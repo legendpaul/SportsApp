@@ -124,22 +124,69 @@ class UFCFetcher {
 
     apiEvents.forEach(event => {
       try {
-        // Skip events without proper data
+        // Enhanced Log: Check for missing critical info (title or date)
         if (!event.strEvent || !event.dateEvent) {
-          return;
+            console.warn(`⚠️ Missing critical info (title or date) for UFC event ${event.idEvent || '(no ID)'}. Raw event data:`, event);
+            // Allowing to proceed to see if other parts can be processed or fail gracefully.
         }
 
-        const eventDate = new Date(event.dateEvent + 'T' + (event.strTime || '00:00:00'));
+        const initialDateString = (event.dateEvent || '') + 'T' + (event.strTime || '00:00:00'); // Guard against null dateEvent
+        const eventDateAsUtc = new Date(initialDateString + 'Z'); // Ensure parsed as UTC
+
+        let londonDateTimeIsoString = null; // Default to null
+
+        if (isNaN(eventDateAsUtc.getTime())) {
+            console.error(`Invalid UTC date for event ${event.idEvent || '(no ID)'}: ${initialDateString}. Raw event data:`, event);
+        } else {
+            const options = {
+                timeZone: "Europe/London",
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false // Use 24-hour format
+            };
+            // Using 'sv-SE' locale for YYYY-MM-DD format parts, then reconstruct.
+            // 'en-GB' would give DD/MM/YYYY. 'sv-SE' gives YYYY-MM-DD.
+            const formatter = new Intl.DateTimeFormat('sv-SE', options); 
+            const parts = formatter.formatToParts(eventDateAsUtc);
+            
+            const dateParts = {};
+            for (const part of parts) {
+                if (part.type !== 'literal') { // Filter out literal parts like '/', '-', ' ', ':' etc.
+                     dateParts[part.type] = part.value;
+                }
+            }
+            
+            // Handle cases where hour might be '24' for midnight in some locales (e.g., 'Europe/London' at DST changeover or midnight)
+            if (dateParts.hour === '24') {
+                dateParts.hour = '00';
+            }
+
+            if (dateParts.year && dateParts.month && dateParts.day && dateParts.hour && dateParts.minute && dateParts.second) {
+                // Constructing the ISO string to represent London wall-clock time, tagged as 'Z'
+                // This format (YYYY-MM-DDTHH:mm:ss.sssZ) is what toISOString() produces.
+                londonDateTimeIsoString = `${dateParts.year}-${dateParts.month}-${dateParts.day}T${dateParts.hour}:${dateParts.minute}:${dateParts.second}.000Z`;
+            } else {
+                console.error(`Failed to construct London time string for event ${event.idEvent || '(no ID)'}. Collected parts: ${JSON.stringify(dateParts)} from eventDateAsUtc: ${eventDateAsUtc.toISOString()}. Raw event data:`, event);
+                // Keep londonDateTimeIsoString as null if parts are missing
+            }
+        }
+
+        // Enhanced Log: Check if ukDateTime (londonDateTimeIsoString) is null
+        if (!londonDateTimeIsoString) {
+            console.warn(`⚠️ ukDateTime is null for event ${event.idEvent || '(no ID)'}, indicating date processing issue. Raw event data:`, event);
+        }
         
-        // Convert to UK time
-        const ukDate = new Date(eventDate.toLocaleString("en-US", {timeZone: "Europe/London"}));
-        
+        // Enhanced Log: Check for missing description before card parsing
+        if (!event.strDescriptionEN) {
+            console.warn(`⚠️ Missing strDescriptionEN for UFC event ${event.idEvent || '(no ID)'}, card parsing will use defaults. Raw event data:`, event);
+        }
+
         const processedEvent = {
-          id: `ufc_${event.idEvent}`,
-          title: event.strEvent || 'UFC Event',
-          date: event.dateEvent,
-          time: event.strTime || 'TBD',
-          ukDateTime: ukDate.toISOString(),
+          id: `ufc_${event.idEvent || 'unknown_' + (Date.now() + Math.random()).toString(36)}`, // Robust ID
+          title: event.strEvent || 'UFC Event', // Fallback if strEvent was initially missing but processing continued
+          date: event.dateEvent, // Keep original date string
+          time: event.strTime || 'TBD', // Keep original time string
+          ukDateTime: londonDateTimeIsoString, // This will be the ISO string representing London wall clock time, but marked as Z(ulu)
           location: this.buildLocation(event),
           venue: event.strVenue || 'TBD',
           status: this.mapStatus(event.strStatus),
@@ -150,7 +197,7 @@ class UFCFetcher {
           apiEventId: event.idEvent,
           
           // Parse main card and prelims from description or use defaults
-          mainCard: this.parseMainCard(event),
+          mainCard: this.parseMainCard(event), // parseMainCard and parsePrelimCard are basic, logging for strDescriptionEN covers this for now
           prelimCard: this.parsePrelimCard(event),
           
           // Additional UFC-specific data
@@ -162,11 +209,16 @@ class UFCFetcher {
         processedEvents.push(processedEvent);
         
       } catch (error) {
-        console.error('Error processing UFC event:', error.message, event);
+        console.error(`Error processing UFC event ${event.idEvent || '(no ID)'}:`, error.message, event);
       }
     });
 
-    return processedEvents.sort((a, b) => new Date(a.ukDateTime) - new Date(b.ukDateTime));
+    return processedEvents.sort((a, b) => {
+        if (a.ukDateTime === null && b.ukDateTime === null) return 0;
+        if (a.ukDateTime === null) return 1; 
+        if (b.ukDateTime === null) return -1;
+        return new Date(a.ukDateTime) - new Date(b.ukDateTime);
+    });
   }
 
   buildLocation(event) {
@@ -182,6 +234,7 @@ class UFCFetcher {
   }
 
   extractUFCNumber(eventTitle) {
+    if (!eventTitle) return null; // Guard against null eventTitle
     const match = eventTitle.match(/UFC\s+(\d+)/i);
     return match ? match[1] : null;
   }
@@ -227,11 +280,12 @@ class UFCFetcher {
     }
     
     // Fallback to generic main event
+    const eventTitle = event.strEvent || ''; // Guard against null strEvent
     return [{
       fighter1: 'Main Event',
       fighter2: 'TBD',
       weightClass: 'TBD',
-      title: event.strEvent.toLowerCase().includes('title') ? 'Title Fight' : ''
+      title: eventTitle.toLowerCase().includes('title') ? 'Title Fight' : ''
     }];
   }
 

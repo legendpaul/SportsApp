@@ -29,6 +29,16 @@ A desktop application that displays today's football matches on UK TV and the ne
 - Node.js (Download from https://nodejs.org)
 - Windows operating system
 
+### API Key Configuration
+- **Football Data**: This application uses the Football-Data.org API to fetch football match information. You will need to obtain a free API key from [https://www.football-data.org/client/register](https://www.football-data.org/client/register).
+- Once you have your API key, open the `matchFetcher.js` file in the application's root directory.
+- Replace the placeholder string `'YOUR_FOOTBALL_DATA_API_KEY_HERE'` with your actual API key:
+  ```javascript
+  // In matchFetcher.js
+  this.apiKey = 'YOUR_FOOTBALL_DATA_API_KEY_HERE'; // Replace with your key
+  ```
+- Without a valid API key, football match data will not be fetched.
+
 ## Current Data
 
 ### Today's Football (May 25, 2025)

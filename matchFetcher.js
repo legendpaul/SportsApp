@@ -5,7 +5,7 @@ const path = require('path');
 class MatchFetcher {
   constructor() {
     // Free tier: 10 requests per minute, 10 competitions
-    this.apiKey = '35813088b3ae49dbb84843a9f959ba69'; // Get free key from https://www.football-data.org/client/register
+    this.apiKey = 'YOUR_FOOTBALL_DATA_API_KEY_HERE'; // Get free key from https://www.football-data.org/client/register
     this.baseUrl = 'api.football-data.org';
     this.dataManager = null;
     
@@ -93,8 +93,8 @@ class MatchFetcher {
 
   makeApiRequest(endpoint) {
     return new Promise((resolve, reject) => {
-      if (this.apiKey === '35813088b3ae49dbb84843a9f959ba69') {
-        reject(new Error('Please set your Football-Data.org API key'));
+      if (this.apiKey === 'YOUR_FOOTBALL_DATA_API_KEY_HERE') {
+        reject(new Error("API key not configured. Please replace 'YOUR_FOOTBALL_DATA_API_KEY_HERE' in matchFetcher.js with your actual Football-Data.org API key."));
         return;
       }
 

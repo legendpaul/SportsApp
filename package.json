@@ -1,0 +1,32 @@
+{
+  "name": "uk-sports-tv-guide",
+  "version": "1.0.0",
+  "description": "UK Sports TV Guide - Football and UFC event information",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "dev": "electron . --dev",
+    "install-deps": "npm install",
+    "rebuild": "npm install && npm start"
+  },
+  "author": "Minnka",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.minnka.sportsguide",
+    "productName": "UK Sports TV Guide",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  }
+}

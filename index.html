@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>UK Sports TV Guide</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles_api.css">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="app-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <h1 class="main-title">UK Sports TV Guide</h1>
+        <div class="time-display">
+          <div class="clock-icon">🕐</div>
+          <div class="current-time" id="current-time">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Football Section -->
+    <div class="section football-section">
+      <div class="section-header">
+        <div class="section-icon">🏆</div>
+        <h2 class="section-title">Today's Football on UK TV</h2>
+      </div>
+      
+      <div class="matches-grid" id="football-matches">
+        <!-- Football matches will be populated by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Next UFC Event Section -->
+    <div class="section ufc-section">
+      <div class="section-header">
+        <div class="section-icon">🥊</div>
+        <h2 class="section-title">Next UFC Event</h2>
+      </div>
+
+      <!-- UFC Event Header -->
+      <div class="ufc-event-header">
+        <h3 class="ufc-title">UFC 316: Dvalishvili vs O'Malley 2</h3>
+        <div class="ufc-details">
+          <div class="ufc-detail">
+            <div class="detail-icon">📅</div>
+            <span>Saturday, June 7, 2025</span>
+          </div>
+          <div class="ufc-detail">
+            <div class="detail-icon">📍</div>
+            <span>Prudential Center, Newark, NJ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- UK Start Times -->
+      <div class="uk-times">
+        <h4 class="times-title">UK Start Times</h4>
+        <div class="times-grid">
+          <div class="time-slot early-prelims">
+            <div class="time-label">Early Prelims</div>
+            <div class="time-value">11:00 PM (Sat) - UFC Fight Pass</div>
+          </div>
+          <div class="time-slot prelims">
+            <div class="time-label">Prelims</div>
+            <div class="time-value">1:00 AM (Sun) - TNT Sports</div>
+          </div>
+          <div class="time-slot main-card">
+            <div class="time-label">Main Card</div>
+            <div class="time-value">3:00 AM (Sun) - TNT Sports</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Card -->
+      <div class="fight-card">
+        <h4 class="card-title">
+          <div class="card-icon">🏆</div>
+          Main Card
+        </h4>
+        <div class="fights-container" id="main-card-fights">
+          <!-- Main card fights will be populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Preliminary Card -->
+      <div class="fight-card">
+        <h4 class="card-title">Preliminary Card</h4>
+        <div class="prelim-fights-grid" id="prelim-card-fights">
+          <!-- Preliminary fights will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>Data updated live • Times shown in UK timezone</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#16213e;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="stadiumLight" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.1" />
+    </radialGradient>
+    <linearGradient id="grassGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#2d5016;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#1a3009;stop-opacity:0.8" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Base background -->
+  <rect width="100%" height="100%" fill="url(#bg)"/>
+  
+  <!-- Stadium Background Glow -->
+  <rect x="0" y="0" width="960" height="1080" fill="url(#stadiumLight)"/>
+  <rect x="960" y="0" width="960" height="1080" fill="url(#stadiumLight)"/>
+  
+  <!-- Football Stadium - Left Side -->
+  <!-- Stadium Stands -->
+  <path d="M0,500 Q300,450 600,500 L600,700 Q300,650 0,700 Z" fill="#1a1a2e" opacity="0.8"/>
+  <rect x="0" y="500" width="600" height="30" fill="#2a2a5e" opacity="0.6"/>
+  
+  <!-- Football Pitch -->
+  <rect x="50" y="700" width="500" height="200" fill="url(#grassGradient)"/>
+  
+  <!-- Goal Posts -->
+  <rect x="100" y="750" width="150" height="80" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  <rect x="100" y="750" width="150" height="6" fill="#ffffff" opacity="0.7"/>
+  <line x1="100" y1="750" x2="100" y2="700" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  <line x1="250" y1="750" x2="250" y2="700" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  <line x1="100" y1="700" x2="250" y2="700" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Goal Net Pattern -->
+  <g stroke="#ffffff" stroke-width="1" opacity="0.3">
+    <line x1="110" y1="710" x2="130" y2="730"/>
+    <line x1="130" y1="710" x2="150" y2="730"/>
+    <line x1="150" y1="710" x2="170" y2="730"/>
+    <line x1="170" y1="710" x2="190" y2="730"/>
+    <line x1="190" y1="710" x2="210" y2="730"/>
+    <line x1="210" y1="710" x2="230" y2="730"/>
+    <line x1="230" y1="710" x2="240" y2="720"/>
+    <line x1="110" y1="720" x2="130" y2="740"/>
+    <line x1="130" y1="720" x2="150" y2="740"/>
+    <line x1="150" y1="720" x2="170" y2="740"/>
+    <line x1="170" y1="720" x2="190" y2="740"/>
+    <line x1="190" y1="720" x2="210" y2="740"/>
+    <line x1="210" y1="720" x2="230" y2="740"/>
+  </g>
+  
+  <!-- Football in Motion -->
+  <circle cx="350" cy="780" r="8" fill="#ffffff"/>
+  <path d="M 342,780 L 350,772 L 358,780 L 350,788 Z" fill="#000000"/>
+  <path d="M 350,772 L 346,776 L 350,780 L 354,776 Z" fill="#000000"/>
+  <path d="M 350,788 L 346,784 L 350,780 L 354,784 Z" fill="#000000"/>
+  
+  <!-- Motion Lines for Football -->
+  <g stroke="#ffffff" stroke-width="2" opacity="0.6">
+    <line x1="310" y1="775" x2="340" y2="778"/>
+    <line x1="300" y1="770" x2="335" y2="776"/>
+    <line x1="320" y1="785" x2="345" y2="782"/>
+  </g>
+  
+  <!-- Stadium Lights -->
+  <circle cx="200" cy="400" r="15" fill="#ffffff" opacity="0.3"/>
+  <circle cx="400" cy="380" r="18" fill="#ffffff" opacity="0.4"/>
+  <circle cx="500" cy="420" r="12" fill="#ffffff" opacity="0.3"/>
+  
+  <!-- MMA Arena - Right Side -->
+  <!-- Arena Structure -->
+  <path d="M960,500 Q1260,450 1560,500 L1560,700 Q1260,650 960,700 Z" fill="#1a1a2e" opacity="0.8"/>
+  <rect x="960" y="500" width="600" height="30" fill="#2a2a5e" opacity="0.6"/>
+  
+  <!-- Octagon Cage -->
+  <polygon points="1150,650 1200,630 1300,630 1350,650 1370,700 1350,750 1300,770 1200,770 1150,750 1130,700" 
+           fill="none" stroke="#cccccc" stroke-width="3" opacity="0.8"/>
+  
+  <!-- Cage Mesh Pattern -->
+  <g stroke="#cccccc" stroke-width="0.5" opacity="0.4">
+    <rect x="1160" y="640" width="10" height="10" fill="none"/>
+    <rect x="1170" y="640" width="10" height="10" fill="none"/>
+    <rect x="1180" y="640" width="10" height="10" fill="none"/>
+    <rect x="1190" y="640" width="10" height="10" fill="none"/>
+    <rect x="1200" y="640" width="10" height="10" fill="none"/>
+    <rect x="1210" y="640" width="10" height="10" fill="none"/>
+    <rect x="1220" y="640" width="10" height="10" fill="none"/>
+    <rect x="1230" y="640" width="10" height="10" fill="none"/>
+    <rect x="1240" y="640" width="10" height="10" fill="none"/>
+    <rect x="1250" y="640" width="10" height="10" fill="none"/>
+    <rect x="1260" y="640" width="10" height="10" fill="none"/>
+    <rect x="1270" y="640" width="10" height="10" fill="none"/>
+    <rect x="1280" y="640" width="10" height="10" fill="none"/>
+    <rect x="1290" y="640" width="10" height="10" fill="none"/>
+    <rect x="1300" y="640" width="10" height="10" fill="none"/>
+    <rect x="1310" y="640" width="10" height="10" fill="none"/>
+    <rect x="1320" y="640" width="10" height="10" fill="none"/>
+    <rect x="1330" y="640" width="10" height="10" fill="none"/>
+    <rect x="1340" y="640" width="10" height="10" fill="none"/>
+  </g>
+  
+  <!-- Fighter 1 - Left fighter throwing punch -->
+  <ellipse cx="1200" cy="720" rx="12" ry="20" fill="#ff6b6b" opacity="0.8"/>
+  <circle cx="1200" cy="695" r="6" fill="#ffb3b3"/>
+  <rect x="1193" y="710" width="14" height="12" rx="2" fill="#ff6b6b" opacity="0.8"/>
+  <ellipse cx="1188" cy="705" rx="8" ry="4" fill="#ff6b6b" opacity="0.8"/>
+  <ellipse cx="1215" cy="715" rx="6" ry="3" fill="#ff6b6b" opacity="0.8"/>
+  
+  <!-- Fighter 2 - Right fighter -->
+  <ellipse cx="1280" cy="720" rx="12" ry="20" fill="#4ecdc4" opacity="0.8"/>
+  <circle cx="1280" cy="695" r="6" fill="#b3fffa"/>
+  <rect x="1273" y="710" width="14" height="12" rx="2" fill="#4ecdc4" opacity="0.8"/>
+  <ellipse cx="1268" cy="705" rx="6" ry="3" fill="#4ecdc4" opacity="0.8"/>
+  <ellipse cx="1292" cy="715" rx="8" ry="4" fill="#4ecdc4" opacity="0.8"/>
+  
+  <!-- Impact Effect -->
+  <circle cx="1240" cy="700" r="6" fill="#ffff00" opacity="0.6"/>
+  <g stroke="#ffff00" stroke-width="1.5" opacity="0.8">
+    <line x1="1232" y1="692" x2="1236" y2="705"/>
+    <line x1="1244" y1="695" x2="1248" y2="708"/>
+    <line x1="1236" y1="688" x2="1240" y2="700"/>
+    <line x1="1244" y1="688" x2="1240" y2="700"/>
+  </g>
+  
+  <!-- Arena Lights -->
+  <circle cx="1100" cy="400" r="15" fill="#ffffff" opacity="0.3"/>
+  <circle cx="1300" cy="380" r="18" fill="#ffffff" opacity="0.4"/>
+  <circle cx="1450" cy="420" r="12" fill="#ffffff" opacity="0.3"/>
+  
+  <!-- Crowd Silhouettes -->
+  <rect x="0" y="850" width="600" height="80" fill="#0a0a1a" opacity="0.7"/>
+  <rect x="960" y="850" width="600" height="80" fill="#0a0a1a" opacity="0.7"/>
+  <path d="M 0,850 Q 50,840 100,845 Q 150,835 200,850 Q 250,840 300,845 Q 350,835 400,850 Q 450,840 500,845 Q 550,835 600,850" 
+        fill="#1a1a3a" opacity="0.8"/>
+  <path d="M 960,850 Q 1010,840 1060,845 Q 1110,835 1160,850 Q 1210,840 1260,845 Q 1310,835 1360,850 Q 1410,840 1460,845 Q 1510,835 1560,850" 
+        fill="#1a1a3a" opacity="0.8"/>
+  
+  <!-- TV/Broadcasting Elements -->
+  <g fill="#a59d88" opacity="0.4">
+    <!-- TV Camera on Stadium -->
+    <rect x="450" y="520" width="8" height="6" rx="1"/>
+    <rect x="455" y="516" width="3" height="4"/>
+    
+    <!-- TV Camera on Arena -->
+    <rect x="1400" y="520" width="8" height="6" rx="1"/>
+    <rect x="1405" y="516" width="3" height="4"/>
+  </g>
+  
+  <!-- Transition Blend -->
+  <rect x="580" y="0" width="80" height="1080" fill="url(#stadiumLight)" opacity="0.6"/>
+  
+  <!-- Digital Score Board Elements -->
+  <g fill="#00ccff" opacity="0.3">
+    <!-- Stadium scoreboard -->
+    <rect x="250" y="500" width="100" height="40" rx="5"/>
+    <rect x="260" y="510" width="15" height="8"/>
+    <rect x="280" y="510" width="15" height="8"/>
+    <rect x="300" y="510" width="15" height="8"/>
+    <rect x="320" y="510" width="15" height="8"/>
+    
+    <!-- Arena display -->
+    <rect x="1200" y="500" width="100" height="40" rx="5"/>
+    <rect x="1210" y="510" width="15" height="8"/>
+    <rect x="1230" y="510" width="15" height="8"/>
+    <rect x="1250" y="510" width="15" height="8"/>
+    <rect x="1270" y="510" width="15" height="8"/>
+  </g>
+  
+  <!-- Sports Channel Logos (Abstract) -->
+  <g fill="#ff6b6b" opacity="0.2">
+    <!-- Sky Sports style -->
+    <circle cx="150" cy="600" r="8"/>
+    <rect x="146" y="596" width="8" height="8"/>
+    
+    <!-- TNT Sports style -->
+    <circle cx="1350" cy="600" r="8"/>
+    <rect x="1346" y="596" width="8" height="8"/>
+  </g>
+  
+</svg>

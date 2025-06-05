@@ -5,7 +5,7 @@ const path = require('path');
 class MatchFetcher {
   constructor() {
     // Free tier: 10 requests per minute, 10 competitions
-    this.apiKey = 'YOUR_FOOTBALL_DATA_API_KEY_HERE'; // Get free key from https://www.football-data.org/client/register
+    this.apiKey = '35813088b3ae49dbb84843a9f959ba69'; // Football-Data.org API key
     this.baseUrl = 'api.football-data.org';
     this.dataManager = null;
     
@@ -297,4 +297,6 @@ if (require.main === module) {
 }
 
 module.exports = MatchFetcher;
+
+
 

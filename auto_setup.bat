@@ -6,7 +6,7 @@ echo.
 echo This script will setup the Sports TV Guide app automatically.
 echo.
 
-set appDir=C:\svn\bitbucket\SportsApp
+set appDir=C:\svn\git\SportsApp
 
 echo Navigating to app directory...
 cd "%appDir%"

@@ -6,6 +6,7 @@ class SportsApp {
     this.footballMatches = [];
     this.ufcMainCard = [];
     this.ufcPrelimCard = [];
+    this.ufcEarlyPrelimCard = [];
     this.ufcEvents = [];
     this.dataManager = null;
     this.matchFetcher = null;
@@ -201,6 +202,7 @@ class SportsApp {
           if (upcomingEvent) {
             this.ufcMainCard = upcomingEvent.mainCard || [];
             this.ufcPrelimCard = upcomingEvent.prelimCard || [];
+            this.ufcEarlyPrelimCard = upcomingEvent.earlyPrelimCard || [];
           }
         }
         
@@ -254,23 +256,46 @@ class SportsApp {
   loadFallbackUFCData() {
     this.ufcMainCard = [
       { 
-        fighter1: "Merab Dvalishvili", 
-        fighter2: "Sean O'Malley", 
-        weightClass: "Bantamweight", 
-        title: "Title Fight" 
+        fighter1: "Erin Blanchfield", 
+        fighter2: "Maycee Barber", 
+        weightClass: "Women's Flyweight", 
+        title: "Main Event" 
       },
       { 
-        fighter1: "Julianna Peña", 
-        fighter2: "Kayla Harrison", 
-        weightClass: "Women's Bantamweight", 
-        title: "Title Fight" 
+        fighter1: "Mateusz Gamrot", 
+        fighter2: "Ludovit Klein", 
+        weightClass: "Lightweight", 
+        title: "" 
+      },
+      { 
+        fighter1: "Billy Ray Goff", 
+        fighter2: "Seokhyeon Ko", 
+        weightClass: "Welterweight", 
+        title: "" 
+      },
+      { 
+        fighter1: "Dustin Jacoby", 
+        fighter2: "Bruno Lopes", 
+        weightClass: "Light Heavyweight", 
+        title: "" 
+      },
+      { 
+        fighter1: "Zach Reese", 
+        fighter2: "Dusko Todorovic", 
+        weightClass: "Middleweight", 
+        title: "" 
       }
     ];
 
     this.ufcPrelimCard = [
-      { fighter1: "Bruno Silva", fighter2: "Joshua Van", weightClass: "Flyweight" },
-      { fighter1: "Ariane Lipski", fighter2: "Cong Wang", weightClass: "Women's Flyweight" }
+      { fighter1: "Allan Nascimento", fighter2: "Jafel Filho", weightClass: "Flyweight" },
+      { fighter1: "Andreas Gustafsson", fighter2: "Jeremiah Wells", weightClass: "Welterweight" },
+      { fighter1: "Ketlen Vieira", fighter2: "TBD", weightClass: "Women's Bantamweight" },
+      { fighter1: "Rayanne dos Santos", fighter2: "Alice Ardelean", weightClass: "Women's Strawweight" }
     ];
+    
+    // Fight Night events typically don't have early prelims
+    this.ufcEarlyPrelimCard = [];
   }
 
   init() {
@@ -462,6 +487,7 @@ class SportsApp {
   renderUFCFights() {
     this.renderMainCard();
     this.renderPrelimCard();
+    this.renderEarlyPrelimCard();
     this.updateUFCTitle();
   }
 
@@ -537,6 +563,34 @@ class SportsApp {
     this.ufcPrelimCard.forEach(fight => {
       const fightCard = document.createElement('div');
       fightCard.className = 'fight-prelim';
+      
+      fightCard.innerHTML = `
+        <div class="prelim-fighters">
+          <div class="prelim-fighter fighter-1">${fight.fighter1}</div>
+          <div class="vs-separator">vs</div>
+          <div class="prelim-fighter fighter-2">${fight.fighter2}</div>
+        </div>
+        <div class="prelim-weight">${fight.weightClass}</div>
+      `;
+
+      container.appendChild(fightCard);
+    });
+  }
+  
+  renderEarlyPrelimCard() {
+    const container = document.getElementById('early-prelim-card-fights');
+    if (!container) return;
+
+    container.innerHTML = '';
+    
+    // Skip rendering if no early prelim fights (Fight Night events)
+    if (!this.ufcEarlyPrelimCard || this.ufcEarlyPrelimCard.length === 0) {
+      return;
+    }
+
+    this.ufcEarlyPrelimCard.forEach(fight => {
+      const fightCard = document.createElement('div');
+      fightCard.className = 'fight-prelim early-prelim';
       
       fightCard.innerHTML = `
         <div class="prelim-fighters">
@@ -727,9 +781,10 @@ class SportsApp {
   }
 
   // Method to update UFC event
-  updateUFCEvent(mainCard, prelimCard) {
+  updateUFCEvent(mainCard, prelimCard, earlyPrelimCard) {
     if (mainCard) this.ufcMainCard = mainCard;
     if (prelimCard) this.ufcPrelimCard = prelimCard;
+    if (earlyPrelimCard) this.ufcEarlyPrelimCard = earlyPrelimCard;
     this.renderUFCFights();
     this.saveMatchData();
   }

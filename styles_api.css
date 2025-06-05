@@ -199,7 +199,7 @@
 .no-matches {
   text-align: center;
   padding: 60px 20px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02); /* Reduced from 0.05 to 0.02 for more transparency */
   border-radius: 12px;
   border: 2px dashed rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -340,7 +340,7 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.4); /* Reduced from 0.8 to 0.4 for more transparency */
   color: white;
   padding: 8px 12px;
   border-radius: 20px;
@@ -365,8 +365,8 @@
 
 /* Enhanced Competition Badges */
 .competition-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: rgba(0, 0, 0, 0.4); /* More transparent fallback background */
+  color: var(--sports-gold);
   padding: 4px 12px;
   border-radius: 15px;
   font-size: 12px;
@@ -374,19 +374,22 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* Gradient override for modern look */
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
+  color: white;
 }
 
-/* Competition-specific colors */
+/* Competition-specific colors - more transparent */
 .competition-badge:contains('Premier League') {
-  background: linear-gradient(135deg, #37003c 0%, #00ff87 100%);
+  background: linear-gradient(135deg, rgba(55, 0, 60, 0.6) 0%, rgba(0, 255, 135, 0.6) 100%);
 }
 
 .competition-badge:contains('Champions League') {
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  background: linear-gradient(135deg, rgba(30, 60, 114, 0.6) 0%, rgba(42, 82, 152, 0.6) 100%);
 }
 
 .competition-badge:contains('La Liga') {
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.6) 0%, rgba(247, 147, 30, 0.6) 100%);
 }
 
 /* Smooth transitions for all interactive elements */

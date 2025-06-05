@@ -19,7 +19,7 @@ echo Current directory: %CD% >> C:\temp\sports_app_log.txt
 echo PATH: %PATH% >> C:\temp\sports_app_log.txt
 echo. >> C:\temp\sports_app_log.txt
 
-set appDir=C:\svn\bitbucket\SportsApp
+set appDir=C:\svn\git\SportsApp
 
 echo Step 2: Checking app directory... >> C:\temp\sports_app_log.txt
 if exist "%appDir%" (

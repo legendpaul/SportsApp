@@ -1,6 +1,8 @@
 // Web-compatible Match Fetcher - Uses Netlify Functions for real data
+// Version: 2.1.0 - Fixed Netlify environment detection
 class WebMatchFetcher {
   constructor(debugLogCallback = null) {
+    this.version = '2.1.0';
     this.netlifyFunctionUrl = '/.netlify/functions/fetch-football';
     this.corsProxyUrl = 'https://api.allorigins.win/get?url=';
     this.directUrl = 'https://www.live-footballontv.com';
@@ -10,28 +12,67 @@ class WebMatchFetcher {
       console.log(`[${category.toUpperCase()}] ${message}`, data || '');
     });
     
+    // Log version for debugging
+    this.debugLog('requests', `WebMatchFetcher v${this.version} initializing...`);
+    
     // Then detect environment
     this.isLocal = this.detectLocalEnvironment();
   }
 
   detectLocalEnvironment() {
     // Check if running locally (not on Netlify)
-    const isLocal = window.location.hostname === 'localhost' || 
-                   window.location.hostname === '127.0.0.1' || 
-                   window.location.hostname === '' ||
-                   window.location.protocol === 'file:';
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const port = window.location.port;
+    
+    // Local development indicators
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
+    const isFileProtocol = protocol === 'file:';
+    const hasDevPort = port && (port === '3000' || port === '8080' || port === '5000');
+    
+    // Netlify indicators (production)
+    const isNetlify = hostname.includes('.netlify.app') || hostname.includes('.netlify.com');
+    const isHTTPS = protocol === 'https:';
+    
+    // Determine environment
+    const isLocal = (isLocalhost || isFileProtocol || hasDevPort) && !isNetlify;
+    
+    // Log detailed environment info
+    const envInfo = {
+      hostname,
+      protocol,
+      port,
+      isLocalhost,
+      isFileProtocol,
+      hasDevPort,
+      isNetlify,
+      isHTTPS,
+      finalDecision: isLocal ? 'Local Development' : 'Production (Netlify)'
+    };
     
     // Log after debugLog is available
     if (this.debugLog) {
-      this.debugLog('requests', `Environment detected: ${isLocal ? 'Local Development' : 'Netlify Production'}`);
+      this.debugLog('requests', `Environment detection complete: ${envInfo.finalDecision}`, envInfo);
     } else {
-      console.log(`[REQUESTS] Environment detected: ${isLocal ? 'Local Development' : 'Netlify Production'}`);
+      console.log(`[REQUESTS] Environment detection complete: ${envInfo.finalDecision}`, envInfo);
     }
+    
     return isLocal;
   }
 
   async fetchTodaysMatches() {
     try {
+      // Log current environment for debugging
+      const envDetails = {
+        hostname: window.location.hostname,
+        protocol: window.location.protocol,
+        port: window.location.port,
+        href: window.location.href,
+        isLocal: this.isLocal
+      };
+      
+      this.debugLog('requests', `Starting fetch with environment details:`, envDetails);
+      
       if (this.isLocal) {
         this.debugLog('requests', 'Local development detected - using CORS proxy for live data...');
         return await this.fetchWithCorsProxy();
@@ -304,18 +345,33 @@ class WebMatchFetcher {
       } else {
         this.debugLog('requests', 'Testing Netlify function connection...');
         
-        const response = await fetch(this.netlifyFunctionUrl, { 
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json'
+        // First test if the function endpoint exists
+        try {
+          const testResponse = await fetch(this.netlifyFunctionUrl, { 
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          this.debugLog('requests', `Function endpoint test - Status: ${testResponse.status}`, {
+            url: this.netlifyFunctionUrl,
+            status: testResponse.status,
+            statusText: testResponse.statusText,
+            headers: Object.fromEntries(testResponse.headers)
+          });
+          
+          if (!testResponse.ok) {
+            if (testResponse.status === 404) {
+              this.debugLog('requests', 'ERROR: Netlify function not found (404) - check deployment');
+              return false;
+            } else if (testResponse.status >= 500) {
+              this.debugLog('requests', 'ERROR: Netlify function server error - check function logs');
+              return false;
+            }
           }
-        });
-        
-        const success = response.ok;
-        this.debugLog('requests', `Netlify function connection ${success ? 'successful' : 'failed'} - status: ${response.status}`);
-        
-        if (success) {
-          const data = await response.json();
+          
+          const data = await testResponse.json();
           this.debugLog('requests', 'Function response received', {
             success: data.success,
             matchCount: data.matches ? data.matches.length : 0,
@@ -326,9 +382,17 @@ class WebMatchFetcher {
           if (data.source === 'demo-data') {
             this.debugLog('requests', 'Function returned demo data - this may indicate issues with live data fetching');
           }
+          
+          return testResponse.ok;
+          
+        } catch (error) {
+          this.debugLog('requests', `Function test failed: ${error.message}`, {
+            url: this.netlifyFunctionUrl,
+            error: error.name,
+            message: error.message
+          });
+          return false;
         }
-        
-        return success;
       }
       
     } catch (error) {

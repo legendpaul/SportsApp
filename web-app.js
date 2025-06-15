@@ -1,6 +1,8 @@
 // Web-compatible Sports App JavaScript - Fixed initialization issue
+// Version: 2.1.0 - Fixed Netlify environment detection
 class WebSportsApp {
   constructor() {
+    this.version = '2.1.0';
     this.footballMatches = [];
     this.ufcMainCard = [];
     this.ufcPrelimCard = [];
@@ -217,7 +219,7 @@ class WebSportsApp {
   }
 
   init() {
-    this.debugLog('display', 'Initializing Web Sports App...');
+    this.debugLog('display', `Initializing Web Sports App v${this.version}...`);
     
     this.updateClock();
     this.renderFootballMatches();
@@ -232,8 +234,8 @@ class WebSportsApp {
     setInterval(() => this.updateMatchStatuses(), 60000);
     setInterval(() => this.autoRefreshIfNeeded(), 2 * 60 * 60 * 1000);
     
-    this.debugLog('display', 'Web Sports App initialized successfully!');
-    console.log('🚀 Web Sports App initialized successfully!');
+    this.debugLog('display', `Web Sports App v${this.version} initialized successfully!`);
+    console.log(`🚀 Web Sports App v${this.version} initialized successfully!`);
   }
 
   updateFooterForEnvironment() {

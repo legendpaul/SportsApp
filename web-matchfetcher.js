@@ -57,7 +57,7 @@ class WebMatchFetcher {
       console.log(`[REQUESTS] Environment detection complete: ${envInfo.finalDecision}`, envInfo);
     }
     
-    return isLocal;
+    return isLocal; // Ensure this returns boolean
   }
 
   async fetchTodaysMatches() {
@@ -68,7 +68,7 @@ class WebMatchFetcher {
         protocol: window.location.protocol,
         port: window.location.port,
         href: window.location.href,
-        isLocal: this.isLocal
+        isLocal: this.isLocal // This should be boolean
       };
       
       this.debugLog('requests', `Starting fetch with environment details:`, envDetails);

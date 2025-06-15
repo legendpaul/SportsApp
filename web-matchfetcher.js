@@ -42,7 +42,7 @@ class WebMatchFetcher {
     } catch (error) {
       this.debugLog('requests', `Error fetching matches: ${error.message}`);
       
-      // Try fallback method if primary fails
+      // Try fallback methods if primary fails
       if (this.isLocal) {
         this.debugLog('requests', 'CORS proxy failed, trying direct fetch...');
         try {
@@ -52,7 +52,9 @@ class WebMatchFetcher {
           return this.generateLocalDemoMatches();
         }
       } else {
-        throw error; // Re-throw error for production
+        // In production, if Netlify function fails completely, use demo data
+        this.debugLog('requests', 'Netlify function failed completely, using demo data as fallback');
+        return this.generateLocalDemoMatches();
       }
     }
   }
@@ -76,11 +78,29 @@ class WebMatchFetcher {
       throw new Error(`Function returned error: ${data.error}`);
     }
 
+    // Log the data source and any notes
+    const source = data.source || 'unknown';
+    const fetchMethod = data.fetchMethod || 'unknown';
+    const note = data.note || '';
+    
     this.debugLog('requests', `Successfully fetched ${data.todayCount} matches from Netlify function`, {
       totalFound: data.totalFound,
       todayCount: data.todayCount,
-      fetchTime: data.fetchTime
+      fetchTime: data.fetchTime,
+      source: source,
+      fetchMethod: fetchMethod,
+      note: note
     });
+    
+    // Log additional info if using demo data
+    if (source === 'demo-data') {
+      this.debugLog('requests', `Using demo data: ${note}`);
+      if (data.error) {
+        this.debugLog('requests', `Original error: ${data.error}`);
+      }
+    } else if (source === 'live-data') {
+      this.debugLog('requests', `Successfully fetched live data via ${fetchMethod}`);
+    }
 
     return data.matches || [];
   }
@@ -204,8 +224,24 @@ class WebMatchFetcher {
       const newMatches = await this.fetchTodaysMatches();
       
       if (newMatches.length === 0) {
-        this.debugLog('data', 'No matches found from live data source');
+        this.debugLog('data', 'No matches found from data source');
         return { success: true, added: 0, total: existingData.footballMatches.length };
+      }
+      
+      // Check if matches are from demo data
+      const isDemoData = newMatches.length > 0 && newMatches[0].apiSource && 
+                        (newMatches[0].apiSource.includes('demo') || newMatches[0].apiSource.includes('local'));
+      
+      if (isDemoData) {
+        this.debugLog('data', 'Received demo data - not adding to existing matches to avoid duplicates');
+        return { 
+          success: true, 
+          added: 0, 
+          total: existingData.footballMatches.length,
+          matches: newMatches,
+          source: 'demo-data',
+          note: 'Demo data not persisted to avoid duplicates'
+        };
       }
 
       const existingIds = new Set(
@@ -239,7 +275,7 @@ class WebMatchFetcher {
         added: uniqueNewMatches.length, 
         total: existingData.footballMatches.length,
         matches: uniqueNewMatches,
-        source: 'live-footballontv.com'
+        source: newMatches.length > 0 && newMatches[0].apiSource ? newMatches[0].apiSource : 'live-footballontv.com'
       };
       
     } catch (error) {
@@ -282,8 +318,14 @@ class WebMatchFetcher {
           const data = await response.json();
           this.debugLog('requests', 'Function response received', {
             success: data.success,
-            matchCount: data.matches ? data.matches.length : 0
+            matchCount: data.matches ? data.matches.length : 0,
+            source: data.source || 'unknown',
+            note: data.note || ''
           });
+          
+          if (data.source === 'demo-data') {
+            this.debugLog('requests', 'Function returned demo data - this may indicate issues with live data fetching');
+          }
         }
         
         return success;

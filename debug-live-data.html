@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔍 Live Data Debug - Function Logs</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .log-container { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .log-entry { 
+            background: white; 
+            margin: 10px 0; 
+            padding: 15px; 
+            border-radius: 4px; 
+            border-left: 4px solid #17a2b8;
+            font-family: monospace; 
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error { border-left-color: #dc3545; }
+        .success { border-left-color: #28a745; }
+        .warning { border-left-color: #ffc107; }
+        
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            margin: 10px; 
+            font-size: 16px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        
+        .status { 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin: 10px 0; 
+            font-weight: bold;
+        }
+        .status.loading { background: #fff3cd; color: #856404; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin: 20px 0;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: #007bff;
+            color: #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Live Data Debug Tool</h1>
+        <p>This tool calls the Netlify function and shows detailed logs to debug why live data isn't working.</p>
+    </div>
+    
+    <div id="status" class="status">Ready to test...</div>
+    
+    <div style="text-align: center;">
+        <button onclick="testFunction()" id="testBtn">🧪 Test Function & Show Logs</button>
+        <button onclick="clearLogs()">🗑️ Clear Logs</button>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('overview')">📊 Overview</button>
+        <button class="tab" onclick="showTab('logs')">📋 Full Logs</button>
+        <button class="tab" onclick="showTab('analysis')">🔍 Analysis</button>
+    </div>
+    
+    <div id="overview" class="tab-content active">
+        <h3>📊 Test Results Overview</h3>
+        <div id="overview-content">No test run yet...</div>
+    </div>
+    
+    <div id="logs" class="tab-content">
+        <h3>📋 Detailed Function Logs</h3>
+        <div id="logs-content" class="log-container">No logs yet...</div>
+    </div>
+    
+    <div id="analysis" class="tab-content">
+        <h3>🔍 Issue Analysis</h3>
+        <div id="analysis-content">No analysis yet...</div>
+    </div>
+
+    <script>
+        let testData = null;
+        
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+        }
+        
+        function setStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs-content').innerHTML = 'Logs cleared...';
+            document.getElementById('overview-content').innerHTML = 'No test run yet...';
+            document.getElementById('analysis-content').innerHTML = 'No analysis yet...';
+            setStatus('Ready to test...', '');
+        }
+        
+        async function testFunction() {
+            const testBtn = document.getElementById('testBtn');
+            testBtn.disabled = true;
+            testBtn.textContent = '⏳ Testing...';
+            
+            setStatus('🔄 Calling Netlify function...', 'loading');
+            
+            try {
+                console.log('Starting function test...');
+                
+                const startTime = Date.now();
+                const response = await fetch('/.netlify/functions/fetch-football', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const endTime = Date.now();
+                
+                console.log('Function response received:', response);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                testData = data;
+                
+                console.log('Function data:', data);
+                
+                // Update overview
+                updateOverview(response, data, endTime - startTime);
+                
+                // Update logs
+                updateLogs();
+                
+                // Analyze the response
+                analyzeResponse();
+                
+                setStatus(`✅ Function completed in ${endTime - startTime}ms`, 'success');
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                setStatus(`❌ Test failed: ${error.message}`, 'error');
+                
+                document.getElementById('overview-content').innerHTML = `
+                    <div class="log-entry error">
+                        <strong>❌ Function Call Failed</strong><br>
+                        Error: ${error.message}<br>
+                        This suggests the Netlify function is not responding or has a critical error.
+                    </div>
+                `;
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🧪 Test Function & Show Logs';
+            }
+        }
+        
+        function updateOverview(response, data, duration) {
+            const overviewDiv = document.getElementById('overview-content');
+            
+            let statusClass = 'success';
+            let statusIcon = '✅';
+            let statusText = 'Working';
+            
+            if (data.source === 'demo-data') {
+                statusClass = 'warning';
+                statusIcon = '⚠️';
+                statusText = 'Returning Demo Data';
+            }
+            
+            overviewDiv.innerHTML = `
+                <div class="log-entry ${statusClass}">
+                    <strong>${statusIcon} Function Status: ${statusText}</strong><br>
+                    Response Time: ${duration}ms<br>
+                    HTTP Status: ${response.status} ${response.statusText}<br>
+                    Data Source: ${data.source || 'unknown'}<br>
+                    Matches Returned: ${data.todayCount || 0}<br>
+                    ${data.note ? `Note: ${data.note}` : ''}
+                    ${data.error ? `<br><strong>Error:</strong> ${data.error}` : ''}
+                </div>
+                
+                ${data.source === 'demo-data' ? `
+                <div class="log-entry warning">
+                    <strong>⚠️ Issue: Live Data Not Working</strong><br>
+                    The function is returning demo data instead of live matches.<br>
+                    This means the website scraping is failing.<br>
+                    Check the Analysis tab for solutions.
+                </div>
+                ` : ''}
+                
+                <div class="log-entry">
+                    <strong>📊 Function Response Data:</strong><br>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+        
+        function updateLogs() {
+            const logsDiv = document.getElementById('logs-content');
+            
+            if (testData) {
+                logsDiv.innerHTML = `
+                    <div class="log-entry">
+                        <strong>📋 Available Log Information:</strong><br>
+                        Response Time: ${testData.fetchTime || 'Unknown'}<br>
+                        Source: ${testData.source || 'Unknown'}<br>
+                        Fetch Method: ${testData.fetchMethod || 'Unknown'}<br>
+                        Total Matches Found: ${testData.totalFound || 0}<br>
+                        Today's Matches: ${testData.todayCount || 0}<br>
+                        ${testData.note ? `Note: ${testData.note}` : ''}
+                        ${testData.error ? `Error: ${testData.error}` : ''}
+                    </div>
+                    
+                    <div class="log-entry">
+                        <strong>💡 To See Detailed Function Logs:</strong><br>
+                        1. Go to your Netlify Dashboard<br>
+                        2. Click on "Functions" tab<br>
+                        3. Click on "fetch-football" function<br>
+                        4. View the "Function log" section<br>
+                        5. Look for console.log output from the function
+                    </div>
+                    
+                    <div class="log-entry">
+                        <strong>🔍 What to Look For in Netlify Logs:</strong><br>
+                        • "HTML Content length: X characters" - Shows if website fetch worked<br>
+                        • "HTML Content preview:" - Shows what HTML was received<br>
+                        • "Found X fixture divs in HTML" - Shows if fixtures were detected<br>
+                        • "Successfully parsed match:" - Shows if any matches were parsed<br>
+                        • "No matches found for today" - Explains why demo data is used
+                    </div>
+                `;
+            }
+        }
+        
+        function analyzeResponse() {
+            const analysisDiv = document.getElementById('analysis-content');
+            
+            if (!testData) {
+                analysisDiv.innerHTML = 'No test data available for analysis.';
+                return;
+            }
+            
+            let analysis = '';
+            
+            if (testData.source === 'demo-data') {
+                analysis = `
+                    <div class="log-entry error">
+                        <strong>🔍 Root Cause Analysis: Live Data Scraping Failed</strong><br><br>
+                        
+                        <strong>❌ Problem:</strong> The Netlify function is not extracting live football matches from live-footballontv.com<br><br>
+                        
+                        <strong>🔍 Possible Causes:</strong><br>
+                        1. <strong>Website Structure Changed:</strong> The HTML structure may have changed since the scraper was written<br>
+                        2. <strong>Anti-Bot Protection:</strong> The website may be blocking server requests<br>
+                        3. <strong>No Matches Today:</strong> There genuinely might be no matches scheduled for today (${new Date().toDateString()})<br>
+                        4. <strong>Date Parsing Issues:</strong> The function might not be finding today's date section correctly<br>
+                        5. <strong>Content Loading Issues:</strong> The website might load content dynamically with JavaScript<br><br>
+                        
+                        <strong>🛠️ Solutions to Try:</strong><br>
+                        1. <strong>Check Netlify Function Logs:</strong> Look for "HTML Content preview" to see what was actually fetched<br>
+                        2. <strong>Try Different Football API:</strong> Use API-Football, Football-Data.org, or SportRadar<br>
+                        3. <strong>Update Scraping Logic:</strong> Inspect live-footballontv.com to see current HTML structure<br>
+                        4. <strong>Add Fallback Sources:</strong> BBC Sport, Sky Sports, or other reliable sources<br>
+                        5. <strong>Use RSS Feeds:</strong> Many sports sites provide RSS feeds with fixture data<br><br>
+                        
+                        <strong>⚡ Quick Fix Options:</strong><br>
+                        • Switch to a reliable football API instead of web scraping<br>
+                        • Add multiple data sources with fallbacks<br>
+                        • Implement caching to reduce API calls
+                    </div>
+                `;
+            } else if (testData.source === 'live-data') {
+                analysis = `
+                    <div class="log-entry success">
+                        <strong>✅ Success: Live Data Working!</strong><br>
+                        The function successfully scraped ${testData.todayCount} matches from live-footballontv.com<br>
+                        Fetch method: ${testData.fetchMethod || 'Unknown'}<br>
+                        No issues detected.
+                    </div>
+                `;
+            }
+            
+            analysisDiv.innerHTML = analysis;
+        }
+        
+        // Auto-run test if on Netlify
+        window.addEventListener('load', () => {
+            const isNetlify = window.location.hostname.includes('.netlify.app') || window.location.hostname.includes('.netlify.com');
+            if (isNetlify) {
+                setTimeout(testFunction, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

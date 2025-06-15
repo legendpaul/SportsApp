@@ -294,11 +294,19 @@ function fetchWithUserAgentRotation(hostname, path) {
 // Function to parse matches from HTML
 function parseMatches(htmlContent) {
   console.log('Starting to parse HTML content for matches...');
+  console.log(`HTML Content length: ${htmlContent.length} characters`);
+  
+  // Save HTML content for debugging (first 2000 characters)
+  console.log('HTML Content preview:', htmlContent.substring(0, 2000));
+  
   const matches = [];
   
   try {
     const today = new Date();
     const todayFormatted = today.toISOString().split('T')[0];
+    
+    console.log(`Today's date: ${todayFormatted}`);
+    console.log(`Today object: ${today.toString()}`);
     
     // Look for today's date section in HTML - Dynamic date patterns
     const todayPatterns = [
@@ -306,7 +314,16 @@ function parseMatches(htmlContent) {
       `${today.toLocaleDateString('en-US', { weekday: 'long' })} ${today.getDate()}${getOrdinalSuffix(today.getDate())} ${today.toLocaleDateString('en-US', { month: 'long' })} ${today.getFullYear()}`,
       // Additional patterns for different date formats
       `${today.getDate()}${getOrdinalSuffix(today.getDate())} ${today.toLocaleDateString('en-GB', { month: 'long' })} ${today.getFullYear()}`,
-      `${today.toLocaleDateString('en-GB', { month: 'long' })} ${today.getDate()}${getOrdinalSuffix(today.getDate())}, ${today.getFullYear()}`
+      `${today.toLocaleDateString('en-GB', { month: 'long' })} ${today.getDate()}${getOrdinalSuffix(today.getDate())}, ${today.getFullYear()}`,
+      // Also try some common variations
+      `Sunday ${today.getDate()}${getOrdinalSuffix(today.getDate())} June ${today.getFullYear()}`,
+      `Sunday, ${today.getDate()}${getOrdinalSuffix(today.getDate())} June ${today.getFullYear()}`,
+      `${today.getDate()}${getOrdinalSuffix(today.getDate())} June ${today.getFullYear()}`,
+      // Check for any date mentions
+      `${today.getDate()}${getOrdinalSuffix(today.getDate())}`,
+      `June ${today.getFullYear()}`,
+      'fixture',
+      'match'
     ];
     
     console.log('Looking for today\'s date patterns:', todayPatterns);
@@ -318,15 +335,19 @@ function parseMatches(htmlContent) {
     for (const pattern of todayPatterns) {
       const patternIndex = htmlContent.indexOf(pattern);
       if (patternIndex !== -1) {
-        console.log(`Found today's date section: ${pattern}`);
+        console.log(`Found pattern "${pattern}" at index ${patternIndex}`);
         todaySection = pattern;
         
         const fixtureStartIndex = htmlContent.indexOf('<div class="fixture">', patternIndex);
         const nextDayPattern = htmlContent.indexOf('class="fixture-date"', patternIndex + pattern.length);
         nextDayIndex = nextDayPattern !== -1 ? nextDayPattern : htmlContent.length;
         
+        console.log(`Fixture start index: ${fixtureStartIndex}, Next day index: ${nextDayIndex}`);
+        
         if (fixtureStartIndex !== -1 && fixtureStartIndex < nextDayIndex) {
           const todayFixturesSection = htmlContent.substring(fixtureStartIndex, nextDayIndex);
+          console.log(`Today's fixtures section length: ${todayFixturesSection.length}`);
+          console.log(`Today's fixtures section preview:`, todayFixturesSection.substring(0, 500));
           matches.push(...parseFixturesFromHTML(todayFixturesSection, todayFormatted));
         }
         break;
@@ -334,8 +355,23 @@ function parseMatches(htmlContent) {
     }
     
     if (!todaySection) {
-      console.log('Could not find today\'s date section, parsing all fixtures for today');
+      console.log('Could not find today\'s date section, parsing all fixtures');
+      
+      // Look for ANY fixture divs
+      const fixtureMatches = htmlContent.match(/<div class="fixture"[^>]*>/g);
+      console.log(`Found ${fixtureMatches ? fixtureMatches.length : 0} fixture divs in HTML`);
+      
+      // Look for common football-related terms
+      const footballTerms = ['premier league', 'champions league', 'football', 'soccer', 'match', 'vs', 'v ', 'kick-off'];
+      for (const term of footballTerms) {
+        if (htmlContent.toLowerCase().includes(term)) {
+          console.log(`Found football term: "${term}"`);
+        }
+      }
+      
       const allFixtures = parseAllFixturesFromHTML(htmlContent);
+      console.log(`parseAllFixturesFromHTML returned ${allFixtures.length} matches`);
+      
       const todayMatches = allFixtures.filter(match => {
         match.matchDate = todayFormatted;
         return true;
@@ -345,8 +381,14 @@ function parseMatches(htmlContent) {
     
     console.log(`Parsing completed: ${matches.length} matches extracted`);
     
+    // Log each match found
+    matches.forEach((match, index) => {
+      console.log(`Match ${index + 1}: ${match.time} - ${match.teamA} vs ${match.teamB} (${match.competition})`);
+    });
+    
   } catch (error) {
     console.log(`Error parsing matches: ${error.message}`);
+    console.log(`Error stack: ${error.stack}`);
   }
   
   return matches;
@@ -356,20 +398,33 @@ function parseFixturesFromHTML(htmlSection, matchDate) {
   const matches = [];
   
   try {
-    const fixtureRegex = /<div class="fixture">(.*?)<\/div>(?=<div class="fixture">|<div class="advertfixtures">|<div class="anchor">|$)/gs;
+    console.log(`parseFixturesFromHTML called with section length: ${htmlSection.length}`);
+    console.log(`Section preview:`, htmlSection.substring(0, 500));
+    
+    const fixtureRegex = /<div class="fixture"[^>]*>(.*?)<\/div>(?=<div class="fixture"|<div class="advertfixtures"|<div class="anchor"|$)/gs;
     let match;
+    let matchCount = 0;
     
     while ((match = fixtureRegex.exec(htmlSection)) !== null) {
+      matchCount++;
+      console.log(`Processing fixture ${matchCount}:`, match[1].substring(0, 200));
+      
       const fixtureHTML = match[1];
       const parsedMatch = parseIndividualFixture(fixtureHTML, matchDate);
       
       if (parsedMatch) {
+        console.log(`Successfully parsed match: ${parsedMatch.teamA} vs ${parsedMatch.teamB}`);
         matches.push(parsedMatch);
+      } else {
+        console.log(`Failed to parse fixture ${matchCount}`);
       }
     }
     
+    console.log(`Found ${matchCount} fixture divs, parsed ${matches.length} matches`);
+    
   } catch (error) {
     console.log(`Error parsing fixtures section: ${error.message}`);
+    console.log(`Error stack: ${error.stack}`);
   }
   
   return matches;
@@ -379,22 +434,48 @@ function parseAllFixturesFromHTML(htmlContent) {
   const matches = [];
   
   try {
-    const fixtureRegex = /<div class="fixture">(.*?)<\/div>(?=<div class="fixture">|<div class="advertfixtures">|<div class="anchor">|$)/gs;
-    let match;
+    console.log(`parseAllFixturesFromHTML called with content length: ${htmlContent.length}`);
     
-    const today = new Date().toISOString().split('T')[0];
+    // Try multiple fixture regex patterns
+    const patterns = [
+      /<div class="fixture"[^>]*>(.*?)<\/div>(?=<div class="fixture"|<div class="advertfixtures"|<div class="anchor"|$)/gs,
+      /<div[^>]*class="[^"]*fixture[^"]*"[^>]*>(.*?)<\/div>/gs,
+      /<article[^>]*class="[^"]*fixture[^"]*"[^>]*>(.*?)<\/article>/gs
+    ];
     
-    while ((match = fixtureRegex.exec(htmlContent)) !== null) {
-      const fixtureHTML = match[1];
-      const parsedMatch = parseIndividualFixture(fixtureHTML, today);
+    for (let i = 0; i < patterns.length; i++) {
+      console.log(`Trying pattern ${i + 1}...`);
+      const regex = patterns[i];
+      let match;
+      let matchCount = 0;
       
-      if (parsedMatch) {
-        matches.push(parsedMatch);
+      // Reset regex
+      regex.lastIndex = 0;
+      
+      while ((match = regex.exec(htmlContent)) !== null && matchCount < 50) { // Limit to prevent infinite loops
+        matchCount++;
+        console.log(`Pattern ${i + 1} - Match ${matchCount}:`, match[1].substring(0, 100));
+        
+        const fixtureHTML = match[1];
+        const today = new Date().toISOString().split('T')[0];
+        const parsedMatch = parseIndividualFixture(fixtureHTML, today);
+        
+        if (parsedMatch) {
+          console.log(`Successfully parsed: ${parsedMatch.teamA} vs ${parsedMatch.teamB}`);
+          matches.push(parsedMatch);
+        }
+      }
+      
+      console.log(`Pattern ${i + 1} found ${matchCount} fixtures, parsed ${matches.length} matches so far`);
+      
+      if (matches.length > 0) {
+        break; // Found matches, no need to try other patterns
       }
     }
     
   } catch (error) {
     console.log(`Error parsing all fixtures: ${error.message}`);
+    console.log(`Error stack: ${error.stack}`);
   }
   
   return matches;
@@ -402,27 +483,80 @@ function parseAllFixturesFromHTML(htmlContent) {
 
 function parseIndividualFixture(fixtureHTML, matchDate) {
   try {
-    // Extract time
-    const timeMatch = fixtureHTML.match(/<div class="fixture__time">([^<]+)<\/div>/);
-    if (!timeMatch) return null;
+    console.log(`parseIndividualFixture called with HTML:`, fixtureHTML.substring(0, 300));
     
-    const time = timeMatch[1].trim();
-    if (time === 'TBC') return null;
+    // Try multiple patterns for time
+    const timePatterns = [
+      /<div class="fixture__time"[^>]*>([^<]+)<\/div>/,
+      /<span class="time"[^>]*>([^<]+)<\/span>/,
+      /<div[^>]*class="[^"]*time[^"]*"[^>]*>([^<]+)<\/div>/,
+      /\b(\d{1,2}:\d{2})\b/, // Just look for time pattern
+      /\b(\d{1,2}\.\d{2})\b/ // Alternative time format
+    ];
     
-    // Extract teams
-    const teamsMatch = fixtureHTML.match(/<div class="fixture__teams">([^<]+)<\/div>/);
-    if (!teamsMatch) return null;
+    let time = null;
+    for (const pattern of timePatterns) {
+      const timeMatch = fixtureHTML.match(pattern);
+      if (timeMatch && timeMatch[1]) {
+        time = timeMatch[1].trim();
+        console.log(`Found time with pattern: ${time}`);
+        break;
+      }
+    }
     
-    const teamsText = teamsMatch[1].trim();
-    const teams = parseTeamsFromText(teamsText);
-    if (!teams) return null;
+    if (!time || time === 'TBC') {
+      console.log(`No valid time found in fixture`);
+      return null;
+    }
     
-    // Extract competition
-    const competitionMatch = fixtureHTML.match(/<div class="fixture__competition">([^<]+)<\/div>/);
-    const competition = competitionMatch ? cleanHTML(competitionMatch[1].trim()) : 'Football';
+    // Try multiple patterns for teams
+    const teamPatterns = [
+      /<div class="fixture__teams"[^>]*>([^<]+)<\/div>/,
+      /<span class="teams"[^>]*>([^<]+)<\/span>/,
+      /<div[^>]*class="[^"]*teams[^"]*"[^>]*>([^<]+)<\/div>/,
+      /<h[2-4][^>]*>([^<]*\s+(?:v|vs|V)\s+[^<]*)<\/h[2-4]>/, // Look for headings with vs
+      /([A-Za-z\s]+)\s+(?:v|vs|V)\s+([A-Za-z\s]+)/ // Direct pattern match
+    ];
+    
+    let teams = null;
+    for (const pattern of teamPatterns) {
+      const teamsMatch = fixtureHTML.match(pattern);
+      if (teamsMatch && teamsMatch[1]) {
+        const teamsText = teamsMatch[1].trim();
+        console.log(`Found teams text: ${teamsText}`);
+        teams = parseTeamsFromText(teamsText);
+        if (teams) {
+          console.log(`Successfully parsed teams: ${teams.teamA} vs ${teams.teamB}`);
+          break;
+        }
+      }
+    }
+    
+    if (!teams) {
+      console.log(`No valid teams found in fixture`);
+      return null;
+    }
+    
+    // Try multiple patterns for competition
+    const competitionPatterns = [
+      /<div class="fixture__competition"[^>]*>([^<]+)<\/div>/,
+      /<span class="competition"[^>]*>([^<]+)<\/span>/,
+      /<div[^>]*class="[^"]*competition[^"]*"[^>]*>([^<]+)<\/div>/
+    ];
+    
+    let competition = 'Football';
+    for (const pattern of competitionPatterns) {
+      const competitionMatch = fixtureHTML.match(pattern);
+      if (competitionMatch && competitionMatch[1]) {
+        competition = cleanHTML(competitionMatch[1].trim());
+        console.log(`Found competition: ${competition}`);
+        break;
+      }
+    }
     
     // Extract channels
     const channels = parseChannelsFromHTML(fixtureHTML);
+    console.log(`Found channels:`, channels);
     
     const matchObj = {
       id: `netlify_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -439,12 +573,13 @@ function parseIndividualFixture(fixtureHTML, matchDate) {
       venue: ''
     };
     
-    console.log(`Parsed match: ${teams.teamA} vs ${teams.teamB} at ${time}`);
+    console.log(`Successfully created match object: ${matchObj.teamA} vs ${matchObj.teamB} at ${matchObj.time}`);
     
     return matchObj;
     
   } catch (error) {
     console.log(`Error parsing individual fixture: ${error.message}`);
+    console.log(`Error stack: ${error.stack}`);
     return null;
   }
 }

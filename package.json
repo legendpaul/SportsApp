@@ -3,12 +3,18 @@
   "version": "1.0.0",
   "description": "UK Sports TV Guide - Football and UFC event information",
   "main": "main.js",
+  "homepage": "index.html",
   "scripts": {
     "start": "electron .",
+    "desktop": "electron .",
+    "web": "python -m http.server 8000",
+    "serve": "npx http-server",
     "build": "electron-builder --win",
     "dev": "electron . --dev",
     "install-deps": "npm install",
-    "rebuild": "npm install && npm start"
+    "rebuild": "npm install && npm start",
+    "test-web": "open index.html",
+    "test-desktop": "open desktop-index.html"
   },
   "author": "Minnka",
   "license": "MIT",

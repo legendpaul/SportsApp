@@ -1,130 +1,230 @@
 # UK Sports TV Guide
 
-A desktop application that displays today's football matches on UK TV and the next UFC event information.
+A comprehensive sports application that displays today's football matches and upcoming UFC events on UK television, available in both **desktop (Electron)** and **web** versions.
 
-## Features
+## 🚀 Quick Start
 
-- **Today's Football on UK TV**: Shows all matches with team names, kick-off times, and TV channels
-- **Next UFC Event**: Complete fight card with main card and preliminary fights
-- **Real-time Updates**: Live clock and match status updates
-- **Custom Sports Background**: Merged football and MMA themed design
+### Web Version (Netlify/Browser)
+1. Open `web-index.html` in your browser, or
+2. Deploy to Netlify for online access
 
-## Quick Start
+### Desktop Version (Electron)
+1. `npm install`
+2. `npm start`
 
-### Option 1: Automatic Setup (Recommended)
-1. Double-click `auto_setup.bat`
-2. Wait for dependencies to install
-3. Choose to launch the app immediately
+## 📱 Two Versions Available
 
-### Option 2: Manual Setup
-1. Open command prompt in the app directory
-2. Run `npm install`
-3. Run `npm start`
+### 🌐 Web Version (`web-index.html`)
+- **Runs in browsers** (Chrome, Firefox, Safari, Edge)
+- **Netlify deployable** for online access
+- Uses **localStorage** for data persistence
+- **CORS-limited** data fetching (uses demo data when blocked)
+- **No installation required**
+- Compatible with mobile devices
 
-### Option 3: Simple Launch (after setup)
-- Double-click `SportsApp.bat`
+**Files:**
+- `web-index.html` - Main web page
+- `web-app.js` - Web-compatible app logic
+- `web-datamanager.js` - localStorage-based data management
+- `web-matchfetcher.js` - Browser fetch API with CORS handling
 
-## Requirements
+### 🖥️ Desktop Version (`index.html`)
+- **Electron desktop app** (Windows, macOS, Linux)
+- Full **file system access** for data storage
+- **Direct web scraping** without CORS restrictions
+- **System integration** (notifications, tray icons)
+- **Better performance** for data processing
 
-- Node.js (Download from https://nodejs.org)
-- Windows operating system
+**Files:**
+- `index.html` - Desktop app page
+- `main.js` - Electron main process
+- `app.js` - Desktop app logic
+- `dataManager.js` - File system-based data management
+- `matchFetcher.js` - Node.js HTTPS requests
 
-### API Key Configuration
-- **Football Data**: This application uses the Football-Data.org API to fetch football match information. You will need to obtain a free API key from [https://www.football-data.org/client/register](https://www.football-data.org/client/register).
-- Once you have your API key, open the `matchFetcher.js` file in the application's root directory.
-- Replace the placeholder string `'YOUR_FOOTBALL_DATA_API_KEY_HERE'` with your actual API key:
-  ```javascript
-  // In matchFetcher.js
-  this.apiKey = 'YOUR_FOOTBALL_DATA_API_KEY_HERE'; // Replace with your key
-  ```
-- Without a valid API key, football match data will not be fetched.
+## 🔧 Key Differences
 
-## Current Data
+| Feature | Web Version | Desktop Version |
+|---------|-------------|----------------|
+| **Installation** | None required | `npm install` |
+| **Data Storage** | localStorage | JSON files |
+| **Data Fetching** | Limited by CORS | Full access |
+| **Performance** | Browser-dependent | Native performance |
+| **Offline Use** | Limited | Full offline |
+| **Updates** | Auto from web | Manual/auto-update |
+| **Mobile Support** | ✅ Yes | ❌ No |
 
-### Today's Football (May 25, 2025)
-- Girona vs Atlético Madrid (13:00 - Premier Sports 1)
-- Charlton Athletic vs Leyton Orient (13:01 - Sky Sports Football)
-- Glasgow City vs Rangers Women (14:00 - BBC One Scotland)
-- Villarreal vs Sevilla (15:15 - Premier Sports 1)
-- Liverpool vs Crystal Palace (16:00 - Sky Sports Premier League)
-- Manchester United vs Aston Villa (16:00 - TNT Sports 1)
-- Nottingham Forest vs Chelsea (16:00 - Sky Sports Main Event)
+## 🌟 Features (Both Versions)
 
-### Next UFC Event
-**UFC 316: Dvalishvili vs O'Malley 2**
-- Date: Saturday, June 7, 2025
-- Location: Prudential Center, Newark, NJ
-- UK Times:
-  - Early Prelims: 11:00 PM (Sat) - UFC Fight Pass
-  - Prelims: 1:00 AM (Sun) - TNT Sports
-  - Main Card: 3:00 AM (Sun) - TNT Sports
+### Football Matches
+- **Today's matches** on UK television
+- **Channel filtering** (BBC, ITV, Sky Sports, TNT Sports, etc.)
+- **Live status tracking** (upcoming, soon, live, finished)
+- **Competition info** (Premier League, Champions League, etc.)
+- **Match details** (time, teams, venue, channels)
 
-## Technology Stack
+### UFC Events
+- **Next UFC event** information
+- **UK start times** for prelims and main card
+- **Fight cards** (main card, prelims, early prelims)
+- **Fighter details** and weight classes
 
-- **Frontend**: HTML, CSS, JavaScript
-- **Desktop Framework**: Electron
-- **Build Tool**: electron-builder
+### General Features
+- **Auto-refresh** every 2 hours
+- **Manual refresh** and cleanup options
+- **Debug system** with detailed logging
+- **Channel filter** system
+- **Responsive design** for all screen sizes
+- **Real-time clock** with UK timezone
 
-## Development
+## 🚀 Deployment
 
-### Scripts
-- `npm start` - Run the app in development mode
-- `npm run dev` - Run with developer tools open
-- `npm run build` - Build the app for distribution
+### Netlify (Web Version)
+1. Push code to GitHub/GitLab
+2. Connect to Netlify
+3. Set build command: *none* (static site)
+4. Set publish directory: `.` (root)
+5. `netlify.toml` handles configuration
+
+### Local Development
+```bash
+# Web version
+open web-index.html
+
+# Desktop version
+npm install
+npm start
+```
+
+## 🎨 Styling
+
+Both versions use the same CSS files:
+- `styles.css` - Main application styles
+- `styles_api.css` - API and interaction styles
+
+**Design Features:**
+- **Sports-themed** color scheme (gold, green, red, blue)
+- **Modern glassmorphism** effects
+- **Responsive grid** layouts
+- **Smooth animations** and transitions
+- **Status indicators** for live matches
+- **Mobile-optimized** touch interactions
+
+## 🔧 Technical Details
+
+### Web Version Technical Choices
+- **localStorage** instead of file system for data persistence
+- **Fetch API** with CORS proxy fallback for web requests
+- **Demo data** when live fetching is blocked
+- **Browser-compatible** vanilla JavaScript (no Node.js dependencies)
+- **Progressive enhancement** approach
+
+### Desktop Version Features
+- **Node.js modules** for file system and HTTP requests
+- **Electron APIs** for native desktop integration
+- **Direct web scraping** from live-footballontv.com
+- **JSON file storage** in `data/` directory
+- **System notifications** and window management
+
+## 📊 Data Sources
+
+### Football Data
+- **Primary**: live-footballontv.com (web scraping)
+- **Fallback**: Static demo data for testing
+- **Channels**: 30+ UK TV channels mapped
+- **Updates**: Automatic every 2 hours during active hours
+
+### UFC Data
+- **Primary**: Currently uses static data
+- **Planned**: UFC API integration
+- **Events**: Upcoming fight cards with UK times
+- **Details**: Fighter names, weight classes, event info
+
+## 🛠️ Development
 
 ### File Structure
 ```
 SportsApp/
-├── index.html          # Main HTML file
-├── styles.css          # Styling with sports background
-├── app.js             # Main application logic
-├── main.js            # Electron main process
-├── package.json       # Dependencies and scripts
-├── assets/            # Icons and images
-├── SportsApp.bat      # Windows launcher
-├── auto_setup.bat     # Automatic setup script
-└── README.md          # This file
+├── Web Version Files
+│   ├── web-index.html          # Web entry point
+│   ├── web-app.js              # Web app logic
+│   ├── web-datamanager.js      # localStorage data
+│   └── web-matchfetcher.js     # Browser fetch API
+├── Desktop Version Files
+│   ├── index.html              # Desktop entry point
+│   ├── main.js                 # Electron main process
+│   ├── app.js                  # Desktop app logic
+│   ├── dataManager.js          # File system data
+│   └── matchFetcher.js         # Node.js requests
+├── Shared Files
+│   ├── styles.css              # Main styles
+│   ├── styles_api.css          # API styles
+│   └── assets/                 # Images and icons
+├── Configuration
+│   ├── package.json            # Node.js dependencies
+│   ├── netlify.toml            # Netlify config
+│   └── README.md               # This file
+└── Data (Desktop Only)
+    └── data/matches.json       # Stored match data
 ```
 
-## Troubleshooting
+### Adding Features
+1. **Both versions**: Update shared CSS files
+2. **Web only**: Modify `web-*.js` files, use localStorage
+3. **Desktop only**: Modify main `*.js` files, use file system
+4. **New APIs**: Add to both fetcher classes
 
-### App won't start
-1. Check that Node.js is installed: `node --version`
-2. Install dependencies: `npm install`
-3. Check the log file: `C:\temp\sports_app_log.txt`
+## 🎯 Usage Examples
 
-### Missing dependencies
-- Run `auto_setup.bat` or `npm install`
+### Channel Filtering
+- Select specific TV channels to show only those matches
+- Perfect for cord-cutters or specific subscription services
+- Real-time filtering without page reload
 
-### Display issues
-- Try restarting the app
-- Check your screen resolution and scaling
+### Debug System
+- Four tabs: Requests, Data, Filtering, Display
+- Real-time logging of all app operations
+- Helpful for troubleshooting and development
 
-## Customization
+### Data Management (Web Version)
+- **Export**: Download your data as JSON
+- **Import**: Upload previously exported data
+- **Clear**: Reset all stored information
+- **Storage**: Monitor localStorage usage
 
-### Adding New Matches
-Edit the `footballMatches` array in `app.js`:
-```javascript
-{
-  time: "18:00",
-  teamA: "Arsenal",
-  teamB: "Tottenham",
-  competition: "Premier League",
-  channel: "Sky Sports Premier League",
-  status: "upcoming"
-}
-```
+## 🔄 Future Enhancements
 
-### Updating UFC Events
-Edit the `ufcMainCard` and `ufcPrelimCard` arrays in `app.js`.
+### Planned Features
+- [ ] **Live scores** integration
+- [ ] **Push notifications** for match starts
+- [ ] **Favorite teams** filtering
+- [ ] **Calendar integration** for match scheduling
+- [ ] **Social sharing** of match lineups
+- [ ] **Dark/light theme** toggle
+- [ ] **Multiple timezone** support
 
-### Styling
-Modify `styles.css` to change colors, layout, or the sports background.
+### Technical Improvements
+- [ ] **Service worker** for offline functionality
+- [ ] **WebSocket** connections for real-time updates
+- [ ] **Progressive Web App** (PWA) features
+- [ ] **API optimization** for faster loading
+- [ ] **Caching strategies** for better performance
 
-## License
+## 📄 License
 
-MIT License - Feel free to modify and distribute.
+MIT License - Feel free to use and modify for your needs.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Test both web and desktop versions
+4. Submit a pull request
 
 ---
 
-**Created by Minnka** - Maximum pace, maximum automation, maximum success
+**Choose your preferred version:**
+- 🌐 **Web**: Perfect for quick access and mobile use
+- 🖥️ **Desktop**: Best for power users and unlimited data access
+
+Both versions provide the same core functionality with different technical approaches optimized for their platforms.

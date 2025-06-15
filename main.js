@@ -16,7 +16,7 @@ function createWindow() {
     title: 'UK Sports TV Guide'
   });
 
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile('desktop-index.html');
   
   // Show dev tools in development
   if (process.argv.includes('--dev')) {

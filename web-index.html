@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>UK Sports TV Guide</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles_api.css">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="app-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <h1 class="main-title">UK Sports TV Guide</h1>
+        <div class="time-display">
+          <div class="clock-icon">🕐</div>
+          <div class="current-time" id="current-time">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Football Section -->
+    <div class="section football-section">
+      <div class="section-header">
+        <div class="section-icon">🏆</div>
+        <h2 class="section-title">Today's Football on UK TV</h2>
+      </div>
+      
+      <div class="matches-grid" id="football-matches">
+        <!-- Football matches will be populated by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Next UFC Event Section -->
+    <div class="section ufc-section">
+      <div class="section-header">
+        <div class="section-icon">🥊</div>
+        <h2 class="section-title">Next UFC Event</h2>
+      </div>
+
+      <!-- UFC Event Header -->
+      <div class="ufc-event-header">
+        <h3 class="ufc-title">UFC Fight Night: Blanchfield vs Barber</h3>
+        <div class="ufc-details">
+          <div class="ufc-detail">
+            <div class="detail-icon">📅</div>
+            <span>Saturday, May 31, 2025</span>
+          </div>
+          <div class="ufc-detail">
+            <div class="detail-icon">📍</div>
+            <span>UFC APEX, Las Vegas, Nevada</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- UK Start Times -->
+      <div class="uk-times">
+        <h4 class="times-title">UK Start Times</h4>
+        <div class="times-grid">
+          <div class="time-slot prelims">
+            <div class="time-label">Prelims</div>
+            <div class="time-value">11:00 PM (Sat) - TNT Sports</div>
+          </div>
+          <div class="time-slot main-card">
+            <div class="time-label">Main Card</div>
+            <div class="time-value">2:00 AM (Sun) - TNT Sports</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Card -->
+      <div class="fight-card">
+        <h4 class="card-title">
+          <div class="card-icon">🏆</div>
+          Main Card
+        </h4>
+        <div class="fights-container" id="main-card-fights">
+          <!-- Main card fights will be populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Preliminary Card -->
+      <div class="fight-card">
+        <h4 class="card-title">Preliminary Card (TNT Sports)</h4>
+        <div class="prelim-fights-grid" id="prelim-card-fights">
+          <!-- Preliminary fights will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Debug Window -->
+    <div class="section debug-section" id="debug-section">
+      <div class="section-header">
+        <div class="section-icon">🐛</div>
+        <h2 class="section-title">Debug Information</h2>
+        <div class="filter-controls">
+          <button onclick="window.sportsApp.toggleDebugWindow()" class="filter-btn debug-toggle" id="debug-toggle">Hide Debug</button>
+          <button onclick="window.sportsApp.clearDebugLog()" class="filter-btn debug-clear">Clear Log</button>
+        </div>
+      </div>
+      
+      <div class="debug-content" id="debug-content">
+        <div class="debug-tabs">
+          <button class="debug-tab active" onclick="window.sportsApp.showDebugTab('requests')">Web Requests</button>
+          <button class="debug-tab" onclick="window.sportsApp.showDebugTab('data')">Raw Data</button>
+          <button class="debug-tab" onclick="window.sportsApp.showDebugTab('filtering')">Filtering</button>
+          <button class="debug-tab" onclick="window.sportsApp.showDebugTab('display')">Display Lists</button>
+        </div>
+        
+        <div id="debug-requests" class="debug-panel active">
+          <h4>Web Scraping Requests & Responses</h4>
+          <div id="debug-requests-content" class="debug-log">No requests yet...</div>
+        </div>
+        
+        <div id="debug-data" class="debug-panel">
+          <h4>Raw Parsed Data</h4>
+          <div id="debug-data-content" class="debug-log">No data loaded yet...</div>
+        </div>
+        
+        <div id="debug-filtering" class="debug-panel">
+          <h4>Channel Filtering Process</h4>
+          <div id="debug-filtering-content" class="debug-log">No filtering performed yet...</div>
+        </div>
+        
+        <div id="debug-display" class="debug-panel">
+          <h4>Display Lists & UI State</h4>
+          <div id="debug-display-content" class="debug-log">No display data yet...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Channel Filter Section -->
+    <div class="section channel-filter-section">
+      <div class="section-header">
+        <div class="section-icon">📺</div>
+        <h2 class="section-title">TV Channel Filter</h2>
+        <div class="filter-controls">
+          <button onclick="window.sportsApp.selectAllChannels()" class="filter-btn select-all">Select All</button>
+          <button onclick="window.sportsApp.clearAllChannels()" class="filter-btn clear-all">Clear All</button>
+        </div>
+      </div>
+      
+      <div class="channel-checkboxes" id="channel-checkboxes">
+        <!-- Channel checkboxes will be populated by JavaScript -->
+      </div>
+      
+      <div class="filter-info">
+        <p id="filter-status">Showing all matches</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>Data updated live • Times shown in UK timezone • Web Version</p>
+    </div>
+  </div>
+
+  <!-- Web-compatible JavaScript modules -->
+  <script src="web-datamanager.js"></script>
+  <script src="web-matchfetcher.js"></script>
+  <script src="web-app.js"></script>
+</body>
+</html>

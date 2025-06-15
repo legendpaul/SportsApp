@@ -262,6 +262,38 @@
       "matchDate": "2025-06-15",
       "apiSource": "live-footballontv.com",
       "venue": ""
+    },
+    {
+      "id": "web_1750007144513_ndq4mfwkf",
+      "time": "13:30",
+      "teamA": "Denmark U20",
+      "teamB": "Mexico U20",
+      "competition": "Tournoi Maurice Revello Semi-Final",
+      "channel": "Youth Football Arena",
+      "channels": [
+        "Youth Football Arena"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-15T17:05:44.513Z",
+      "matchDate": "2025-06-15",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1750007144513_dbh9j1zzz",
+      "time": "14:00",
+      "teamA": "Angola",
+      "teamB": "South Africa",
+      "competition": "COSAFA Cup Final",
+      "channel": "FIFA+",
+      "channels": [
+        "FIFA+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-15T17:05:44.513Z",
+      "matchDate": "2025-06-15",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
     }
   ],
   "ufcEvents": [

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UK Sports TV Guide</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="app-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <h1 class="main-title">🇬🇧 UK Sports TV Guide</h1>
+        <div class="time-display">
+          <div class="clock-icon">🕐</div>
+          <div class="current-time" id="current-time">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div class="status-banner" id="status-banner" style="display: none;">
+      <div class="status-content">
+        <span class="status-icon">⏳</span>
+        <span class="status-text">Loading sports data...</span>
+      </div>
+    </div>
+
+    <!-- Today's Football Section -->
+    <div class="section football-section">
+      <div class="section-header">
+        <div class="section-icon">🏆</div>
+        <h2 class="section-title">Today's Football on UK TV</h2>
+        <div class="section-controls">
+          <button onclick="window.sportsApp.fetchFootballData()" class="refresh-btn" id="refresh-football">
+            🔄 Refresh
+          </button>
+        </div>
+      </div>
+      
+      <div class="matches-grid" id="football-matches">
+        <div class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Loading today's football matches...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Next UFC Event Section -->
+    <div class="section ufc-section">
+      <div class="section-header">
+        <div class="section-icon">🥊</div>
+        <h2 class="section-title">Next UFC Event</h2>
+        <div class="section-controls">
+          <button onclick="window.sportsApp.fetchUFCData()" class="refresh-btn" id="refresh-ufc">
+            🔄 Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- UFC Event Header -->
+      <div class="ufc-event-header">
+        <h3 class="ufc-title" id="ufc-title">UFC on ABC 6: Hill vs Rountree Jr.</h3>
+        <div class="ufc-details">
+          <div class="ufc-detail">
+            <div class="detail-icon">📅</div>
+            <span id="ufc-date">Saturday, 21 June 2025</span>
+          </div>
+          <div class="ufc-detail">
+            <div class="detail-icon">📍</div>
+            <span id="ufc-venue">UFC APEX, Las Vegas, Nevada</span>
+          </div>
+          <div class="ufc-detail">
+            <div class="detail-icon">📺</div>
+            <span id="ufc-broadcast">TNT Sports</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- UK Start Times -->
+      <div class="uk-times">
+        <h4 class="times-title">UK Start Times</h4>
+        <div class="times-grid">
+          <div class="time-slot prelims">
+            <div class="time-label">Prelims</div>
+            <div class="time-value">11:00 PM (Sat) - TNT Sports</div>
+          </div>
+          <div class="time-slot main-card">
+            <div class="time-label">Main Card</div>
+            <div class="time-value">2:00 AM (Sun) - TNT Sports</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Card -->
+      <div class="fight-card">
+        <h4 class="card-title">
+          <div class="card-icon">🏆</div>
+          Main Card
+        </h4>
+        <div class="fights-container" id="main-card-fights">
+          <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Loading UFC main card...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preliminary Card -->
+      <div class="fight-card">
+        <h4 class="card-title">Preliminary Card (TNT Sports)</h4>
+        <div class="prelim-fights-grid" id="prelim-card-fights">
+          <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Loading UFC preliminary card...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Channel Filter Section -->
+    <div class="section channel-filter-section">
+      <div class="section-header">
+        <div class="section-icon">📺</div>
+        <h2 class="section-title">TV Channel Filter</h2>
+        <div class="filter-controls">
+          <button onclick="window.sportsApp.selectAllChannels()" class="filter-btn select-all">Select All</button>
+          <button onclick="window.sportsApp.clearAllChannels()" class="filter-btn clear-all">Clear All</button>
+        </div>
+      </div>
+      
+      <div class="channel-checkboxes" id="channel-checkboxes">
+        <div class="loading-state">
+          <p>Loading TV channels...</p>
+        </div>
+      </div>
+      
+      <div class="filter-info">
+        <p id="filter-status">Loading channel filter...</p>
+      </div>
+    </div>
+
+    <!-- Data Source Info -->
+    <div class="section info-section">
+      <div class="section-header">
+        <div class="section-icon">ℹ️</div>
+        <h2 class="section-title">Data Sources</h2>
+      </div>
+      <div class="info-content">
+        <div class="data-source">
+          <strong>Football Matches:</strong> Live data from live-footballontv.com
+        </div>
+        <div class="data-source">
+          <strong>UFC Events:</strong> Accurate event data with real fighter names
+        </div>
+        <div class="data-source">
+          <strong>TV Channels:</strong> UK broadcast information (TNT Sports, BBC, ITV, Sky Sports, etc.)
+        </div>
+        <div class="data-source">
+          <strong>Times:</strong> All times shown in UK timezone (GMT/BST)
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>
+        🇬🇧 UK Sports TV Guide • Data updated automatically • 
+        <span id="last-update">Last updated: Never</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay" style="display: none;">
+    <div class="loading-content">
+      <div class="loading-spinner large"></div>
+      <h3>Loading Sports Data</h3>
+      <p id="loading-message">Fetching latest football and UFC information...</p>
+    </div>
+  </div>
+
+  <script src="web-app.js"></script>
+</body>
+</html>

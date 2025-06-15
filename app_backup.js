@@ -1,4 +1,4 @@
-// Sports App JavaScript - Fixed with Debug Window
+// Sports App JavaScript - Updated with Football + UFC Auto-Fetch
 const { ipcRenderer } = require('electron');
 
 class SportsApp {
@@ -13,11 +13,11 @@ class SportsApp {
     this.ufcFetcher = null;
     this.lastFetchTime = null;
     this.lastUFCFetch = null;
-    this.autoFetchOnStartup = true;
+    this.autoFetchOnStartup = true; // Enable auto-fetch on startup
     this.availableChannels = [];
-    this.selectedChannels = new Set();
-    this.showAllChannels = true;
-    this.debugVisible = true;
+    this.selectedChannels = new Set(); // Track which channels are selected
+    this.showAllChannels = true; // When true, show all matches regardless of channel selection
+    this.debugVisible = true; // Show debug window by default
     this.debugLogs = {
       requests: [],
       data: [],
@@ -34,9 +34,11 @@ class SportsApp {
     try {
       this.debugLog('data', 'Initializing data manager and fetchers...');
       
+      // Initialize fetchers with debug logging
       const MatchFetcher = require('./matchFetcher');
       const UFCFetcher = require('./ufcFetcher');
       
+      // Pass debug logging function to fetchers
       this.matchFetcher = new MatchFetcher((category, message, data) => {
         this.debugLog(category, message, data);
       });
@@ -44,55 +46,62 @@ class SportsApp {
       
       this.debugLog('data', 'Fetchers initialized successfully');
       
+      // Load data from file system
       await this.loadMatchData();
       
+      // Auto-fetch on startup if enabled
       if (this.autoFetchOnStartup) {
         await this.autoFetchOnStartup();
       }
     } catch (error) {
       this.debugLog('data', `Failed to initialize data manager: ${error.message}`);
       console.error('Failed to initialize data manager:', error);
+      // Fall back to hardcoded data if needed
       this.loadFallbackData();
     }
   }
 
   async autoFetchOnStartup() {
     try {
-      this.debugLog('requests', 'Auto-fetching sports data on startup...');
+      console.log('🚀 Auto-fetching sports data on startup...');
       
+      // Check if we should fetch
       const shouldFetchFootball = this.shouldAutoFetch('football');
       const shouldFetchUFC = this.shouldAutoFetch('ufc');
       
       if (shouldFetchFootball || shouldFetchUFC) {
-        this.debugLog('requests', 'Fetching fresh sports data...');
+        console.log('📥 Fetching fresh sports data...');
         this.showStartupFetchingState();
         
         let footballResult = { success: true, added: 0 };
         let ufcResult = { success: true, added: 0 };
         
+        // Fetch football matches if needed
         if (shouldFetchFootball) {
           try {
             footballResult = await this.matchFetcher.updateMatchData();
-            this.debugLog('requests', `Football fetch result: ${footballResult.success ? 'Success' : 'Failed'} - ${footballResult.added} new matches`);
+            console.log(`⚽ Football: ${footballResult.success ? 'Success' : 'Failed'} - ${footballResult.added} new matches`);
           } catch (error) {
-            this.debugLog('requests', `Football fetch error: ${error.message}`);
+            console.log(`⚽ Football fetch error: ${error.message}`);
             footballResult = { success: false, error: error.message };
           }
         }
         
+        // Fetch UFC events if needed
         if (shouldFetchUFC) {
           try {
             ufcResult = await this.ufcFetcher.updateUFCData();
-            this.debugLog('requests', `UFC fetch result: ${ufcResult.success ? 'Success' : 'Failed'} - ${ufcResult.added} new events`);
+            console.log(`🥊 UFC: ${ufcResult.success ? 'Success' : 'Failed'} - ${ufcResult.added} new events`);
           } catch (error) {
-            this.debugLog('requests', `UFC fetch error: ${error.message}`);
+            console.log(`🥊 UFC fetch error: ${error.message}`);
             ufcResult = { success: false, error: error.message };
           }
         }
         
+        // Show results
         const totalNew = (footballResult.added || 0) + (ufcResult.added || 0);
         if (totalNew > 0) {
-          await this.loadMatchData();
+          await this.loadMatchData(); // Reload with new data
           this.showStartupFetchResult(`📥 Found ${footballResult.added || 0} football matches, ${ufcResult.added || 0} UFC events!`);
         } else if (footballResult.success || ufcResult.success) {
           this.showStartupFetchResult('✅ Sports data is up to date');
@@ -100,23 +109,38 @@ class SportsApp {
           this.showStartupFetchResult('⚠️ Using cached sports data');
         }
         
+        // Also run cleanup while we're at it
         await this.startupCleanup();
+        
       } else {
-        this.debugLog('requests', 'Skipping startup fetch (data is recent)');
+        console.log('⏭️ Skipping startup fetch (data is recent)');
       }
     } catch (error) {
-      this.debugLog('requests', `Error during startup fetch: ${error.message}`);
+      console.error('Error during startup fetch:', error);
       this.showStartupFetchResult('⚠️ Using cached data');
     }
   }
 
   shouldAutoFetch(type) {
+    // Football now uses web scraping (no API key needed)
+    if (type === 'football') {
+      // Always try to fetch from website
+    }
+    
+    // Always fetch UFC (TheSportsDB is free and doesn't require API key)
+    if (type === 'ufc') {
+      // Always try to fetch UFC
+    }
+
+    // Check last fetch times
     const lastFetch = type === 'football' ? this.lastFetchTime : this.lastUFCFetch;
     
+    // Always fetch if no previous fetch recorded
     if (!lastFetch) {
       return true;
     }
 
+    // Fetch if last fetch was more than 2 hours ago
     const lastFetchDate = new Date(lastFetch);
     const now = new Date();
     const hoursSinceLastFetch = (now - lastFetchDate) / (1000 * 60 * 60);
@@ -126,21 +150,22 @@ class SportsApp {
 
   async startupCleanup() {
     try {
-      this.debugLog('data', 'Running startup cleanup...');
+      console.log('🧹 Running startup cleanup...');
       const DataManager = require('./dataManager');
       const dataManager = new DataManager();
       const result = dataManager.cleanupOldMatches();
       
       if (result.success && result.removedCount > 0) {
-        this.debugLog('data', `Startup cleanup: Removed ${result.removedCount} old events`);
-        await this.loadMatchData();
+        console.log(`🧹 Startup cleanup: Removed ${result.removedCount} old events`);
+        await this.loadMatchData(); // Reload after cleanup
       }
     } catch (error) {
-      this.debugLog('data', `Error during startup cleanup: ${error.message}`);
+      console.error('Error during startup cleanup:', error);
     }
   }
 
   showStartupFetchingState() {
+    // Show a subtle loading indicator during startup fetch
     const header = document.querySelector('.header-content');
     if (header && !document.getElementById('startup-loading')) {
       const loading = document.createElement('div');
@@ -155,11 +180,13 @@ class SportsApp {
   }
 
   showStartupFetchResult(message) {
+    // Remove loading indicator and show result briefly
     const loading = document.getElementById('startup-loading');
     if (loading) {
       loading.innerHTML = `<span>${message}</span>`;
       loading.className = 'startup-result';
       
+      // Remove after 4 seconds
       setTimeout(() => {
         if (loading.parentNode) {
           loading.parentNode.removeChild(loading);
@@ -185,7 +212,9 @@ class SportsApp {
         
         this.debugLog('data', `Loaded data from file: ${this.footballMatches.length} football matches, ${this.ufcEvents.length} UFC events`);
         
+        // Handle UFC data - use fetched events or fallback to hardcoded
         if (this.ufcEvents && this.ufcEvents.length > 0) {
+          // Use the most recent UFC event for main/prelim cards
           const upcomingEvent = this.ufcEvents.find(event => 
             new Date(event.ukDateTime || event.date) > new Date()
           ) || this.ufcEvents[0];
@@ -198,6 +227,7 @@ class SportsApp {
           }
         }
         
+        // Fallback to hardcoded UFC if no fetched data
         if (this.ufcMainCard.length === 0) {
           this.loadFallbackUFCData();
           this.debugLog('data', 'Using fallback UFC data');
@@ -206,48 +236,24 @@ class SportsApp {
         console.log(`📊 Loaded ${this.footballMatches.length} football matches and ${this.ufcEvents.length} UFC events`);
       } else {
         this.debugLog('data', 'No data file found, using fallback data');
+        console.log('📁 No data file found, using fallback data');
         this.loadFallbackData();
       }
     } catch (error) {
       this.debugLog('data', `Error loading match data: ${error.message}`);
+      console.error('Error loading match data:', error);
       this.loadFallbackData();
     }
   }
 
   loadFallbackData() {
-    // Enhanced fallback football data with proper channel arrays
+    // Fallback football data
     this.footballMatches = [
       {
         id: "fallback_001",
         time: "13:00",
-        teamA: "Manchester City",
-        teamB: "Arsenal",
-        competition: "Premier League",
-        channel: "Sky Sports Premier League, Sky Sports Main Event",
-        channels: ["Sky Sports Premier League", "Sky Sports Main Event"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "fallback_002",
-        time: "15:30",
-        teamA: "Liverpool",
-        teamB: "Chelsea",
-        competition: "Premier League",
-        channel: "BBC One, BBC iPlayer",
-        channels: ["BBC One", "BBC iPlayer"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "fallback_003",
-        time: "17:45",
-        teamA: "Real Madrid",
-        teamB: "Barcelona",
+        teamA: "Girona",
+        teamB: "Atlético Madrid",
         competition: "La Liga",
         channel: "Premier Sports 1",
         channels: ["Premier Sports 1"],
@@ -257,39 +263,26 @@ class SportsApp {
         apiSource: 'fallback'
       },
       {
-        id: "fallback_004",
-        time: "20:00",
-        teamA: "Bayern Munich",
-        teamB: "Borussia Dortmund",
-        competition: "Bundesliga",
-        channel: "Sky Sports Football",
-        channels: ["Sky Sports Football"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "fallback_005",
-        time: "19:45",
-        teamA: "Paris Saint-Germain",
-        teamB: "Olympique Marseille",
-        competition: "Ligue 1",
-        channel: "TNT Sports 1, TNT Sports 2",
-        channels: ["TNT Sports 1", "TNT Sports 2"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "fallback_006",
+        id: "fallback_002",
         time: "16:00",
-        teamA: "Tottenham",
-        teamB: "Manchester United",
+        teamA: "Liverpool",
+        teamB: "Crystal Palace",
         competition: "Premier League",
-        channel: "ITV1, ITVX",
-        channels: ["ITV1", "ITVX"],
+        channel: "Sky Sports Premier League",
+        channels: ["Sky Sports Premier League"],
+        status: "upcoming",
+        createdAt: new Date().toISOString(),
+        matchDate: new Date().toISOString().split('T')[0],
+        apiSource: 'fallback'
+      },
+      {
+        id: "fallback_003",
+        time: "19:45",
+        teamA: "Manchester United",
+        teamB: "Arsenal",
+        competition: "Premier League",
+        channel: "Sky Sports Premier League, Sky Sports Main Event",
+        channels: ["Sky Sports Premier League", "Sky Sports Main Event"],
         status: "upcoming",
         createdAt: new Date().toISOString(),
         matchDate: new Date().toISOString().split('T')[0],
@@ -298,7 +291,7 @@ class SportsApp {
     ];
 
     this.loadFallbackUFCData();
-    this.debugLog('data', 'Using enhanced fallback data with multiple channels for testing channel filter');
+    console.log('📋 Using fallback data - web scraping will provide real data');
   }
 
   loadFallbackUFCData() {
@@ -314,14 +307,35 @@ class SportsApp {
         fighter2: "Ludovit Klein", 
         weightClass: "Lightweight", 
         title: "" 
+      },
+      { 
+        fighter1: "Billy Ray Goff", 
+        fighter2: "Seokhyeon Ko", 
+        weightClass: "Welterweight", 
+        title: "" 
+      },
+      { 
+        fighter1: "Dustin Jacoby", 
+        fighter2: "Bruno Lopes", 
+        weightClass: "Light Heavyweight", 
+        title: "" 
+      },
+      { 
+        fighter1: "Zach Reese", 
+        fighter2: "Dusko Todorovic", 
+        weightClass: "Middleweight", 
+        title: "" 
       }
     ];
 
     this.ufcPrelimCard = [
       { fighter1: "Allan Nascimento", fighter2: "Jafel Filho", weightClass: "Flyweight" },
-      { fighter1: "Andreas Gustafsson", fighter2: "Jeremiah Wells", weightClass: "Welterweight" }
+      { fighter1: "Andreas Gustafsson", fighter2: "Jeremiah Wells", weightClass: "Welterweight" },
+      { fighter1: "Ketlen Vieira", fighter2: "TBD", weightClass: "Women's Bantamweight" },
+      { fighter1: "Rayanne dos Santos", fighter2: "Alice Ardelean", weightClass: "Women's Strawweight" }
     ];
     
+    // Fight Night events typically don't have early prelims
     this.ufcEarlyPrelimCard = [];
   }
 
@@ -335,8 +349,13 @@ class SportsApp {
     this.addFetchButton();
     this.initDebugWindow();
     
+    // Update clock every second
     setInterval(() => this.updateClock(), 1000);
+    
+    // Update match statuses every minute
     setInterval(() => this.updateMatchStatuses(), 60000);
+    
+    // Auto-refresh sports data every 2 hours (optional)
     setInterval(() => this.autoRefreshIfNeeded(), 2 * 60 * 60 * 1000);
     
     this.debugLog('display', 'Sports App initialized successfully!');
@@ -344,16 +363,19 @@ class SportsApp {
   }
 
   async autoRefreshIfNeeded() {
+    // Auto-refresh during the day if app is running for a long time
     const now = new Date();
     const hour = now.getHours();
     
+    // Only auto-refresh during reasonable hours (8 AM to 11 PM)
     if (hour >= 8 && hour <= 23) {
-      this.debugLog('requests', 'Auto-refreshing sports data (2-hour interval)');
+      console.log('🔄 Auto-refreshing sports data (2-hour interval)');
       await this.fetchNewSportsData();
     }
   }
 
   addFetchButton() {
+    // Add fetch controls to the header
     const header = document.querySelector('.header-content');
     if (header && !document.getElementById('fetch-controls')) {
       const controls = document.createElement('div');
@@ -375,19 +397,41 @@ class SportsApp {
   }
 
   updateClock() {
+    // Always show UK time explicitly
     const now = new Date();
-    const timeString = now.toLocaleTimeString('en-GB');
-    const dateString = now.toLocaleDateString('en-GB', { 
+    const ukTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/London"}));
+    
+    const timeString = ukTime.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    const dateString = ukTime.toLocaleDateString('en-GB', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     });
     
+    // Determine if we're in BST or GMT (June 2025 = BST)
+    const timezoneName = this.isUKSummerTime() ? 'BST' : 'GMT';
+    
     const timeElement = document.getElementById('current-time');
     if (timeElement) {
-      timeElement.textContent = `${timeString} - ${dateString}`;
+      timeElement.textContent = `${timeString} ${timezoneName} (UK Time) - ${dateString}`;
     }
+  }
+
+  // Check if UK is in summer time (BST)
+  isUKSummerTime() {
+    const now = new Date();
+    const month = now.getMonth(); // 0-11
+    
+    // BST runs from last Sunday in March to last Sunday in October
+    // For June 2025, we're definitely in BST
+    return month >= 2 && month <= 9; // March to October (approximate)
   }
 
   getMatchStatus(match) {
@@ -395,6 +439,7 @@ class SportsApp {
     const matchDateTime = this.getMatchDateTime(match);
     
     if (now > matchDateTime) {
+      // Check if it's been more than 2 hours (typical match duration)
       const timeDiff = now - matchDateTime;
       if (timeDiff > 2 * 60 * 60 * 1000) {
         return "finished";
@@ -402,11 +447,46 @@ class SportsApp {
       return "live";
     } else {
       const timeDiff = matchDateTime - now;
-      if (timeDiff <= 30 * 60 * 1000) {
+      if (timeDiff <= 30 * 60 * 1000) { // 30 minutes
         return "soon";
       }
       return "upcoming";
     }
+  }
+
+  // Get live match time (how long the match has been running)
+  getLiveMatchTime(match) {
+    if (this.getMatchStatus(match) !== 'live') {
+      return null;
+    }
+    
+    const now = new Date();
+    const matchStart = this.getMatchDateTime(match);
+    const minutesElapsed = Math.floor((now - matchStart) / (1000 * 60));
+    
+    if (minutesElapsed <= 45) {
+      return `${minutesElapsed}'`;
+    } else if (minutesElapsed <= 60) {
+      return 'HT';
+    } else if (minutesElapsed <= 105) {
+      return `${minutesElapsed - 15}'`; // Account for 15-min halftime
+    } else {
+      return 'FT';
+    }
+  }
+
+  // Generate mock live score for demonstration
+  getMockLiveScore(match) {
+    if (this.getMatchStatus(match) !== 'live') {
+      return null;
+    }
+    
+    // Simple mock scoring based on match ID
+    const seed = match.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const homeScore = seed % 4; // 0-3 goals
+    const awayScore = (seed * 2) % 3; // 0-2 goals
+    
+    return `${homeScore}-${awayScore}`;
   }
 
   getMatchDateTime(match) {
@@ -436,6 +516,7 @@ class SportsApp {
 
     container.innerHTML = '';
 
+    // Filter out old matches (matches that started more than 3 hours ago)
     const currentMatches = this.footballMatches.filter(match => {
       const matchDateTime = this.getMatchDateTime(match);
       const threeHoursAgo = new Date(Date.now() - (3 * 60 * 60 * 1000));
@@ -444,6 +525,7 @@ class SportsApp {
     
     this.debugLog('filtering', `Filtered old matches: ${this.footballMatches.length} total -> ${currentMatches.length} current`);
 
+    // Apply channel filtering
     const filteredMatches = this.applyChannelFilter(currentMatches);
     
     this.debugLog('filtering', `Applied channel filter: ${currentMatches.length} current -> ${filteredMatches.length} after channel filter`, {
@@ -483,8 +565,6 @@ class SportsApp {
       return;
     }
 
-    this.debugLog('display', `Rendering ${filteredMatches.length} football match cards`);
-
     filteredMatches.forEach(match => {
       const status = this.getMatchStatus(match);
       const statusClass = this.getStatusClass(status);
@@ -494,12 +574,17 @@ class SportsApp {
       matchCard.className = 'match-card';
       matchCard.setAttribute('data-match-id', match.id);
       
+      // Get live score and match time if applicable
+      const liveScore = this.getMockLiveScore(match);
+      const liveTime = this.getLiveMatchTime(match);
+      const timezoneName = this.isUKSummerTime() ? 'BST' : 'GMT';
+      
       matchCard.innerHTML = `
         <div class="match-header">
           <div class="match-time">
             <div class="status-indicator ${statusClass}"></div>
-            <span class="time-text">${match.time}</span>
-            <span class="match-source" title="${match.apiSource ? 'From live-footballontv.com' : 'Fallback data'}">${isApiMatch}</span>
+            <span class="time-text">${match.time} ${timezoneName}</span>
+            <span class="match-source" title="${match.apiSource ? 'From Football API' : 'Manual entry'}">${isApiMatch}</span>
           </div>
           <div class="channel-info">
             <span>📺</span>
@@ -510,20 +595,23 @@ class SportsApp {
         <div class="teams">
           <div class="teams-text">
             <span class="team-a">${match.teamA}</span>
-            <span class="vs">vs</span>
+            <span class="vs">${status === 'live' && liveScore ? liveScore : 'vs'}</span>
             <span class="team-b">${match.teamB}</span>
           </div>
+          ${status === 'live' && liveTime ? `<div class="live-time">${liveTime} min</div>` : ''}
         </div>
         
         <div class="competition">
           <span class="competition-badge">${match.competition}</span>
           ${match.venue ? `<span class="venue-info" title="Venue">${match.venue}</span>` : ''}
+          ${status === 'live' ? '<span class="live-indicator">🔴 LIVE</span>' : ''}
         </div>
       `;
 
       container.appendChild(matchCard);
     });
 
+    // Update matches count in header
     this.updateMatchesCount(filteredMatches.length, currentMatches.length);
   }
 
@@ -534,7 +622,14 @@ class SportsApp {
         ` (Updated: ${new Date(this.lastFetchTime).toLocaleTimeString('en-GB')})` : '';
       const countText = filteredCount === totalCount ? 
         `(${totalCount})` : `(${filteredCount}/${totalCount})`;
-      sectionTitle.textContent = `Today's Football on UK TV ${countText}${lastFetchText}`;
+      
+      // Count live matches
+      const liveCount = filteredCount > 0 ? 
+        this.footballMatches.filter(match => this.getMatchStatus(match) === 'live').length : 0;
+      const liveText = liveCount > 0 ? ` • ${liveCount} LIVE` : '';
+      
+      const timezoneName = this.isUKSummerTime() ? 'BST' : 'GMT';
+      sectionTitle.textContent = `Today's Football on UK TV ${countText}${liveText} • All times ${timezoneName}${lastFetchText}`;
     }
   }
 
@@ -548,6 +643,7 @@ class SportsApp {
   updateUFCTitle() {
     const ufcTitle = document.querySelector('.ufc-title');
     if (ufcTitle && this.ufcEvents.length > 0) {
+      // Find next upcoming UFC event
       const upcomingEvent = this.ufcEvents.find(event => 
         new Date(event.ukDateTime || event.date) > new Date()
       );
@@ -555,6 +651,7 @@ class SportsApp {
       if (upcomingEvent) {
         ufcTitle.textContent = upcomingEvent.title;
         
+        // Update event details if elements exist
         const ufcDetails = document.querySelector('.ufc-details');
         if (ufcDetails) {
           const dateSpan = ufcDetails.querySelector('span');
@@ -569,6 +666,7 @@ class SportsApp {
           }
         }
         
+        // Add API source indicator
         const lastUFCFetchText = this.lastUFCFetch ? 
           ` (UFC Updated: ${new Date(this.lastUFCFetch).toLocaleTimeString('en-GB')})` : '';
         const apiIndicator = upcomingEvent.apiSource ? ' 🌐' : ' ✏️';
@@ -634,6 +732,7 @@ class SportsApp {
 
     container.innerHTML = '';
     
+    // Skip rendering if no early prelim fights (Fight Night events)
     if (!this.ufcEarlyPrelimCard || this.ufcEarlyPrelimCard.length === 0) {
       return;
     }
@@ -656,24 +755,27 @@ class SportsApp {
   }
 
   async updateMatchStatuses() {
+    // Reload data from file to get any updates
     await this.loadMatchData();
+    
+    // Re-render all sports data with updated statuses
     this.renderFootballMatches();
     this.renderUFCFights();
-    this.renderChannelFilter();
-    this.debugLog('display', 'Sports data statuses updated');
+    this.renderChannelFilter(); // Update channel filter with new data
+    console.log('🔄 Sports data statuses updated');
   }
 
+  // Method to fetch both football and UFC data
   async fetchNewSportsData() {
     try {
-      this.debugLog('requests', 'Fetching new sports data...');
+      console.log('📥 Fetching new sports data...');
       
+      // Show loading state
       this.showFetchingState(true);
       
       if (!this.matchFetcher) {
         const MatchFetcher = require('./matchFetcher');
-        this.matchFetcher = new MatchFetcher((category, message, data) => {
-          this.debugLog(category, message, data);
-        });
+        this.matchFetcher = new MatchFetcher();
       }
       
       if (!this.ufcFetcher) {
@@ -681,25 +783,30 @@ class SportsApp {
         this.ufcFetcher = new UFCFetcher();
       }
       
+      // Fetch both football and UFC data
       const [footballResult, ufcResult] = await Promise.all([
         this.matchFetcher.updateMatchData().catch(e => ({ success: false, error: e.message })),
         this.ufcFetcher.updateUFCData().catch(e => ({ success: false, error: e.message }))
       ]);
       
-      this.debugLog('requests', 'Fetch results received', { footballResult, ufcResult });
-      
       const totalNew = (footballResult.added || 0) + (ufcResult.added || 0);
       
       if (totalNew > 0) {
+        console.log(`✅ Fetched ${footballResult.added || 0} football matches, ${ufcResult.added || 0} UFC events`);
+        
+        // Update timestamps
         if (footballResult.success) this.lastFetchTime = new Date().toISOString();
         if (ufcResult.success) this.lastUFCFetch = new Date().toISOString();
         
+        // Reload data and refresh UI
         await this.loadMatchData();
         this.renderFootballMatches();
         this.renderUFCFights();
-        this.renderChannelFilter();
+        this.renderChannelFilter(); // Update channel filter with new data
         
+        // Show success message
         this.showFetchResult(`✅ Added ${footballResult.added || 0} football matches, ${ufcResult.added || 0} UFC events!`);
+        
       } else if (footballResult.success || ufcResult.success) {
         this.showFetchResult('✅ Sports data is up to date');
       } else {
@@ -714,7 +821,7 @@ class SportsApp {
       };
       
     } catch (error) {
-      this.debugLog('requests', `Error fetching sports data: ${error.message}`);
+      console.error('Error fetching sports data:', error);
       this.showFetchResult(`❌ Error: ${error.message}`);
       this.showFetchingState(false);
       return { success: false, error: error.message };
@@ -735,6 +842,7 @@ class SportsApp {
   }
 
   showFetchResult(message) {
+    // Create a temporary notification
     const notification = document.createElement('div');
     notification.className = 'fetch-notification';
     notification.textContent = message;
@@ -743,6 +851,7 @@ class SportsApp {
     if (header) {
       header.appendChild(notification);
       
+      // Remove after 4 seconds
       setTimeout(() => {
         if (notification.parentNode) {
           notification.parentNode.removeChild(notification);
@@ -751,34 +860,37 @@ class SportsApp {
     }
   }
 
+  // Method to manually trigger cleanup from the app
   async manualCleanup() {
     try {
-      this.debugLog('data', 'Running manual cleanup...');
+      console.log('🧹 Running manual cleanup...');
       
       const DataManager = require('./dataManager');
       const dataManager = new DataManager();
       const result = dataManager.cleanupOldMatches();
       
       if (result.success) {
-        this.debugLog('data', `Manual cleanup completed: Removed ${result.removedCount} old events`);
+        console.log(`✅ Manual cleanup completed: Removed ${result.removedCount} old events`);
         this.showFetchResult(`🧹 Removed ${result.removedCount} old events`);
         
+        // Reload data and refresh UI
         await this.loadMatchData();
         this.renderFootballMatches();
         this.renderUFCFights();
-        this.renderChannelFilter();
+        this.renderChannelFilter(); // Update channel filter with new data
       } else {
         this.showFetchResult(`❌ Cleanup failed`);
       }
       
       return result;
     } catch (error) {
-      this.debugLog('data', `Error during manual cleanup: ${error.message}`);
+      console.error('Error during manual cleanup:', error);
       this.showFetchResult(`❌ Cleanup error: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
 
+  // Method to add new matches dynamically
   addFootballMatch(match) {
     const newMatch = {
       ...match,
@@ -789,6 +901,8 @@ class SportsApp {
     
     this.footballMatches.push(newMatch);
     this.renderFootballMatches();
+    
+    // Save to file
     this.saveMatchData();
   }
 
@@ -812,12 +926,13 @@ class SportsApp {
       }
       
       fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
-      this.debugLog('data', 'Sports data saved successfully');
+      console.log('💾 Sports data saved successfully');
     } catch (error) {
-      this.debugLog('data', `Error saving sports data: ${error.message}`);
+      console.error('Error saving sports data:', error);
     }
   }
 
+  // Method to update UFC event
   updateUFCEvent(mainCard, prelimCard, earlyPrelimCard) {
     if (mainCard) this.ufcMainCard = mainCard;
     if (prelimCard) this.ufcPrelimCard = prelimCard;
@@ -838,6 +953,7 @@ class SportsApp {
           }
         });
       } else if (match.channel && match.channel !== 'Check TV Guide') {
+        // Split comma-separated channels
         const channels = match.channel.split(',').map(ch => ch.trim());
         channels.forEach(channel => {
           if (channel && channel !== 'Check TV Guide') {
@@ -851,24 +967,14 @@ class SportsApp {
   }
 
   renderChannelFilter() {
-    this.debugLog('display', 'Rendering channel filter...');
-    
     this.availableChannels = this.extractChannelsFromMatches();
     
-    this.debugLog('data', `Extracted ${this.availableChannels.length} unique channels`, {
-      channels: this.availableChannels
-    });
-    
     const container = document.getElementById('channel-checkboxes');
-    if (!container) {
-      this.debugLog('display', 'ERROR: channel-checkboxes container not found');
-      return;
-    }
+    if (!container) return;
     
     container.innerHTML = '';
     
     if (this.availableChannels.length === 0) {
-      this.debugLog('display', 'No channels found - showing empty message');
       container.innerHTML = `
         <div class="no-channels">
           <p>No TV channels found in current matches</p>
@@ -883,10 +989,7 @@ class SportsApp {
         this.selectedChannels.add(channel);
       });
       this.showAllChannels = true;
-      this.debugLog('filtering', 'Initialized all channels as selected on first load');
     }
-    
-    this.debugLog('display', `Rendering ${this.availableChannels.length} channel checkboxes`);
     
     this.availableChannels.forEach(channel => {
       const checkboxDiv = document.createElement('div');
@@ -897,12 +1000,10 @@ class SportsApp {
         checkboxDiv.classList.add('checked');
       }
       
-      const safeChannelName = channel.replace(/'/g, "\\'");
-      
       checkboxDiv.innerHTML = `
         <input type="checkbox" id="channel-${this.sanitizeId(channel)}" 
                ${isChecked ? 'checked' : ''} 
-               onchange="window.sportsApp.toggleChannel('${safeChannelName}')">
+               onchange="window.sportsApp.toggleChannel('${channel.replace(/'/g, '\\\'')}')">
         <label for="channel-${this.sanitizeId(channel)}">${channel}</label>
       `;
       
@@ -910,7 +1011,6 @@ class SportsApp {
     });
     
     this.updateFilterStatus();
-    this.debugLog('display', 'Channel filter rendered successfully');
   }
 
   sanitizeId(str) {
@@ -918,8 +1018,6 @@ class SportsApp {
   }
 
   toggleChannel(channel) {
-    this.debugLog('filtering', `Toggling channel: ${channel}`);
-    
     if (this.selectedChannels.has(channel)) {
       this.selectedChannels.delete(channel);
     } else {
@@ -928,6 +1026,7 @@ class SportsApp {
     
     this.showAllChannels = this.selectedChannels.size === this.availableChannels.length;
     
+    // Update the checkbox appearance
     const checkboxDiv = document.getElementById(`channel-${this.sanitizeId(channel)}`).parentElement;
     if (this.selectedChannels.has(channel)) {
       checkboxDiv.classList.add('checked');
@@ -935,13 +1034,12 @@ class SportsApp {
       checkboxDiv.classList.remove('checked');
     }
     
+    // Re-render matches with new filter
     this.renderFootballMatches();
     this.updateFilterStatus();
   }
 
   selectAllChannels() {
-    this.debugLog('filtering', 'Selecting all channels');
-    
     this.availableChannels.forEach(channel => {
       this.selectedChannels.add(channel);
       const checkbox = document.getElementById(`channel-${this.sanitizeId(channel)}`);
@@ -957,8 +1055,6 @@ class SportsApp {
   }
 
   clearAllChannels() {
-    this.debugLog('filtering', 'Clearing all channels');
-    
     this.selectedChannels.clear();
     
     this.availableChannels.forEach(channel => {
@@ -988,6 +1084,7 @@ class SportsApp {
         matchChannels = match.channel.split(',').map(ch => ch.trim());
       }
       
+      // Check if any of the match's channels are selected
       return matchChannels.some(channel => 
         this.selectedChannels.has(channel.trim())
       );
@@ -1009,6 +1106,7 @@ class SportsApp {
       statusElement.textContent = `Showing matches from ${selectedCount}/${totalChannels} channels`;
     }
     
+    // Debug log
     this.debugLog('filtering', `Filter status updated: ${selectedCount}/${totalChannels} channels selected`);
   }
 
@@ -1023,12 +1121,16 @@ class SportsApp {
     
     if (this.debugLogs[category]) {
       this.debugLogs[category].push(logEntry);
+      // Keep only last 50 entries per category
       if (this.debugLogs[category].length > 50) {
         this.debugLogs[category] = this.debugLogs[category].slice(-50);
       }
     }
     
+    // Update debug UI if visible
     this.updateDebugDisplay(category);
+    
+    // Console log for immediate debugging
     console.log(`[${category.toUpperCase()}] ${message}`, data || '');
   }
 
@@ -1054,6 +1156,7 @@ class SportsApp {
     }).join('');
     
     contentElement.innerHTML = html;
+    // Auto-scroll to bottom
     contentElement.scrollTop = contentElement.scrollHeight;
   }
 
@@ -1077,21 +1180,26 @@ class SportsApp {
   }
 
   showDebugTab(tabName) {
+    // Hide all panels
     document.querySelectorAll('.debug-panel').forEach(panel => {
       panel.classList.remove('active');
     });
     
+    // Hide all tabs
     document.querySelectorAll('.debug-tab').forEach(tab => {
       tab.classList.remove('active');
     });
     
+    // Show selected panel and tab
     const panel = document.getElementById(`debug-${tabName}`);
     const tab = document.querySelector(`[onclick="window.sportsApp.showDebugTab('${tabName}')"]`);
     
     if (panel) panel.classList.add('active');
     if (tab) tab.classList.add('active');
     
+    // Update the display for this category
     this.updateDebugDisplay(tabName);
+    
     this.debugLog('display', `Switched to debug tab: ${tabName}`);
   }
 
@@ -1105,10 +1213,12 @@ class SportsApp {
   }
 
   initDebugWindow() {
+    // Initialize debug window with initial state
     this.debugLog('display', 'Debug system initialized');
     this.debugLog('data', 'Football matches loaded', { count: this.footballMatches.length });
     this.debugLog('data', 'Available channels extracted', { channels: this.availableChannels });
     
+    // Show initial debug tab
     this.showDebugTab('requests');
   }
 }
@@ -1118,8 +1228,10 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('🎯 DOM loaded, initializing Sports App...');
   const app = new SportsApp();
   
+  // Make app globally accessible for debugging and manual operations
   window.sportsApp = app;
   
+  // Add manual operation shortcuts
   window.fetchSportsData = () => app.fetchNewSportsData();
   window.fetchFootball = () => app.matchFetcher?.updateMatchData();
   window.fetchUFC = () => app.ufcFetcher?.updateUFCData();
@@ -1127,6 +1239,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addMatch = (match) => app.addFootballMatch(match);
 });
 
+// Error handling
 window.addEventListener('error', (e) => {
   console.error('❌ Sports App Error:', e.error);
 });

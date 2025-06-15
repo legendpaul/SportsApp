@@ -61,11 +61,11 @@
         <div class="times-grid">
           <div class="time-slot prelims">
             <div class="time-label">Prelims</div>
-            <div class="time-value">11:00 PM (Sat) - ESPN+</div>
+            <div class="time-value">11:00 PM (Sat) - TNT Sports</div>
           </div>
           <div class="time-slot main-card">
             <div class="time-label">Main Card</div>
-            <div class="time-value">2:00 AM (Sun) - ESPN/ESPN+</div>
+            <div class="time-value">2:00 AM (Sun) - TNT Sports</div>
           </div>
         </div>
       </div>
@@ -92,10 +92,71 @@
 
       <!-- Preliminary Card -->
       <div class="fight-card">
-        <h4 class="card-title">Preliminary Card (ESPN+)</h4>
+        <h4 class="card-title">Preliminary Card (TNT Sports)</h4>
         <div class="prelim-fights-grid" id="prelim-card-fights">
           <!-- Preliminary fights will be populated by JavaScript -->
         </div>
+      </div>
+    </div>
+
+    <!-- Debug Window -->
+    <div class="section debug-section" id="debug-section">
+      <div class="section-header">
+        <div class="section-icon">🐛</div>
+        <h2 class="section-title">Debug Information</h2>
+        <div class="filter-controls">
+          <button onclick="window.sportsApp.toggleDebugWindow()" class="filter-btn debug-toggle" id="debug-toggle">Hide Debug</button>
+          <button onclick="window.sportsApp.clearDebugLog()" class="filter-btn debug-clear">Clear Log</button>
+        </div>
+      </div>
+      
+      <div class="debug-content" id="debug-content">
+        <div class="debug-tabs">
+          <button class="debug-tab active" onclick="window.sportsApp.showDebugTab('requests')">Web Requests</button>
+          <button class="debug-tab" onclick="window.sportsApp.showDebugTab('data')">Raw Data</button>
+          <button class="debug-tab" onclick="window.sportsApp.showDebugTab('filtering')">Filtering</button>
+          <button class="debug-tab" onclick="window.sportsApp.showDebugTab('display')">Display Lists</button>
+        </div>
+        
+        <div id="debug-requests" class="debug-panel active">
+          <h4>Web Scraping Requests & Responses</h4>
+          <div id="debug-requests-content" class="debug-log">No requests yet...</div>
+        </div>
+        
+        <div id="debug-data" class="debug-panel">
+          <h4>Raw Parsed Data</h4>
+          <div id="debug-data-content" class="debug-log">No data loaded yet...</div>
+        </div>
+        
+        <div id="debug-filtering" class="debug-panel">
+          <h4>Channel Filtering Process</h4>
+          <div id="debug-filtering-content" class="debug-log">No filtering performed yet...</div>
+        </div>
+        
+        <div id="debug-display" class="debug-panel">
+          <h4>Display Lists & UI State</h4>
+          <div id="debug-display-content" class="debug-log">No display data yet...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Channel Filter Section -->
+    <div class="section channel-filter-section">
+      <div class="section-header">
+        <div class="section-icon">📺</div>
+        <h2 class="section-title">TV Channel Filter</h2>
+        <div class="filter-controls">
+          <button onclick="window.sportsApp.selectAllChannels()" class="filter-btn select-all">Select All</button>
+          <button onclick="window.sportsApp.clearAllChannels()" class="filter-btn clear-all">Clear All</button>
+        </div>
+      </div>
+      
+      <div class="channel-checkboxes" id="channel-checkboxes">
+        <!-- Channel checkboxes will be populated by JavaScript -->
+      </div>
+      
+      <div class="filter-info">
+        <p id="filter-status">Showing all matches</p>
       </div>
     </div>
 

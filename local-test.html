@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Development Test - UK Sports TV Guide</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { border-left: 4px solid #4CAF50; }
+        .error { border-left: 4px solid #f44336; }
+        .loading { border-left: 4px solid #ff9800; }
+        .info { border-left: 4px solid #2196F3; }
+        .env-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Local Development Test</h1>
+        
+        <div class="env-info">
+            <h3>🔍 Environment Information</h3>
+            <p><strong>Current URL:</strong> <span id="currentUrl"></span></p>
+            <p><strong>Hostname:</strong> <span id="hostname"></span></p>
+            <p><strong>Protocol:</strong> <span id="protocol"></span></p>
+            <p><strong>Detected Environment:</strong> <span id="environment"></span></p>
+        </div>
+        
+        <div class="test-section">
+            <h3>🏆 Football Data Test (Local Development)</h3>
+            <p>This tests the local development data fetching methods.</p>
+            <button onclick="testLocalFetching()" id="testBtn">Test Local Data Fetching</button>
+            <button onclick="testCorsProxy()" id="corsBtn">Test CORS Proxy Only</button>
+            <button onclick="testDemoData()" id="demoBtn">Test Demo Data</button>
+            <button onclick="clearResults()">Clear Results</button>
+            <div id="result" class="result info">Environment information loaded above. Click a test button to begin...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 Quick Links</h3>
+            <a href="index.html" style="color: white; text-decoration: none; margin-right: 15px;">🏠 Main App</a>
+            <a href="function-test.html" style="color: white; text-decoration: none; margin-right: 15px;">🧪 Function Test</a>
+            <a href="test.html" style="color: white; text-decoration: none;">⚙️ Basic Test</a>
+        </div>
+    </div>
+
+    <script src="web-datamanager.js"></script>
+    <script src="web-matchfetcher.js"></script>
+    <script>
+        // Display environment information
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('hostname').textContent = window.location.hostname;
+        document.getElementById('protocol').textContent = window.location.protocol;
+        
+        // Detect environment
+        const isLocal = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' || 
+                       window.location.hostname === '' ||
+                       window.location.protocol === 'file:';
+        
+        document.getElementById('environment').textContent = isLocal ? 'Local Development' : 'Production/Netlify';
+        document.getElementById('environment').style.color = isLocal ? '#4CAF50' : '#ff9800';
+
+        let fetcher;
+
+        function setupFetcher() {
+            if (!fetcher) {
+                fetcher = new WebMatchFetcher((category, message, data) => {
+                    console.log(`[${category.toUpperCase()}] ${message}`, data || '');
+                });
+            }
+            return fetcher;
+        }
+
+        async function testLocalFetching() {
+            const resultDiv = document.getElementById('result');
+            const testBtn = document.getElementById('testBtn');
+            
+            testBtn.disabled = true;
+            testBtn.textContent = 'Testing...';
+            
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '⏳ Testing local development data fetching...\n\n';
+            
+            try {
+                const fetcher = setupFetcher();
+                resultDiv.textContent += `🔄 Environment: ${fetcher.isLocal ? 'Local Development' : 'Production'}\n`;
+                
+                const startTime = Date.now();
+                const matches = await fetcher.fetchTodaysMatches();
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent += `✅ SUCCESS! Fetched ${matches.length} matches in ${duration}ms\n\n`;
+                
+                if (matches.length > 0) {
+                    resultDiv.textContent += '📋 Sample matches:\n';
+                    matches.slice(0, 3).forEach((match, i) => {
+                        resultDiv.textContent += `${i + 1}. ${match.time} - ${match.teamA} vs ${match.teamB} (${match.competition}) on ${match.channel}\n`;
+                        resultDiv.textContent += `   Source: ${match.apiSource}\n`;
+                    });
+                } else {
+                    resultDiv.textContent += '📋 No matches found for today.\n';
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += `❌ ERROR: ${error.message}\n\n`;
+                resultDiv.textContent += 'This could mean:\n';
+                resultDiv.textContent += '• CORS proxy is not accessible\n';
+                resultDiv.textContent += '• live-footballontv.com is not responding\n';
+                resultDiv.textContent += '• Network connectivity issue\n';
+                resultDiv.textContent += '• HTML parsing error\n\n';
+                resultDiv.textContent += 'Try the demo data test to verify the app works locally.';
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = 'Test Local Data Fetching';
+            }
+        }
+
+        async function testCorsProxy() {
+            const resultDiv = document.getElementById('result');
+            const corsBtn = document.getElementById('corsBtn');
+            
+            corsBtn.disabled = true;
+            corsBtn.textContent = 'Testing CORS Proxy...';
+            
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '⏳ Testing CORS proxy specifically...\n\n';
+            
+            try {
+                const corsProxyUrl = 'https://api.allorigins.win/get?url=';
+                const targetUrl = 'https://www.live-footballontv.com';
+                
+                resultDiv.textContent += `🔄 Proxy URL: ${corsProxyUrl}\n`;
+                resultDiv.textContent += `🔄 Target URL: ${targetUrl}\n\n`;
+                
+                const response = await fetch(`${corsProxyUrl}${encodeURIComponent(targetUrl)}`);
+                
+                resultDiv.textContent += `📊 Response Status: ${response.status} ${response.statusText}\n`;
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.contents) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent += `✅ CORS proxy working! Received ${data.contents.length} characters\n`;
+                    resultDiv.textContent += `📄 Content preview: ${data.contents.substring(0, 100)}...\n`;
+                } else {
+                    throw new Error('CORS proxy returned no content');
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += `❌ CORS Proxy Failed: ${error.message}\n\n`;
+                resultDiv.textContent += 'The CORS proxy service may be down or blocked.\n';
+                resultDiv.textContent += 'This means live data fetching will fall back to demo data.';
+            } finally {
+                corsBtn.disabled = false;
+                corsBtn.textContent = 'Test CORS Proxy Only';
+            }
+        }
+
+        async function testDemoData() {
+            const resultDiv = document.getElementById('result');
+            const demoBtn = document.getElementById('demoBtn');
+            
+            demoBtn.disabled = true;
+            demoBtn.textContent = 'Generating Demo Data...';
+            
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '⏳ Testing demo data generation...\n\n';
+            
+            try {
+                const fetcher = setupFetcher();
+                const demoMatches = fetcher.generateLocalDemoMatches();
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent += `✅ Demo data generated successfully! ${demoMatches.length} matches\n\n`;
+                
+                resultDiv.textContent += '📋 Demo matches:\n';
+                demoMatches.forEach((match, i) => {
+                    resultDiv.textContent += `${i + 1}. ${match.time} - ${match.teamA} vs ${match.teamB} (${match.competition}) on ${match.channel}\n`;
+                });
+                
+                resultDiv.textContent += '\n📝 Demo data works - your app should function locally even without live data!';
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += `❌ Demo data generation failed: ${error.message}`;
+            } finally {
+                demoBtn.disabled = false;
+                demoBtn.textContent = 'Test Demo Data';
+            }
+        }
+        
+        function clearResults() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Results cleared. Click a test button to run tests.';
+        }
+        
+        // Auto-test demo data on page load for local development
+        window.addEventListener('load', () => {
+            if (isLocal) {
+                setTimeout(() => {
+                    if (confirm('Auto-test local data fetching? This will help diagnose any local development issues.')) {
+                        testLocalFetching();
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

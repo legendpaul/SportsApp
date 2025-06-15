@@ -184,90 +184,11 @@ class WebSportsApp {
   }
 
   loadFallbackData() {
-    // Enhanced fallback football data with proper channel arrays
-    this.footballMatches = [
-      {
-        id: "web_fallback_001",
-        time: "13:00",
-        teamA: "Manchester City",
-        teamB: "Arsenal",
-        competition: "Premier League",
-        channel: "Sky Sports Premier League, Sky Sports Main Event",
-        channels: ["Sky Sports Premier League", "Sky Sports Main Event"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "web_fallback_002",
-        time: "15:30",
-        teamA: "Liverpool",
-        teamB: "Chelsea",
-        competition: "Premier League",
-        channel: "BBC One, BBC iPlayer",
-        channels: ["BBC One", "BBC iPlayer"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "web_fallback_003",
-        time: "17:45",
-        teamA: "Real Madrid",
-        teamB: "Barcelona",
-        competition: "La Liga",
-        channel: "Premier Sports 1",
-        channels: ["Premier Sports 1"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "web_fallback_004",
-        time: "20:00",
-        teamA: "Bayern Munich",
-        teamB: "Borussia Dortmund",
-        competition: "Bundesliga",
-        channel: "Sky Sports Football",
-        channels: ["Sky Sports Football"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "web_fallback_005",
-        time: "19:45",
-        teamA: "Paris Saint-Germain",
-        teamB: "Olympique Marseille",
-        competition: "Ligue 1",
-        channel: "TNT Sports 1, TNT Sports 2",
-        channels: ["TNT Sports 1", "TNT Sports 2"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "web_fallback_006",
-        time: "16:00",
-        teamA: "Tottenham",
-        teamB: "Manchester United",
-        competition: "Premier League",
-        channel: "ITV1, ITVX",
-        channels: ["ITV1", "ITVX"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      }
-    ];
-
+    // Only load fallback data if explicitly needed for testing
+    // In production, we rely on live data from Netlify functions
+    this.footballMatches = [];
     this.loadFallbackUFCData();
-    this.debugLog('data', 'Using enhanced fallback data for web version');
+    this.debugLog('data', 'No fallback data loaded - using live data only');
   }
 
   loadFallbackUFCData() {
@@ -304,6 +225,7 @@ class WebSportsApp {
     this.addFetchButton();
     this.initDebugWindow();
     this.addDataManagementButtons();
+    this.updateFooterForEnvironment();
     
     setInterval(() => this.updateClock(), 1000);
     setInterval(() => this.updateMatchStatuses(), 60000);
@@ -311,6 +233,22 @@ class WebSportsApp {
     
     this.debugLog('display', 'Web Sports App initialized successfully!');
     console.log('🚀 Web Sports App initialized successfully!');
+  }
+
+  updateFooterForEnvironment() {
+    const isLocal = window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1' || 
+                   window.location.hostname === '' ||
+                   window.location.protocol === 'file:';
+    
+    const footer = document.querySelector('.footer p');
+    if (footer) {
+      if (isLocal) {
+        footer.textContent = 'Local Development • Live data via CORS proxy • Fallback demo data';
+      } else {
+        footer.textContent = 'Live data from live-footballontv.com • Times shown in UK timezone • Powered by Netlify Functions';
+      }
+    }
   }
 
   async autoRefreshIfNeeded() {
@@ -326,20 +264,41 @@ class WebSportsApp {
   addFetchButton() {
     const header = document.querySelector('.header-content');
     if (header && !document.getElementById('fetch-controls')) {
+      const isLocal = window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1' || 
+                     window.location.hostname === '' ||
+                     window.location.protocol === 'file:';
+      
       const controls = document.createElement('div');
       controls.id = 'fetch-controls';
       controls.className = 'fetch-controls';
-      controls.innerHTML = `
-        <button onclick="window.sportsApp.fetchNewSportsData()" class="fetch-btn" title="Fetch new matches (demo data in web version)">
-          📥 Refresh Sports Data
-        </button>
-        <button onclick="window.sportsApp.manualCleanup()" class="cleanup-btn" title="Remove old matches and events">
-          🧹 Cleanup
-        </button>
-        <div class="auto-fetch-indicator" title="Auto-fetches football on startup (web version uses demo data)">
-          🔄 Auto-fetch: ON (Web)
-        </div>
-      `;
+      
+      if (isLocal) {
+        controls.innerHTML = `
+          <button onclick="window.sportsApp.fetchNewSportsData()" class="fetch-btn" title="Fetch live data via CORS proxy (local development)">
+            📥 Refresh Live Data
+          </button>
+          <button onclick="window.sportsApp.manualCleanup()" class="cleanup-btn" title="Remove old matches and events">
+            🧹 Cleanup
+          </button>
+          <div class="auto-fetch-indicator" title="Local development with CORS proxy + demo fallback">
+            🔄 Local Dev
+          </div>
+        `;
+      } else {
+        controls.innerHTML = `
+          <button onclick="window.sportsApp.fetchNewSportsData()" class="fetch-btn" title="Fetch live matches from live-footballontv.com via Netlify Functions">
+            📥 Refresh Live Data
+          </button>
+          <button onclick="window.sportsApp.manualCleanup()" class="cleanup-btn" title="Remove old matches and events">
+            🧹 Cleanup
+          </button>
+          <div class="auto-fetch-indicator" title="Auto-fetches live football data on startup via Netlify Functions">
+            🔄 Auto-fetch: LIVE
+          </div>
+        `;
+      }
+      
       header.appendChild(controls);
     }
   }
@@ -464,10 +423,10 @@ class WebSportsApp {
           <div class="no-matches-icon">📅</div>
           <div class="no-matches-text">No upcoming football matches today</div>
           <div class="no-matches-subtext">
-            Web version uses demo data for demonstration
+            Live data from live-footballontv.com via Netlify Functions
             <br>
             <button onclick="window.sportsApp.fetchNewSportsData()" class="fetch-btn">
-              📥 Generate new demo data
+              📥 Refresh live data now
             </button>
           </div>
         </div>
@@ -716,10 +675,10 @@ class WebSportsApp {
     const fetchButtons = document.querySelectorAll('.fetch-btn');
     fetchButtons.forEach(btn => {
       if (isLoading) {
-        btn.textContent = '⏳ Fetching...';
+        btn.textContent = '⏳ Fetching Live Data...';
         btn.disabled = true;
       } else {
-        btn.textContent = '📥 Refresh Sports Data';
+        btn.textContent = '📥 Refresh Live Data';
         btn.disabled = false;
       }
     });
@@ -1176,10 +1135,20 @@ class WebSportsApp {
   }
 
   initDebugWindow() {
-    this.debugLog('display', 'Debug system initialized for web version');
+    const isLocal = window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1' || 
+                   window.location.hostname === '' ||
+                   window.location.protocol === 'file:';
+    
+    this.debugLog('display', `Debug system initialized for ${isLocal ? 'local development' : 'production'} with ${isLocal ? 'CORS proxy + live data' : 'Netlify Functions'}`);
     this.debugLog('data', 'Football matches loaded', { count: this.footballMatches.length });
     this.debugLog('data', 'Available channels extracted', { channels: this.availableChannels });
-    this.debugLog('requests', 'Web version note: Due to CORS restrictions, live data fetching may use demo data');
+    
+    if (isLocal) {
+      this.debugLog('requests', 'Local development: Using CORS proxy with fallback to demo data');
+    } else {
+      this.debugLog('requests', 'Production: Using Netlify Functions for live data fetching');
+    }
     
     this.showDebugTab('requests');
   }

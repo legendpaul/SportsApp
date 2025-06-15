@@ -1,176 +1,154 @@
-// Web-compatible Match Fetcher - Uses fetch API instead of Node.js https
+// Web-compatible Match Fetcher - Uses Netlify Functions for real data
 class WebMatchFetcher {
   constructor(debugLogCallback = null) {
-    this.baseUrl = 'https://www.live-footballontv.com';
-    this.corsProxyUrl = 'https://api.allorigins.win/get?url='; // CORS proxy service
+    this.netlifyFunctionUrl = '/.netlify/functions/fetch-football';
+    this.corsProxyUrl = 'https://api.allorigins.win/get?url=';
+    this.directUrl = 'https://www.live-footballontv.com';
+    
+    // Initialize debug function first
     this.debugLog = debugLogCallback || ((category, message, data) => {
       console.log(`[${category.toUpperCase()}] ${message}`, data || '');
     });
     
-    // UK TV Channel mappings and names
-    this.channelMappings = {
-      'BBC One': 'BBC One',
-      'BBC Two': 'BBC Two', 
-      'BBC Three': 'BBC Three',
-      'BBC Four': 'BBC Four',
-      'BBC One Wales': 'BBC One Wales',
-      'BBC One Scotland': 'BBC One Scotland',
-      'BBC One NI': 'BBC One NI',
-      'BBC Two Wales': 'BBC Two Wales',
-      'BBC Scotland': 'BBC Scotland',
-      'BBC Two NI': 'BBC Two NI',
-      'BBC iPlayer': 'BBC iPlayer',
-      'BBC Sport Website': 'BBC Sport Website',
-      'BBC Red Button': 'BBC Red Button',
-      'ITV1': 'ITV1',
-      'ITV2': 'ITV2', 
-      'ITV3': 'ITV3',
-      'ITV4': 'ITV4',
-      'ITVX': 'ITVX',
-      'STV': 'STV',
-      'STV Player': 'STV Player',
-      'Channel 4': 'Channel 4',
-      'Channel 4 Online': 'Channel 4 Online',
-      'Channel 4 Sport YouTube': 'Channel 4 Sport YouTube',
-      '4seven': '4seven',
-      'Sky Sports Premier League': 'Sky Sports Premier League',
-      'Sky Sports Football': 'Sky Sports Football',
-      'Sky Sports': 'Sky Sports',
-      'Sky Sports Main Event': 'Sky Sports Main Event',
-      'TNT Sports': 'TNT Sports',
-      'TNT Sports 1': 'TNT Sports 1',
-      'TNT Sports 2': 'TNT Sports 2',
-      'TNT Sports 3': 'TNT Sports 3',
-      'BT Sport': 'BT Sport',
-      'Premier Sports': 'Premier Sports',
-      'Premier Sports 1': 'Premier Sports 1',
-      'Premier Sports 2': 'Premier Sports 2',
-      'S4C': 'S4C',
-      'S4C Online': 'S4C Online',
-      'Amazon Prime Video': 'Amazon Prime Video',
-      'Discovery+': 'Discovery+',
-      'DAZN': 'DAZN',
-      'ESPN': 'ESPN',
-      'ESPN+': 'ESPN+',
-      'Eurosport': 'Eurosport',
-      '5': 'Channel 5',
-      '5Action': '5Action',
-      'UEFA.tv': 'UEFA.tv',
-      'FIFA+': 'FIFA+',
-      'LOITV': 'LOITV',
-      'NWSL+': 'NWSL+',
-      'Apple TV': 'Apple TV',
-      'Youth Football Arena': 'Youth Football Arena'
-    };
+    // Then detect environment
+    this.isLocal = this.detectLocalEnvironment();
+  }
+
+  detectLocalEnvironment() {
+    // Check if running locally (not on Netlify)
+    const isLocal = window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1' || 
+                   window.location.hostname === '' ||
+                   window.location.protocol === 'file:';
+    
+    // Log after debugLog is available
+    if (this.debugLog) {
+      this.debugLog('requests', `Environment detected: ${isLocal ? 'Local Development' : 'Netlify Production'}`);
+    } else {
+      console.log(`[REQUESTS] Environment detected: ${isLocal ? 'Local Development' : 'Netlify Production'}`);
+    }
+    return isLocal;
   }
 
   async fetchTodaysMatches() {
     try {
-      this.debugLog('requests', 'Starting to fetch today\'s matches from live-footballontv.com...');
-      
-      // Try direct fetch first (will likely fail due to CORS)
-      let htmlContent = await this.tryDirectFetch();
-      
-      if (!htmlContent) {
-        // Try CORS proxy
-        htmlContent = await this.tryProxyFetch();
+      if (this.isLocal) {
+        this.debugLog('requests', 'Local development detected - using CORS proxy for live data...');
+        return await this.fetchWithCorsProxy();
+      } else {
+        this.debugLog('requests', 'Production environment - using Netlify function...');
+        return await this.fetchWithNetlifyFunction();
       }
-      
-      if (!htmlContent) {
-        this.debugLog('requests', 'Unable to fetch from website due to CORS restrictions, using demo data');
-        return this.generateDemoMatches();
-      }
-
-      this.debugLog('requests', `Received HTML content: ${htmlContent.length} characters`);
-      
-      this.debugLog('data', 'Processing matches from website...');
-      
-      const processedMatches = this.parseMatches(htmlContent);
-      
-      // Filter for today's matches
-      const today = new Date().toISOString().split('T')[0];
-      const todayMatches = processedMatches.filter(match => match.matchDate === today);
-      
-      this.debugLog('data', `Found ${processedMatches.length} total matches, ${todayMatches.length} for today`, {
-        today: today,
-        allDates: [...new Set(processedMatches.map(m => m.matchDate))],
-        sampleMatches: processedMatches.slice(0, 3)
-      });
-      
-      return todayMatches;
-      
     } catch (error) {
       this.debugLog('requests', `Error fetching matches: ${error.message}`);
-      this.debugLog('requests', 'Falling back to demo data for web version');
-      return this.generateDemoMatches();
-    }
-  }
-
-  async tryDirectFetch() {
-    try {
-      this.debugLog('requests', 'Attempting direct fetch...');
       
-      const response = await fetch(this.baseUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-GB,en;q=0.5'
-        },
-        mode: 'cors' // This will likely fail due to CORS
-      });
-
-      if (response.ok) {
-        const text = await response.text();
-        this.debugLog('requests', 'Direct fetch successful');
-        return text;
-      } else {
-        this.debugLog('requests', `Direct fetch failed with status: ${response.status}`);
-        return null;
-      }
-    } catch (error) {
-      this.debugLog('requests', `Direct fetch failed: ${error.message}`);
-      return null;
-    }
-  }
-
-  async tryProxyFetch() {
-    try {
-      this.debugLog('requests', 'Attempting CORS proxy fetch...');
-      
-      const proxyUrl = `${this.corsProxyUrl}${encodeURIComponent(this.baseUrl)}`;
-      const response = await fetch(proxyUrl, {
-        method: 'GET'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.contents) {
-          this.debugLog('requests', 'CORS proxy fetch successful');
-          return data.contents;
+      // Try fallback method if primary fails
+      if (this.isLocal) {
+        this.debugLog('requests', 'CORS proxy failed, trying direct fetch...');
+        try {
+          return await this.fetchDirect();
+        } catch (fallbackError) {
+          this.debugLog('requests', 'All methods failed, using demo data for local development');
+          return this.generateLocalDemoMatches();
         }
+      } else {
+        throw error; // Re-throw error for production
       }
-      
-      this.debugLog('requests', `CORS proxy fetch failed with status: ${response.status}`);
-      return null;
-      
-    } catch (error) {
-      this.debugLog('requests', `CORS proxy fetch failed: ${error.message}`);
-      return null;
     }
   }
 
-  generateDemoMatches() {
-    this.debugLog('data', 'Generating demo matches for web version...');
+  async fetchWithNetlifyFunction() {
+    const response = await fetch(this.netlifyFunctionUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Netlify function failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(`Function returned error: ${data.error}`);
+    }
+
+    this.debugLog('requests', `Successfully fetched ${data.todayCount} matches from Netlify function`, {
+      totalFound: data.totalFound,
+      todayCount: data.todayCount,
+      fetchTime: data.fetchTime
+    });
+
+    return data.matches || [];
+  }
+
+  async fetchWithCorsProxy() {
+    this.debugLog('requests', 'Attempting CORS proxy fetch...');
+    
+    const proxyUrl = `${this.corsProxyUrl}${encodeURIComponent(this.directUrl)}`;
+    const response = await fetch(proxyUrl, {
+      method: 'GET'
+    });
+
+    if (!response.ok) {
+      throw new Error(`CORS proxy failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (!data.contents) {
+      throw new Error('CORS proxy returned no content');
+    }
+
+    this.debugLog('requests', `CORS proxy successful - received ${data.contents.length} characters`);
+    
+    const matches = this.parseMatches(data.contents);
+    const today = new Date().toISOString().split('T')[0];
+    const todayMatches = matches.filter(match => match.matchDate === today);
+    
+    this.debugLog('requests', `Parsed ${matches.length} total matches, ${todayMatches.length} for today`);
+    
+    return todayMatches;
+  }
+
+  async fetchDirect() {
+    this.debugLog('requests', 'Attempting direct fetch (will likely fail due to CORS)...');
+    
+    const response = await fetch(this.directUrl, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Direct fetch failed: ${response.status} ${response.statusText}`);
+    }
+
+    const html = await response.text();
+    this.debugLog('requests', `Direct fetch successful - received ${html.length} characters`);
+    
+    const matches = this.parseMatches(html);
+    const today = new Date().toISOString().split('T')[0];
+    const todayMatches = matches.filter(match => match.matchDate === today);
+    
+    return todayMatches;
+  }
+
+  generateLocalDemoMatches() {
+    this.debugLog('requests', 'Generating demo matches for local development...');
     
     const today = new Date().toISOString().split('T')[0];
     const currentHour = new Date().getHours();
     
-    // Generate realistic demo matches with times spread throughout the day
     const demoMatches = [
       {
-        id: `web_demo_${Date.now()}_1`,
-        time: "13:30",
+        id: `local_demo_${Date.now()}_1`,
+        time: "15:00",
         teamA: "Manchester City",
         teamB: "Arsenal", 
         competition: "Premier League",
@@ -179,12 +157,12 @@ class WebMatchFetcher {
         status: "upcoming",
         createdAt: new Date().toISOString(),
         matchDate: today,
-        apiSource: 'web-demo',
+        apiSource: 'local-demo',
         venue: 'Etihad Stadium'
       },
       {
-        id: `web_demo_${Date.now()}_2`,
-        time: "15:00",
+        id: `local_demo_${Date.now()}_2`,
+        time: "17:30",
         teamA: "Liverpool",
         teamB: "Chelsea",
         competition: "Premier League", 
@@ -193,12 +171,12 @@ class WebMatchFetcher {
         status: "upcoming",
         createdAt: new Date().toISOString(),
         matchDate: today,
-        apiSource: 'web-demo',
+        apiSource: 'local-demo',
         venue: 'Anfield'
       },
       {
-        id: `web_demo_${Date.now()}_3`,
-        time: "17:30",
+        id: `local_demo_${Date.now()}_3`,
+        time: "20:00",
         teamA: "Real Madrid",
         teamB: "Barcelona",
         competition: "La Liga",
@@ -207,63 +185,142 @@ class WebMatchFetcher {
         status: "upcoming",
         createdAt: new Date().toISOString(),
         matchDate: today,
-        apiSource: 'web-demo',
+        apiSource: 'local-demo',
         venue: 'Santiago Bernabéu'
-      },
-      {
-        id: `web_demo_${Date.now()}_4`,
-        time: "20:00",
-        teamA: "Bayern Munich",
-        teamB: "Borussia Dortmund",
-        competition: "Bundesliga",
-        channel: "TNT Sports 2",
-        channels: ["TNT Sports 2"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'web-demo',
-        venue: 'Allianz Arena'
-      },
-      {
-        id: `web_demo_${Date.now()}_5`,
-        time: "19:45",
-        teamA: "Paris Saint-Germain",
-        teamB: "Olympique Marseille",
-        competition: "Ligue 1",
-        channel: "Discovery+",
-        channels: ["Discovery+"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'web-demo',
-        venue: 'Parc des Princes'
       }
     ];
 
-    // If it's past 18:00, add some evening matches
-    if (currentHour >= 18) {
-      demoMatches.push({
-        id: `web_demo_${Date.now()}_6`,
-        time: "22:00",
-        teamA: "AC Milan",
-        teamB: "Inter Milan",
-        competition: "Serie A",
-        channel: "TNT Sports 3",
-        channels: ["TNT Sports 3"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'web-demo',
-        venue: 'San Siro'
-      });
-    }
-
-    this.debugLog('data', `Generated ${demoMatches.length} demo matches for today`);
+    this.debugLog('requests', `Generated ${demoMatches.length} demo matches for local development`);
     return demoMatches;
   }
 
+  async updateMatchData() {
+    try {
+      this.debugLog('data', 'Starting automatic match data update...');
+      
+      const dataManager = new WebDataManager();
+      const existingData = dataManager.loadData();
+      
+      const newMatches = await this.fetchTodaysMatches();
+      
+      if (newMatches.length === 0) {
+        this.debugLog('data', 'No matches found from live data source');
+        return { success: true, added: 0, total: existingData.footballMatches.length };
+      }
+
+      const existingIds = new Set(
+        existingData.footballMatches.map(m => 
+          `${m.teamA}_${m.teamB}_${m.time}_${m.matchDate}`
+        )
+      );
+      
+      const uniqueNewMatches = newMatches.filter(match => {
+        const matchKey = `${match.teamA}_${match.teamB}_${match.time}_${match.matchDate}`;
+        return !existingIds.has(matchKey);
+      });
+
+      this.debugLog('data', `Found ${newMatches.length} total matches, ${uniqueNewMatches.length} are new`);
+
+      existingData.footballMatches.push(...uniqueNewMatches);
+      existingData.lastFetch = new Date().toISOString();
+      
+      const saved = dataManager.saveData(existingData);
+      
+      if (saved) {
+        this.debugLog('data', `Successfully added ${uniqueNewMatches.length} new matches from live source`);
+        
+        uniqueNewMatches.forEach(match => {
+          this.debugLog('data', `Added: ${match.time} - ${match.teamA} vs ${match.teamB} (${match.competition})`);
+        });
+      }
+      
+      return { 
+        success: saved, 
+        added: uniqueNewMatches.length, 
+        total: existingData.footballMatches.length,
+        matches: uniqueNewMatches,
+        source: 'live-footballontv.com'
+      };
+      
+    } catch (error) {
+      this.debugLog('data', `Error updating match data: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async testConnection() {
+    try {
+      if (this.isLocal) {
+        this.debugLog('requests', 'Testing local development data fetching...');
+        
+        // Try CORS proxy first
+        try {
+          const response = await fetch(`${this.corsProxyUrl}${encodeURIComponent(this.directUrl)}`, {
+            method: 'GET'
+          });
+          const success = response.ok;
+          this.debugLog('requests', `CORS proxy connection ${success ? 'successful' : 'failed'} - status: ${response.status}`);
+          return success;
+        } catch (error) {
+          this.debugLog('requests', `CORS proxy test failed: ${error.message}`);
+          return false;
+        }
+      } else {
+        this.debugLog('requests', 'Testing Netlify function connection...');
+        
+        const response = await fetch(this.netlifyFunctionUrl, { 
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        const success = response.ok;
+        this.debugLog('requests', `Netlify function connection ${success ? 'successful' : 'failed'} - status: ${response.status}`);
+        
+        if (success) {
+          const data = await response.json();
+          this.debugLog('requests', 'Function response received', {
+            success: data.success,
+            matchCount: data.matches ? data.matches.length : 0
+          });
+        }
+        
+        return success;
+      }
+      
+    } catch (error) {
+      this.debugLog('requests', `Connection test failed: ${error.message}`);
+      return false;
+    }
+  }
+
+  getAllChannels(matches) {
+    const allChannels = new Set();
+    
+    matches.forEach(match => {
+      if (match.channels && Array.isArray(match.channels)) {
+        match.channels.forEach(channel => {
+          if (channel && channel !== 'Check TV Guide') {
+            allChannels.add(channel);
+          }
+        });
+      } else if (match.channel && match.channel !== 'Check TV Guide') {
+        const channels = match.channel.split(',').map(ch => ch.trim());
+        channels.forEach(channel => {
+          if (channel) {
+            allChannels.add(channel);
+          }
+        });
+      }
+    });
+    
+    return Array.from(allChannels).sort();
+  }
+
+  // HTML parsing methods for local development
   parseMatches(htmlContent) {
-    this.debugLog('data', 'Starting to parse HTML content for matches...');
+    console.log('Starting to parse HTML content for matches...');
     const matches = [];
     
     try {
@@ -276,7 +333,7 @@ class WebMatchFetcher {
         `${today.toLocaleDateString('en-GB', { weekday: 'long' })} ${today.getDate()}${this.getOrdinalSuffix(today.getDate())} ${today.toLocaleDateString('en-GB', { month: 'long' })} ${today.getFullYear()}`
       ];
       
-      this.debugLog('data', 'Looking for today\'s date patterns', { patterns: todayPatterns });
+      console.log('Looking for today\'s date patterns:', todayPatterns);
       
       // Find today's date section
       let todaySection = null;
@@ -285,7 +342,7 @@ class WebMatchFetcher {
       for (const pattern of todayPatterns) {
         const patternIndex = htmlContent.indexOf(pattern);
         if (patternIndex !== -1) {
-          this.debugLog('data', `Found today's date section: ${pattern}`);
+          console.log(`Found today's date section: ${pattern}`);
           todaySection = pattern;
           
           const fixtureStartIndex = htmlContent.indexOf('<div class="fixture">', patternIndex);
@@ -301,7 +358,7 @@ class WebMatchFetcher {
       }
       
       if (!todaySection) {
-        this.debugLog('data', 'Could not find today\'s date section, parsing all fixtures for today');
+        console.log('Could not find today\'s date section, parsing all fixtures for today');
         const allFixtures = this.parseAllFixturesFromHTML(htmlContent);
         const todayMatches = allFixtures.filter(match => {
           match.matchDate = todayFormatted;
@@ -310,10 +367,10 @@ class WebMatchFetcher {
         matches.push(...todayMatches);
       }
       
-      this.debugLog('data', `Parsing completed: ${matches.length} matches extracted`);
+      console.log(`Parsing completed: ${matches.length} matches extracted`);
       
     } catch (error) {
-      this.debugLog('data', `Error parsing matches: ${error.message}`);
+      console.log(`Error parsing matches: ${error.message}`);
     }
     
     return matches;
@@ -336,7 +393,7 @@ class WebMatchFetcher {
       }
       
     } catch (error) {
-      this.debugLog('data', `Error parsing fixtures section: ${error.message}`);
+      console.log(`Error parsing fixtures section: ${error.message}`);
     }
     
     return matches;
@@ -361,7 +418,7 @@ class WebMatchFetcher {
       }
       
     } catch (error) {
-      this.debugLog('data', `Error parsing all fixtures: ${error.message}`);
+      console.log(`Error parsing all fixtures: ${error.message}`);
     }
     
     return matches;
@@ -392,7 +449,7 @@ class WebMatchFetcher {
       const channels = this.parseChannelsFromHTML(fixtureHTML);
       
       const matchObj = {
-        id: `web_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         time: time,
         teamA: teams.teamA,
         teamB: teams.teamB,
@@ -406,15 +463,12 @@ class WebMatchFetcher {
         venue: ''
       };
       
-      this.debugLog('data', `Parsed match: ${teams.teamA} vs ${teams.teamB} at ${time}`, {
-        competition,
-        channels
-      });
+      console.log(`Parsed match: ${teams.teamA} vs ${teams.teamB} at ${time}`);
       
       return matchObj;
       
     } catch (error) {
-      this.debugLog('data', `Error parsing individual fixture: ${error.message}`);
+      console.log(`Error parsing individual fixture: ${error.message}`);
       return null;
     }
   }
@@ -442,7 +496,7 @@ class WebMatchFetcher {
         }
       }
     } catch (error) {
-      this.debugLog('data', `Error parsing teams from "${teamsText}": ${error.message}`);
+      console.log(`Error parsing teams from "${teamsText}": ${error.message}`);
     }
     
     return null;
@@ -451,13 +505,38 @@ class WebMatchFetcher {
   parseChannelsFromHTML(fixtureHTML) {
     const channels = [];
     
+    // UK TV Channel mappings
+    const channelMappings = {
+      'BBC One': 'BBC One',
+      'BBC Two': 'BBC Two', 
+      'BBC Three': 'BBC Three',
+      'BBC Four': 'BBC Four',
+      'BBC iPlayer': 'BBC iPlayer',
+      'ITV1': 'ITV1',
+      'ITV2': 'ITV2', 
+      'ITV4': 'ITV4',
+      'ITVX': 'ITVX',
+      'Channel 4': 'Channel 4',
+      'Sky Sports Premier League': 'Sky Sports Premier League',
+      'Sky Sports Football': 'Sky Sports Football',
+      'Sky Sports Main Event': 'Sky Sports Main Event',
+      'TNT Sports': 'TNT Sports',
+      'TNT Sports 1': 'TNT Sports 1',
+      'TNT Sports 2': 'TNT Sports 2',
+      'TNT Sports 3': 'TNT Sports 3',
+      'Premier Sports 1': 'Premier Sports 1',
+      'Premier Sports 2': 'Premier Sports 2',
+      'Amazon Prime Video': 'Amazon Prime Video',
+      'Discovery+': 'Discovery+'
+    };
+    
     try {
       const channelRegex = /<span class="channel-pill"[^>]*>([^<]+)<\/span>/g;
       let match;
       
       while ((match = channelRegex.exec(fixtureHTML)) !== null) {
         const channelText = this.cleanHTML(match[1].trim());
-        const mappedChannel = this.channelMappings[channelText] || channelText;
+        const mappedChannel = channelMappings[channelText] || channelText;
         
         if (mappedChannel && mappedChannel !== 'Check TV Guide' && !channels.includes(mappedChannel)) {
           channels.push(mappedChannel);
@@ -465,7 +544,7 @@ class WebMatchFetcher {
       }
       
     } catch (error) {
-      this.debugLog('data', `Error parsing channels: ${error.message}`);
+      console.log(`Error parsing channels: ${error.message}`);
     }
     
     return channels;
@@ -489,120 +568,6 @@ class WebMatchFetcher {
     if (j == 2 && k != 12) return "nd";
     if (j == 3 && k != 13) return "rd";
     return "th";
-  }
-
-  async updateMatchData() {
-    try {
-      this.debugLog('data', 'Starting automatic match data update...');
-      
-      const dataManager = new WebDataManager();
-      const existingData = dataManager.loadData();
-      
-      const newMatches = await this.fetchTodaysMatches();
-      
-      if (newMatches.length === 0) {
-        this.debugLog('data', 'No new matches found from website');
-        return { success: true, added: 0, total: existingData.footballMatches.length };
-      }
-
-      const existingIds = new Set(
-        existingData.footballMatches.map(m => 
-          `${m.teamA}_${m.teamB}_${m.time}_${m.matchDate}`
-        )
-      );
-      
-      const uniqueNewMatches = newMatches.filter(match => {
-        const matchKey = `${match.teamA}_${match.teamB}_${match.time}_${match.matchDate}`;
-        return !existingIds.has(matchKey);
-      });
-
-      this.debugLog('data', `Found ${newMatches.length} total matches, ${uniqueNewMatches.length} are new`);
-
-      existingData.footballMatches.push(...uniqueNewMatches);
-      existingData.lastFetch = new Date().toISOString();
-      
-      const saved = dataManager.saveData(existingData);
-      
-      if (saved) {
-        this.debugLog('data', `Successfully added ${uniqueNewMatches.length} new matches`);
-        
-        uniqueNewMatches.forEach(match => {
-          this.debugLog('data', `Added: ${match.time} - ${match.teamA} vs ${match.teamB} (${match.competition})`);
-        });
-      }
-      
-      return { 
-        success: saved, 
-        added: uniqueNewMatches.length, 
-        total: existingData.footballMatches.length,
-        matches: uniqueNewMatches
-      };
-      
-    } catch (error) {
-      this.debugLog('data', `Error updating match data: ${error.message}`);
-      return { success: false, error: error.message };
-    }
-  }
-
-  async testConnection() {
-    try {
-      this.debugLog('requests', 'Testing live-footballontv.com connection...');
-      
-      // Try direct fetch first
-      let success = false;
-      
-      try {
-        const response = await fetch(this.baseUrl, { 
-          method: 'HEAD',
-          mode: 'no-cors' // This won't give us the content but will test if the site is reachable
-        });
-        success = true; // If we get here without error, the site is reachable
-      } catch (error) {
-        // Try proxy
-        try {
-          const proxyUrl = `${this.corsProxyUrl}${encodeURIComponent(this.baseUrl)}`;
-          const response = await fetch(proxyUrl);
-          success = response.ok;
-        } catch (proxyError) {
-          success = false;
-        }
-      }
-      
-      this.debugLog('requests', `Website connection ${success ? 'successful' : 'failed/blocked by CORS'}`);
-      
-      if (!success) {
-        this.debugLog('requests', 'Note: Web version will use demo data due to CORS restrictions');
-      }
-      
-      return success;
-      
-    } catch (error) {
-      this.debugLog('requests', `Website connection test failed: ${error.message}`);
-      return false;
-    }
-  }
-
-  getAllChannels(matches) {
-    const allChannels = new Set();
-    
-    matches.forEach(match => {
-      if (match.channels && Array.isArray(match.channels)) {
-        match.channels.forEach(channel => {
-          if (channel && channel !== 'Check TV Guide') {
-            allChannels.add(channel);
-          }
-        });
-      } else if (match.channel && match.channel !== 'Check TV Guide') {
-        const channels = match.channel.split(',').map(ch => ch.trim());
-        channels.forEach(channel => {
-          if (channel) {
-            allChannels.add(channel);
-          }
-        });
-      }
-    });
-    
-    return Array.from(allChannels).sort();
   }
 }
 

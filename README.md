@@ -5,8 +5,8 @@ A comprehensive sports application that displays today's football matches and up
 ## 🚀 Quick Start
 
 ### Web Version (Netlify/Browser)
-1. Open `web-index.html` in your browser, or
-2. Deploy to Netlify for online access
+1. Open `index.html` in your browser, or
+2. Deploy to Netlify for online access (with live data)
 
 ### Desktop Version (Electron)
 1. `npm install`
@@ -14,21 +14,22 @@ A comprehensive sports application that displays today's football matches and up
 
 ## 📱 Two Versions Available
 
-### 🌐 Web Version (`web-index.html`)
+### 🌐 Web Version (`index.html`)
 - **Runs in browsers** (Chrome, Firefox, Safari, Edge)
 - **Netlify deployable** for online access
 - Uses **localStorage** for data persistence
-- **CORS-limited** data fetching (uses demo data when blocked)
+- **Real live data** via Netlify Functions (bypasses CORS)
 - **No installation required**
 - Compatible with mobile devices
 
 **Files:**
-- `web-index.html` - Main web page
+- `index.html` - Main web page
 - `web-app.js` - Web-compatible app logic
 - `web-datamanager.js` - localStorage-based data management
-- `web-matchfetcher.js` - Browser fetch API with CORS handling
+- `web-matchfetcher.js` - Netlify Functions integration
+- `netlify/functions/fetch-football.js` - Live data fetcher
 
-### 🖥️ Desktop Version (`index.html`)
+### 🖥️ Desktop Version (`desktop-index.html`)
 - **Electron desktop app** (Windows, macOS, Linux)
 - Full **file system access** for data storage
 - **Direct web scraping** without CORS restrictions
@@ -36,7 +37,7 @@ A comprehensive sports application that displays today's football matches and up
 - **Better performance** for data processing
 
 **Files:**
-- `index.html` - Desktop app page
+- `desktop-index.html` - Desktop app page
 - `main.js` - Electron main process
 - `app.js` - Desktop app logic
 - `dataManager.js` - File system-based data management
@@ -48,7 +49,7 @@ A comprehensive sports application that displays today's football matches and up
 |---------|-------------|----------------|
 | **Installation** | None required | `npm install` |
 | **Data Storage** | localStorage | JSON files |
-| **Data Fetching** | Limited by CORS | Full access |
+| **Data Fetching** | Real live data via Netlify Functions | Full direct access |
 | **Performance** | Browser-dependent | Native performance |
 | **Offline Use** | Limited | Full offline |
 | **Updates** | Auto from web | Manual/auto-update |
@@ -89,11 +90,15 @@ A comprehensive sports application that displays today's football matches and up
 ### Local Development
 ```bash
 # Web version
-open web-index.html
+open index.html
 
 # Desktop version
 npm install
 npm start
+
+# Test web version with server
+python -m http.server 8000
+# Then visit: http://localhost:8000
 ```
 
 ## 🎨 Styling
@@ -129,8 +134,9 @@ Both versions use the same CSS files:
 ## 📊 Data Sources
 
 ### Football Data
-- **Primary**: live-footballontv.com (web scraping)
-- **Fallback**: Static demo data for testing
+- **Primary**: live-footballontv.com (web scraping via Netlify Functions)
+- **Web Method**: Netlify serverless functions bypass CORS
+- **Desktop Method**: Direct Node.js HTTPS requests
 - **Channels**: 30+ UK TV channels mapped
 - **Updates**: Automatic every 2 hours during active hours
 

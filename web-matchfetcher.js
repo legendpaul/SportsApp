@@ -81,7 +81,13 @@ class WebMatchFetcher {
         return await this.fetchWithNetlifyFunction();
       }
     } catch (error) {
-      this.debugLog('requests', `Error fetching matches: ${error.message}`);
+      this.debugLog('requests', `CRITICAL ERROR in fetchTodaysMatches: ${error.message}`, {
+        errorName: error.name,
+        errorMessage: error.message,
+        errorStack: error.stack,
+        isLocal: this.isLocal,
+        functionUrl: this.netlifyFunctionUrl
+      });
       
       // Try fallback methods if primary fails
       if (this.isLocal) {
@@ -101,49 +107,81 @@ class WebMatchFetcher {
   }
 
   async fetchWithNetlifyFunction() {
-    const response = await fetch(this.netlifyFunctionUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+    this.debugLog('requests', `Attempting to call Netlify function: ${this.netlifyFunctionUrl}`);
+    
+    try {
+      const response = await fetch(this.netlifyFunctionUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      this.debugLog('requests', `Netlify function response received`, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        url: response.url
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        this.debugLog('requests', `Netlify function HTTP error`, {
+          status: response.status,
+          statusText: response.statusText,
+          responseBody: errorText
+        });
+        throw new Error(`Netlify function failed: ${response.status} ${response.statusText} - ${errorText}`);
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(`Netlify function failed: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(`Function returned error: ${data.error}`);
-    }
-
-    // Log the data source and any notes
-    const source = data.source || 'unknown';
-    const fetchMethod = data.fetchMethod || 'unknown';
-    const note = data.note || '';
-    
-    this.debugLog('requests', `Successfully fetched ${data.todayCount} matches from Netlify function`, {
-      totalFound: data.totalFound,
-      todayCount: data.todayCount,
-      fetchTime: data.fetchTime,
-      source: source,
-      fetchMethod: fetchMethod,
-      note: note
-    });
-    
-    // Log additional info if using demo data
-    if (source === 'demo-data') {
-      this.debugLog('requests', `Using demo data: ${note}`);
-      if (data.error) {
-        this.debugLog('requests', `Original error: ${data.error}`);
+      const data = await response.json();
+      
+      this.debugLog('requests', `Netlify function JSON response parsed`, {
+        hasSuccess: 'success' in data,
+        success: data.success,
+        hasMatches: 'matches' in data,
+        matchCount: data.matches ? data.matches.length : 0
+      });
+      
+      if (!data.success) {
+        throw new Error(`Function returned error: ${data.error}`);
       }
-    } else if (source === 'live-data') {
-      this.debugLog('requests', `Successfully fetched live data via ${fetchMethod}`);
-    }
 
-    return data.matches || [];
+      // Log the data source and any notes
+      const source = data.source || 'unknown';
+      const fetchMethod = data.fetchMethod || 'unknown';
+      const note = data.note || '';
+      
+      this.debugLog('requests', `Successfully fetched ${data.todayCount} matches from Netlify function`, {
+        totalFound: data.totalFound,
+        todayCount: data.todayCount,
+        fetchTime: data.fetchTime,
+        source: source,
+        fetchMethod: fetchMethod,
+        note: note
+      });
+      
+      // Log additional info if using demo data
+      if (source === 'demo-data') {
+        this.debugLog('requests', `Using demo data: ${note}`);
+        if (data.error) {
+          this.debugLog('requests', `Original error: ${data.error}`);
+        }
+      } else if (source === 'live-data') {
+        this.debugLog('requests', `Successfully fetched live data via ${fetchMethod}`);
+      }
+
+      return data.matches || [];
+      
+    } catch (fetchError) {
+      this.debugLog('requests', `Netlify function fetch failed with error: ${fetchError.message}`, {
+        error: fetchError.name,
+        message: fetchError.message,
+        stack: fetchError.stack
+      });
+      throw fetchError; // Re-throw to be caught by fetchTodaysMatches
+    }
   }
 
   async fetchWithCorsProxy() {
@@ -201,15 +239,15 @@ class WebMatchFetcher {
   }
 
   generateLocalDemoMatches() {
-    this.debugLog('requests', 'Generating demo matches for local development...');
+    this.debugLog('requests', 'Generating demo matches for web version...');
     
     const today = new Date().toISOString().split('T')[0];
     const currentHour = new Date().getHours();
     
     const demoMatches = [
       {
-        id: `local_demo_${Date.now()}_1`,
-        time: "15:00",
+        id: `web_demo_${Date.now()}_1`,
+        time: "13:30",
         teamA: "Manchester City",
         teamB: "Arsenal", 
         competition: "Premier League",
@@ -218,12 +256,12 @@ class WebMatchFetcher {
         status: "upcoming",
         createdAt: new Date().toISOString(),
         matchDate: today,
-        apiSource: 'local-demo',
+        apiSource: 'web-demo',
         venue: 'Etihad Stadium'
       },
       {
-        id: `local_demo_${Date.now()}_2`,
-        time: "17:30",
+        id: `web_demo_${Date.now()}_2`,
+        time: "15:00",
         teamA: "Liverpool",
         teamB: "Chelsea",
         competition: "Premier League", 
@@ -232,12 +270,12 @@ class WebMatchFetcher {
         status: "upcoming",
         createdAt: new Date().toISOString(),
         matchDate: today,
-        apiSource: 'local-demo',
+        apiSource: 'web-demo',
         venue: 'Anfield'
       },
       {
-        id: `local_demo_${Date.now()}_3`,
-        time: "20:00",
+        id: `web_demo_${Date.now()}_3`,
+        time: "17:30",
         teamA: "Real Madrid",
         teamB: "Barcelona",
         competition: "La Liga",
@@ -246,12 +284,54 @@ class WebMatchFetcher {
         status: "upcoming",
         createdAt: new Date().toISOString(),
         matchDate: today,
-        apiSource: 'local-demo',
+        apiSource: 'web-demo',
         venue: 'Santiago Bernabéu'
+      },
+      {
+        id: `web_demo_${Date.now()}_4`,
+        time: "19:45",
+        teamA: "Bayern Munich",
+        teamB: "Borussia Dortmund",
+        competition: "Bundesliga",
+        channel: "Sky Sports Football",
+        channels: ["Sky Sports Football"],
+        status: "upcoming",
+        createdAt: new Date().toISOString(),
+        matchDate: today,
+        apiSource: 'web-demo',
+        venue: 'Allianz Arena'
+      },
+      {
+        id: `web_demo_${Date.now()}_5`,
+        time: "19:45",
+        teamA: "Paris Saint-Germain",
+        teamB: "Olympique Marseille",
+        competition: "Ligue 1",
+        channel: "Discovery+",
+        channels: ["Discovery+"],
+        status: "upcoming",
+        createdAt: new Date().toISOString(),
+        matchDate: today,
+        apiSource: 'web-demo',
+        venue: 'Parc des Princes'
+      },
+      {
+        id: `web_demo_${Date.now()}_6`,
+        time: "21:00",
+        teamA: "AC Milan",
+        teamB: "Inter Milan",
+        competition: "Serie A",
+        channel: "TNT Sports 1",
+        channels: ["TNT Sports 1"],
+        status: "upcoming",
+        createdAt: new Date().toISOString(),
+        matchDate: today,
+        apiSource: 'web-demo',
+        venue: 'San Siro'
       }
     ];
 
-    this.debugLog('requests', `Generated ${demoMatches.length} demo matches for local development`);
+    this.debugLog('requests', `Generated ${demoMatches.length} demo matches for today`);
     return demoMatches;
   }
 

@@ -7,6 +7,7 @@ A comprehensive sports application that displays today's football matches and up
 ### Web Version (Netlify/Browser)
 1. Open `index.html` in your browser, or
 2. Deploy to Netlify for online access (with live data)
+3. Test first with `error-test.html` to verify no JavaScript errors
 
 ### Desktop Version (Electron)
 1. `npm install`

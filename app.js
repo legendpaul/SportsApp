@@ -13,7 +13,7 @@ class SportsApp {
     this.ufcFetcher = null;
     this.lastFetchTime = null;
     this.lastUFCFetch = null;
-    this.autoFetchOnStartup = true;
+    this.shouldAutoFetchOnStartup = true;
     this.availableChannels = [];
     this.selectedChannels = new Set();
     this.showAllChannels = true;
@@ -46,7 +46,7 @@ class SportsApp {
       
       await this.loadMatchData();
       
-      if (this.autoFetchOnStartup) {
+      if (this.shouldAutoFetchOnStartup) {
         await this.autoFetchOnStartup();
       }
     } catch (error) {

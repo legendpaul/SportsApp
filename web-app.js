@@ -1,4 +1,4 @@
-// Web-compatible Sports App JavaScript - No Electron dependencies
+// Web-compatible Sports App JavaScript - Fixed initialization issue
 class WebSportsApp {
   constructor() {
     this.footballMatches = [];
@@ -10,7 +10,7 @@ class WebSportsApp {
     this.matchFetcher = null;
     this.lastFetchTime = null;
     this.lastUFCFetch = null;
-    this.autoFetchOnStartup = true;
+    this.enableAutoFetch = true; // Renamed to avoid any conflicts
     this.availableChannels = [];
     this.selectedChannels = new Set();
     this.showAllChannels = true;
@@ -40,8 +40,9 @@ class WebSportsApp {
       
       await this.loadMatchData();
       
-      if (this.autoFetchOnStartup) {
-        await this.autoFetchOnStartup();
+      // Fixed: Clear method call without naming conflicts
+      if (this.enableAutoFetch) {
+        await this.performAutoFetch();
       }
     } catch (error) {
       this.debugLog('data', `Failed to initialize data manager: ${error.message}`);
@@ -50,7 +51,7 @@ class WebSportsApp {
     }
   }
 
-  async autoFetchOnStartup() {
+  async performAutoFetch() {
     try {
       this.debugLog('requests', 'Auto-fetching sports data on startup...');
       
@@ -1157,14 +1158,33 @@ class WebSportsApp {
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🎯 DOM loaded, initializing Web Sports App...');
-  const app = new WebSportsApp();
   
-  window.sportsApp = app;
-  
-  window.fetchSportsData = () => app.fetchNewSportsData();
-  window.fetchFootball = () => app.matchFetcher?.updateMatchData();
-  window.manualCleanup = () => app.manualCleanup();
-  window.addMatch = (match) => app.addFootballMatch(match);
+  try {
+    const app = new WebSportsApp();
+    window.sportsApp = app;
+    
+    window.fetchSportsData = () => app.fetchNewSportsData();
+    window.fetchFootball = () => app.matchFetcher?.updateMatchData();
+    window.manualCleanup = () => app.manualCleanup();
+    window.addMatch = (match) => app.addFootballMatch(match);
+    
+    console.log('✅ Web Sports App initialized successfully!');
+  } catch (error) {
+    console.error('❌ Failed to initialize Web Sports App:', error);
+    
+    // Show error to user
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f44336; color: white; padding: 20px; border-radius: 10px; z-index: 9999; text-align: center;';
+    errorDiv.innerHTML = `
+      <h3>⚠️ App Initialization Error</h3>
+      <p><strong>Error:</strong> ${error.message}</p>
+      <p>Please refresh the page or check the console for more details.</p>
+      <button onclick="window.location.reload()" style="background: white; color: #f44336; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+        🔄 Refresh Page
+      </button>
+    `;
+    document.body.appendChild(errorDiv);
+  }
 });
 
 window.addEventListener('error', (e) => {

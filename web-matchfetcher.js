@@ -3,9 +3,8 @@
 class WebMatchFetcher {
   constructor(debugLogCallback = null) {
     this.version = '2.1.0';
-    // Use working scraping function instead of API function
-    this.netlifyFunctionUrl = '/.netlify/functions/fetch-football';
-    this.apiFunctionUrl = '/.netlify/functions/fetch-football-api'; // Backup if APIs are configured
+    // Switch to API version for reliable live data
+    this.netlifyFunctionUrl = '/.netlify/functions/fetch-football-api';
     this.corsProxyUrl = 'https://api.allorigins.win/get?url=';
     this.directUrl = 'https://www.live-footballontv.com';
     
@@ -109,68 +108,18 @@ class WebMatchFetcher {
   }
 
   async fetchWithNetlifyFunction() {
-    this.debugLog('requests', `Attempting to call primary Netlify function: ${this.netlifyFunctionUrl}`);
+    this.debugLog('requests', `Attempting to call Netlify function: ${this.netlifyFunctionUrl}`);
     
     try {
-      // Try the primary scraping function first
-      const response = await this.callNetlifyFunction(this.netlifyFunctionUrl);
-      
-      if (response.success && response.matches && response.matches.length > 0) {
-        this.debugLog('requests', `Primary function successful: ${response.matches.length} matches`);
-        return response.matches;
-      } else if (response.success && response.matches && response.matches.length === 0) {
-        this.debugLog('requests', 'Primary function successful but no matches found for today');
-        return response.matches; // Return empty array if no matches today
-      } else {
-        this.debugLog('requests', `Primary function failed or returned no data: ${response.error || 'Unknown error'}`);
-        throw new Error(response.error || 'Primary function returned no data');
-      }
-      
-    } catch (primaryError) {
-      this.debugLog('requests', `Primary function failed: ${primaryError.message}`);
-      this.debugLog('requests', `Trying backup API function: ${this.apiFunctionUrl}`);
-      
-      // Try the API function as backup
-      try {
-        const apiResponse = await this.callNetlifyFunction(this.apiFunctionUrl);
-        
-        if (apiResponse.success && apiResponse.matches && apiResponse.matches.length > 0) {
-          this.debugLog('requests', `Backup API function successful: ${apiResponse.matches.length} matches`);
-          return apiResponse.matches;
-        } else {
-          this.debugLog('requests', `Backup API function also failed: ${apiResponse.error || 'No data'}`);
-          throw new Error(`Both functions failed. Primary: ${primaryError.message}, API: ${apiResponse.error || 'No data'}`);
-        }
-        
-      } catch (apiError) {
-        this.debugLog('requests', `Backup API function failed: ${apiError.message}`);
-        
-        // Both functions failed, throw the original error
-        throw new Error(`All Netlify functions failed. Scraper: ${primaryError.message}, API: ${apiError.message}`);
-      }
-    }
-  }
-  
-  async callNetlifyFunction(functionUrl) {
-    this.debugLog('requests', `Calling function: ${functionUrl}`);
-    
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
-      const response = await fetch(functionUrl, {
+      const response = await fetch(this.netlifyFunctionUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        signal: controller.signal
+          'Content-Type': 'application/json'
+        }
       });
-      
-      clearTimeout(timeoutId);
 
-      this.debugLog('requests', `Function response received`, {
+      this.debugLog('requests', `Netlify function response received`, {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
@@ -178,43 +127,61 @@ class WebMatchFetcher {
       });
 
       if (!response.ok) {
-        let errorText = '';
-        try {
-          errorText = await response.text();
-        } catch (textError) {
-          errorText = `Could not read error response: ${textError.message}`;
-        }
-        
-        this.debugLog('requests', `Function HTTP error`, {
+        const errorText = await response.text();
+        this.debugLog('requests', `Netlify function HTTP error`, {
           status: response.status,
           statusText: response.statusText,
-          responseBody: errorText.substring(0, 500)
+          responseBody: errorText
         });
-        
-        throw new Error(`Function failed: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`Netlify function failed: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       const data = await response.json();
       
-      this.debugLog('requests', `Function response parsed`, {
+      this.debugLog('requests', `Netlify function JSON response parsed`, {
         hasSuccess: 'success' in data,
         success: data.success,
         hasMatches: 'matches' in data,
-        matchCount: data.matches ? data.matches.length : 0,
-        source: data.source || 'unknown',
-        note: data.note || 'No note'
+        matchCount: data.matches ? data.matches.length : 0
       });
       
-      return data;
+      if (!data.success) {
+        throw new Error(`Function returned error: ${data.error}`);
+      }
+
+      // Log the data source and any notes
+      const source = data.source || 'unknown';
+      const fetchMethod = data.fetchMethod || 'unknown';
+      const note = data.note || '';
+      
+      this.debugLog('requests', `Successfully fetched ${data.todayCount} matches from Netlify function`, {
+        totalFound: data.totalFound,
+        todayCount: data.todayCount,
+        fetchTime: data.fetchTime,
+        source: source,
+        fetchMethod: fetchMethod,
+        note: note
+      });
+      
+      // Log additional info if using demo data
+      if (source === 'demo-data') {
+        this.debugLog('requests', `Using demo data: ${note}`);
+        if (data.error) {
+          this.debugLog('requests', `Original error: ${data.error}`);
+        }
+      } else if (source === 'live-data') {
+        this.debugLog('requests', `Successfully fetched live data via ${fetchMethod}`);
+      }
+
+      return data.matches || [];
       
     } catch (fetchError) {
-      if (fetchError.name === 'AbortError') {
-        this.debugLog('requests', 'Function request timed out after 30 seconds');
-        throw new Error('Function request timed out');
-      }
-      
-      this.debugLog('requests', `Function call failed: ${fetchError.message}`);
-      throw fetchError;
+      this.debugLog('requests', `Netlify function fetch failed with error: ${fetchError.message}`, {
+        error: fetchError.name,
+        message: fetchError.message,
+        stack: fetchError.stack
+      });
+      throw fetchError; // Re-throw to be caught by fetchTodaysMatches
     }
   }
 

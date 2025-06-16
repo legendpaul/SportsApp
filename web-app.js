@@ -315,7 +315,7 @@ class WebSportsApp {
       if (isLocal) {
         footer.textContent = 'Local Development • Live data via CORS proxy • Fallback demo data';
       } else {
-        footer.innerHTML = 'Live data from live-footballontv.com • Times shown in UK timezone • Powered by Netlify Functions<br><span style="font-size: 11px; opacity: 0.6;">🔧 Having issues? <a href="test-netlify-functions.html" style="color: inherit;">Test Functions</a></span>';
+        footer.textContent = 'Live data from live-footballontv.com • Times shown in UK timezone • Powered by Netlify Functions';
       }
     }
   }

@@ -63,11 +63,16 @@
           <div class="time-slot prelims">
             <div class="time-label">Prelims</div>
             <div class="time-value">11:00 PM (Sat) - TNT Sports</div>
+            <div class="time-note">📍 Loading accurate times...</div>
           </div>
           <div class="time-slot main-card">
             <div class="time-label">Main Card</div>
             <div class="time-value">2:00 AM (Sun) - TNT Sports</div>
+            <div class="time-note">📍 Loading accurate times...</div>
           </div>
+        </div>
+        <div class="time-explanation">
+          <p><strong>🕐 Time Zone Info:</strong> UFC events have different start times based on event type. ABC cards start earlier (8:00 PM ET), Fight Nights start later (10:00 PM ET). All times automatically converted to UK timezone.</p>
         </div>
       </div>
 
@@ -162,5 +167,32 @@
 
   <!-- Desktop Electron JavaScript modules -->
   <script src="app.js"></script>
+  
+  <!-- UFC Timing Styles -->
+  <style>
+    .time-explanation {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      border-left: 4px solid #4CAF50;
+    }
+    .time-explanation p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .time-note {
+      font-size: 11px;
+      color: #4CAF50;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .early-prelims {
+      opacity: 0.9;
+      border-left: 3px solid #2196F3;
+    }
+  </style>
 </body>
 </html>

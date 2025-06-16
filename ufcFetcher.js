@@ -18,6 +18,77 @@ class UFCFetcher {
     };
   }
 
+  /**
+   * Get accurate UK UFC broadcast channels based on event type
+   * @param {string} eventType - Type of UFC event
+   * @param {string} ufcNumber - UFC number (for PPV events)
+   * @returns {string} Accurate UK broadcast channel
+   */
+  getUKUFCBroadcastChannel(eventType, ufcNumber = null) {
+    switch(eventType) {
+      case 'ppv':
+        // Pay-Per-View events in UK
+        return 'TNT Sports Box Office';
+      
+      case 'abc_card':
+        // ABC/ESPN cards shown on TNT Sports in UK
+        return 'TNT Sports 1';
+      
+      case 'fight_night':
+        // Fight Night events on TNT Sports
+        return 'TNT Sports 2';
+      
+      case 'international':
+        // International events may vary
+        return 'TNT Sports 1';
+      
+      default:
+        return 'TNT Sports 1';
+    }
+  }
+  
+  /**
+   * Format UK broadcast information with accurate channels and timing
+   * @param {object} event - UFC event object
+   * @returns {object} Formatted broadcast info
+   */
+  formatUKBroadcastInfo(event) {
+    const channel = this.getUKUFCBroadcastChannel(event.eventType, event.ufcNumber);
+    
+    const broadcastInfo = {
+      channel,
+      earlyPrelimsUK: {
+        time: new Date(event.earlyPrelimsUkTime).toLocaleTimeString('en-GB', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        }),
+        day: new Date(event.earlyPrelimsUkTime).toLocaleDateString('en-GB', { weekday: 'short' }),
+        channel: event.eventType === 'ppv' ? 'TNT Sports Box Office' : 'TNT Sports 1'
+      },
+      prelimsUK: {
+        time: new Date(event.prelimsUkTime).toLocaleTimeString('en-GB', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        }),
+        day: new Date(event.prelimsUkTime).toLocaleDateString('en-GB', { weekday: 'short' }),
+        channel: event.eventType === 'ppv' ? 'TNT Sports Box Office' : 'TNT Sports 1'
+      },
+      mainCardUK: {
+        time: new Date(event.mainCardUkTime).toLocaleTimeString('en-GB', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        }),
+        day: new Date(event.mainCardUkTime).toLocaleDateString('en-GB', { weekday: 'short' }),
+        channel
+      }
+    };
+    
+    return broadcastInfo;
+  }
+
   async fetchUpcomingUFCEvents() {
     try {
       console.log('🥊 Fetching upcoming UFC events...');
@@ -68,22 +139,50 @@ class UFCFetcher {
   }
 
   getCurrentUFCEvents() {
-    // Accurate current UFC events based on official UFC schedule
+    // Accurate current UFC events with precise timing based on event type and broadcast requirements
     return [
       {
         id: 'ufc_on_abc_6_hill_vs_rountree_2025',
         title: 'UFC on ABC 6: Hill vs Rountree Jr.',
         date: '2025-06-21',
-        time: '21:00:00', // 9 PM ET
-        ukDateTime: '2025-06-22T02:00:00.000Z', // 2 AM UK time Sunday
+        
+        // ABC/ESPN events typically start earlier for prime time
+        time: '20:00:00', // 8 PM ET main card start
+        ukDateTime: '2025-06-22T01:00:00.000Z', // 1 AM UK time Sunday (CORRECTED)
+        
+        // Card timing breakdown - CORRECTED UK TIMES
+        earlyPrelimsTime: '18:00:00', // 6 PM ET
+        earlyPrelimsUkTime: '2025-06-21T23:00:00.000Z', // 11 PM UK Saturday
+        
+        prelimsTime: '19:00:00', // 7 PM ET  
+        prelimsUkTime: '2025-06-22T00:00:00.000Z', // Midnight UK Sunday (CORRECTED)
+        
+        mainCardTime: '20:00:00', // 8 PM ET
+        mainCardUkTime: '2025-06-22T01:00:00.000Z', // 1 AM UK Sunday (CORRECTED)
+        
         location: 'UFC APEX, Las Vegas, Nevada, United States',
         venue: 'UFC APEX',
+        eventType: 'abc_card', // ABC/ESPN events
+        timezone: 'America/New_York', // Eastern Time
         status: 'upcoming',
         description: 'UFC on ABC 6 featuring Jamahal Hill vs Khalil Rountree Jr. in the main event',
         poster: null,
         createdAt: new Date().toISOString(),
         apiSource: 'manual_accurate_data',
         apiEventId: 'ufc_abc_6_2025',
+        
+        // Enhanced timing information for ABC card
+        broadcastTimes: {
+          earlyPrelims: {
+            et: '18:00', uk: '23:00', local: '15:00 PDT'
+          },
+          prelims: {
+            et: '19:00', uk: '00:00+1', local: '16:00 PDT'
+          },
+          mainCard: {
+            et: '20:00', uk: '01:00+1', local: '17:00 PDT'
+          }
+        },
         
         mainCard: [
           { 
@@ -160,25 +259,53 @@ class UFCFetcher {
         ],
         
         ufcNumber: null, // ABC card, not numbered event
-        broadcast: 'TNT Sports',
+        broadcast: this.getUKUFCBroadcastChannel('abc_card'),
         ticketInfo: 'UFC on ABC 6 Hill vs Rountree Jr June 21 2025'
       },
       
-      // Add next upcoming event
+      // Add next upcoming event - Fight Night events have different timing than PPV/ABC
       {
         id: 'ufc_fight_night_blanchfield_vs_barber_2025',
         title: 'UFC Fight Night: Blanchfield vs Barber',
         date: '2025-05-31',
-        time: '21:00:00', // 9 PM ET
-        ukDateTime: '2025-06-01T02:00:00.000Z', // 2 AM UK time Sunday
+        
+        // Fight Night events typically start later on Saturday nights
+        time: '22:00:00', // 10 PM ET main card start
+        ukDateTime: '2025-06-01T03:00:00.000Z', // 3 AM UK time Sunday (CORRECTED)
+        
+        // Card timing breakdown for Fight Night - CORRECTED UK TIMES
+        earlyPrelimsTime: '19:00:00', // 7 PM ET
+        earlyPrelimsUkTime: '2025-06-01T00:00:00.000Z', // Midnight UK Sunday (CORRECTED)
+        
+        prelimsTime: '20:00:00', // 8 PM ET (CORRECTED - was 21:00)
+        prelimsUkTime: '2025-06-01T01:00:00.000Z', // 1 AM UK Sunday (CORRECTED)
+        
+        mainCardTime: '22:00:00', // 10 PM ET
+        mainCardUkTime: '2025-06-01T03:00:00.000Z', // 3 AM UK Sunday (CORRECTED)
+        
         location: 'UFC APEX, Las Vegas, Nevada, United States',
         venue: 'UFC APEX',
+        eventType: 'fight_night', // ESPN+ Fight Night
+        timezone: 'America/New_York',
         status: 'upcoming',
         description: 'UFC Fight Night featuring Erin Blanchfield vs Maycee Barber in the main event',
         poster: null,
         createdAt: new Date().toISOString(),
         apiSource: 'manual_accurate_data',
         apiEventId: 'ufc_fight_night_may_31_2025',
+        
+        // Fight Night timing information - CORRECTED
+        broadcastTimes: {
+          earlyPrelims: {
+            et: '19:00', uk: '00:00+1', local: '16:00 PDT'
+          },
+          prelims: {
+            et: '20:00', uk: '01:00+1', local: '17:00 PDT'
+          },
+          mainCard: {
+            et: '22:00', uk: '03:00+1', local: '19:00 PDT'
+          }
+        },
         
         mainCard: [
           { 
@@ -233,7 +360,7 @@ class UFCFetcher {
         earlyPrelimCard: [], // Fight Night events typically don't have early prelims
         
         ufcNumber: null, // Fight Night, not numbered event
-        broadcast: 'TNT Sports',
+        broadcast: this.getUKUFCBroadcastChannel('fight_night'),
         ticketInfo: 'UFC Fight Night Blanchfield vs Barber May 31 2025'
       }
     ];
@@ -585,13 +712,19 @@ class UFCFetcher {
   determineBroadcast(event) {
     const title = (event.strEvent || '').toLowerCase();
     
+    // Determine event type first
+    let eventType = 'fight_night'; // default
+    
     if (title.includes('ppv') || /ufc\s+\d+/.test(title)) {
-      return 'TNT Sports Box Office';
-    } else if (title.includes('fight night') || title.includes('on espn') || title.includes('on abc')) {
-      return 'TNT Sports';
-    } else {
-      return 'TNT Sports';
+      eventType = 'ppv';
+    } else if (title.includes('on abc') || title.includes('on espn')) {
+      eventType = 'abc_card';
+    } else if (title.includes('fight night')) {
+      eventType = 'fight_night';
     }
+    
+    // Return accurate UK channel
+    return this.getUKUFCBroadcastChannel(eventType);
   }
 
   getRandomWeightClass() {

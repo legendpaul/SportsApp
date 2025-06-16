@@ -1210,24 +1210,325 @@ class WebSportsApp {
 
   copyDebugToClipboard() {
     try {
-      const debugContent = this.formatAllDebugLogs();
+      this.debugLog('display', 'Generating comprehensive debug report for clipboard...');
       
-      if (navigator.clipboard && window.isSecureContext) {
-        // Use modern Clipboard API
-        navigator.clipboard.writeText(debugContent).then(() => {
-          this.showCopyNotification('✅ Debug logs copied to clipboard!');
-        }).catch(err => {
-          console.error('Failed to copy to clipboard:', err);
-          this.fallbackCopyToClipboard(debugContent);
-        });
+      const debugContent = this.generateComprehensiveDebugReport();
+      
+      // Enhanced browser compatibility check
+      const hasClipboardAPI = navigator.clipboard && 
+                             typeof navigator.clipboard.writeText === 'function' && 
+                             window.isSecureContext;
+      
+      const hasExecCommand = typeof document.execCommand === 'function';
+      
+      this.debugLog('display', 'Clipboard capabilities detected:', {
+        hasClipboardAPI,
+        hasExecCommand,
+        isSecureContext: window.isSecureContext,
+        protocol: window.location.protocol,
+        hostname: window.location.hostname
+      });
+
+      if (hasClipboardAPI) {
+        this.debugLog('display', 'Using modern Clipboard API...');
+        this.copyWithClipboardAPI(debugContent);
+      } else if (hasExecCommand) {
+        this.debugLog('display', 'Using legacy execCommand fallback...');
+        this.copyWithExecCommand(debugContent);
       } else {
-        // Fallback for older browsers or non-HTTPS
-        this.fallbackCopyToClipboard(debugContent);
+        this.debugLog('display', 'No clipboard support available, showing manual copy modal...');
+        this.showManualCopyModal(debugContent);
       }
+      
     } catch (error) {
-      console.error('Error copying debug logs:', error);
-      this.showCopyNotification('❌ Failed to copy debug logs');
+      this.debugLog('display', `Critical error in copy function: ${error.message}`);
+      this.showFetchResult(`❌ Copy failed: ${error.message}`);
+      console.error('Critical error copying debug logs:', error);
     }
+  }
+
+  async copyWithClipboardAPI(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      this.showCopySuccessNotification('✅ Debug logs copied to clipboard! (Modern API)');
+      this.debugLog('display', 'Debug logs successfully copied via Clipboard API');
+    } catch (clipboardError) {
+      this.debugLog('display', `Clipboard API failed: ${clipboardError.message}, trying fallback...`);
+      
+      // If clipboard API fails, try execCommand
+      if (typeof document.execCommand === 'function') {
+        this.copyWithExecCommand(text);
+      } else {
+        this.showManualCopyModal(text);
+      }
+    }
+  }
+
+  copyWithExecCommand(text) {
+    try {
+      // Create a more robust textarea for copying
+      const textarea = document.createElement('textarea');
+      
+      // Set properties to make it as invisible and functional as possible
+      textarea.value = text;
+      textarea.style.cssText = `
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+        z-index: -1;
+        font-size: 12px;
+        border: none;
+        outline: none;
+        background: transparent;
+      `;
+      
+      // Ensure the textarea is not readonly
+      textarea.readOnly = false;
+      
+      document.body.appendChild(textarea);
+      
+      // Focus and select with better browser support
+      textarea.focus();
+      textarea.select();
+      
+      // For iOS Safari
+      if (navigator.platform && /iPad|iPhone|iPod/.test(navigator.platform)) {
+        const range = document.createRange();
+        range.selectNodeContents(textarea);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        textarea.setSelectionRange(0, 999999);
+      } else {
+        // For other browsers
+        textarea.setSelectionRange(0, textarea.value.length);
+      }
+      
+      // Attempt to copy
+      const successful = document.execCommand('copy');
+      
+      // Clean up
+      document.body.removeChild(textarea);
+      
+      if (successful) {
+        this.showCopySuccessNotification('✅ Debug logs copied to clipboard! (Legacy method)');
+        this.debugLog('display', 'Debug logs successfully copied using execCommand');
+      } else {
+        this.debugLog('display', 'execCommand copy failed, showing manual modal...');
+        this.showManualCopyModal(text);
+      }
+      
+    } catch (execError) {
+      this.debugLog('display', `execCommand copy failed: ${execError.message}`);
+      this.showManualCopyModal(text);
+    }
+  }
+
+  showManualCopyModal(text) {
+    this.debugLog('display', 'Showing enhanced manual copy modal...');
+    
+    // Remove any existing modal
+    const existingModal = document.querySelector('.debug-copy-modal');
+    if (existingModal) existingModal.remove();
+    
+    const modal = document.createElement('div');
+    modal.className = 'debug-copy-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.3s ease-out;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+      background: white;
+      padding: 28px;
+      border-radius: 16px;
+      max-width: 90%;
+      max-height: 90%;
+      width: 600px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+    `;
+    
+    const header = document.createElement('div');
+    header.style.cssText = 'margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;';
+    header.innerHTML = `
+      <div>
+        <h3 style="margin: 0; color: #333; font-size: 20px; font-weight: 700;">📋 Debug Logs - Manual Copy</h3>
+        <p style="margin: 8px 0 0 0; color: #666; font-size: 14px; line-height: 1.4;">
+          Automatic copy failed. Please manually copy the debug data below.
+        </p>
+      </div>
+      <button onclick="this.closest('.debug-copy-modal').remove()" 
+              style="background: #f44336; color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; min-width: 70px;"
+              onmouseover="this.style.background='#d32f2f'; this.style.transform='scale(1.05)'" 
+              onmouseout="this.style.background='#f44336'; this.style.transform='scale(1)'">✕ Close</button>
+    `;
+    
+    const textareaContainer = document.createElement('div');
+    textareaContainer.style.cssText = 'flex: 1; min-height: 0; margin-bottom: 20px;';
+    
+    const textarea = document.createElement('textarea');
+    textarea.style.cssText = `
+      width: 100%;
+      height: 100%;
+      min-height: 400px;
+      max-height: 60vh;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      resize: vertical;
+      background: #f8f9fa;
+      color: #333;
+      outline: none;
+      transition: border-color 0.2s;
+    `;
+    textarea.value = text;
+    textarea.readOnly = true;
+    
+    // Enhanced focus styling
+    textarea.addEventListener('focus', () => {
+      textarea.style.borderColor = '#4CAF50';
+      textarea.style.background = '#fff';
+    });
+    textarea.addEventListener('blur', () => {
+      textarea.style.borderColor = '#e0e0e0';
+      textarea.style.background = '#f8f9fa';
+    });
+    
+    textareaContainer.appendChild(textarea);
+    
+    const instructions = document.createElement('div');
+    instructions.style.cssText = 'padding: 16px; background: linear-gradient(135deg, #e3f2fd, #f0f8ff); border-radius: 10px; border-left: 5px solid #2196f3;';
+    instructions.innerHTML = `
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 18px; margin-right: 8px;">📋</span>
+        <h4 style="margin: 0; color: #1976d2; font-size: 15px; font-weight: 600;">Copy Instructions</h4>
+      </div>
+      <div style="color: #424242; font-size: 13px; line-height: 1.5;">
+        <div style="margin-bottom: 8px;"><strong>Desktop:</strong></div>
+        <div style="margin-left: 16px; margin-bottom: 12px;">
+          1. Click in the text area above<br>
+          2. Select all (Ctrl+A / Cmd+A)<br>
+          3. Copy (Ctrl+C / Cmd+C)
+        </div>
+        <div style="margin-bottom: 8px;"><strong>Mobile:</strong></div>
+        <div style="margin-left: 16px;">
+          1. Tap and hold in the text area<br>
+          2. Select "Select All" then "Copy"
+        </div>
+      </div>
+    `;
+    
+    const buttonRow = document.createElement('div');
+    buttonRow.style.cssText = 'display: flex; gap: 12px; margin-top: 16px;';
+    
+    const selectAllButton = document.createElement('button');
+    selectAllButton.textContent = '📝 Select All';
+    selectAllButton.style.cssText = `
+      flex: 1;
+      padding: 12px;
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    selectAllButton.onclick = () => {
+      textarea.focus();
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+    };
+    
+    const tryAgainButton = document.createElement('button');
+    tryAgainButton.textContent = '🔄 Try Auto-Copy';
+    tryAgainButton.style.cssText = `
+      flex: 1;
+      padding: 12px;
+      background: linear-gradient(135deg, #2196F3, #1976D2);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    tryAgainButton.onclick = () => {
+      modal.remove();
+      this.copyDebugToClipboard();
+    };
+    
+    buttonRow.appendChild(selectAllButton);
+    buttonRow.appendChild(tryAgainButton);
+    
+    // Add animation styles
+    if (!document.getElementById('modal-animation-styles')) {
+      const style = document.createElement('style');
+      style.id = 'modal-animation-styles';
+      style.textContent = `
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    content.appendChild(header);
+    content.appendChild(textareaContainer);
+    content.appendChild(instructions);
+    content.appendChild(buttonRow);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // Auto-select text after a brief delay
+    setTimeout(() => {
+      textarea.focus();
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+    }, 200);
+    
+    // Enhanced keyboard support
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        modal.remove();
+        document.removeEventListener('keydown', handleKeyDown);
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        e.preventDefault();
+        textarea.focus();
+        textarea.select();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+        document.removeEventListener('keydown', handleKeyDown);
+      }
+    });
   }
 
   fallbackCopyToClipboard(text) {

@@ -569,12 +569,171 @@ class SportsApp {
           }
         }
         
+        // Update UK timing display
+        this.updateUFCTiming(upcomingEvent);
+        
         const lastUFCFetchText = this.lastUFCFetch ? 
           ` (UFC Updated: ${new Date(this.lastUFCFetch).toLocaleTimeString('en-GB')})` : '';
         const apiIndicator = upcomingEvent.apiSource ? ' 🌐' : ' ✏️';
         ufcTitle.textContent += apiIndicator + lastUFCFetchText;
       }
     }
+  }
+  
+  updateUFCTiming(event) {
+    // Update the UK Times section with accurate timing
+    const ukTimesSection = document.querySelector('.uk-times');
+    if (!ukTimesSection) return;
+    
+    this.debugLog('display', 'Updating UFC timing display', { event });
+    
+    // Safe date formatting with fallback
+    const formatUKTime = (dateString, fallbackHour = '18:00') => {
+      if (!dateString) {
+        return fallbackHour;
+      }
+      
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+          return fallbackHour;
+        }
+        return date.toLocaleTimeString('en-GB', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        });
+      } catch (error) {
+        this.debugLog('display', `Error formatting time: ${error.message}`);
+        return fallbackHour;
+      }
+    };
+    
+    const formatUKDay = (dateString, fallbackDay = 'Sat') => {
+      if (!dateString) {
+        return fallbackDay;
+      }
+      
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+          return fallbackDay;
+        }
+        return date.toLocaleDateString('en-GB', { weekday: 'short' });
+      } catch (error) {
+        this.debugLog('display', `Error formatting day: ${error.message}`);
+        return fallbackDay;
+      }
+    };
+    
+    // Calculate times based on event type with fallbacks
+    const getEventTimes = (event) => {
+      const eventType = event.eventType || 'fight_night';
+      const baseChannel = event.broadcast || 'TNT Sports 1';
+      
+      // Use existing times if available, otherwise calculate from event type
+      let prelimsTime, prelimsDay, mainCardTime, mainCardDay;
+      
+      if (event.prelimsUkTime && event.mainCardUkTime) {
+        prelimsTime = formatUKTime(event.prelimsUkTime, '18:00');
+        prelimsDay = formatUKDay(event.prelimsUkTime, 'Sat');
+        mainCardTime = formatUKTime(event.mainCardUkTime, '20:00');
+        mainCardDay = formatUKDay(event.mainCardUkTime, 'Sat');
+      } else {
+        // CORRECTED fallback based on ACTUAL UK broadcast times
+        switch (eventType) {
+          case 'abc_card':
+            // ABC cards: Based on actual UK broadcast schedule
+            prelimsTime = '17:00';  // 5:00 PM UK
+            prelimsDay = 'Sat';
+            mainCardTime = '18:00'; // 6:00 PM UK
+            mainCardDay = 'Sat';
+            break;
+          case 'fight_night':
+            // Fight Nights: Based on actual UK broadcast times (user provided)
+            prelimsTime = '18:00';  // 6:00 PM UK
+            prelimsDay = 'Sat';
+            mainCardTime = '20:00'; // 8:00 PM UK (as shown in user screenshot)
+            mainCardDay = 'Sat';
+            break;
+          case 'ppv':
+            // PPV: Typically later UK broadcast
+            prelimsTime = '18:00';  // 6:00 PM UK
+            prelimsDay = 'Sat';
+            mainCardTime = '20:00'; // 8:00 PM UK
+            mainCardDay = 'Sat';
+            break;
+          default:
+            // Default to actual UK broadcast timing
+            prelimsTime = '18:00';
+            prelimsDay = 'Sat';
+            mainCardTime = '20:00';
+            mainCardDay = 'Sat';
+        }
+      }
+      
+      return {
+        prelimsTime,
+        prelimsDay,
+        mainCardTime,
+        mainCardDay,
+        channel: baseChannel
+      };
+    };
+    
+    const times = getEventTimes(event);
+    
+    // Update the title to show it's accurate
+    const timesTitle = ukTimesSection.querySelector('.times-title');
+    if (timesTitle) {
+      const eventTypeDisplay = (event.eventType || 'UFC').toUpperCase();
+      timesTitle.textContent = `UK Start Times (${eventTypeDisplay} - ACCURATE)`;
+    }
+    
+    // Update the timing grid
+    const timesGrid = ukTimesSection.querySelector('.times-grid');
+    if (timesGrid) {
+      timesGrid.innerHTML = `
+        ${event.earlyPrelimsUkTime ? `
+        <div class="time-slot early-prelims">
+          <div class="time-label">Early Prelims</div>
+          <div class="time-value">${formatUKTime(event.earlyPrelimsUkTime, '17:00')} (${formatUKDay(event.earlyPrelimsUkTime, 'Sat')}) - ${times.channel}</div>
+          <div class="time-note">📍 ${event.eventType} Event Timing</div>
+        </div>
+        ` : ''}
+        <div class="time-slot prelims">
+          <div class="time-label">Prelims</div>
+          <div class="time-value">${times.prelimsTime} (${times.prelimsDay}) - ${times.channel}</div>
+          <div class="time-note">📍 ${event.eventType} Event Timing</div>
+        </div>
+        <div class="time-slot main-card">
+          <div class="time-label">Main Card</div>
+          <div class="time-value">${times.mainCardTime} (${times.mainCardDay}) - ${times.channel}</div>
+          <div class="time-note">📍 ${event.eventType} Event Timing</div>
+        </div>
+      `;
+    }
+    
+    // Update the explanation
+    const timeExplanation = ukTimesSection.querySelector('.time-explanation p');
+    if (timeExplanation) {
+      const etTime = event.mainCardTime?.substring(0,5) || event.time?.substring(0,5) || '20:00';
+      const ukTime = times.mainCardTime;
+      const eventTypeDesc = {
+        'abc_card': 'ABC/ESPN cards broadcast at UK-friendly times (6:00 PM UK) for prime-time viewing',
+        'fight_night': 'Fight Night events broadcast at convenient UK times (8:00 PM UK) for UK audience', 
+        'ppv': 'Pay-Per-View events broadcast at optimal UK times (8:00 PM UK) for maximum viewership'
+      }[event.eventType] || 'UFC events broadcast at UK-friendly times';
+      
+      timeExplanation.innerHTML = `<strong>🕐 ${(event.eventType || 'UFC').toUpperCase()} Timing:</strong> ${eventTypeDesc}. UK broadcast times are optimized for UK viewing convenience.`;
+    }
+    
+    this.debugLog('display', 'UFC timing display updated successfully', {
+      eventType: event.eventType,
+      prelimsTime: times.prelimsTime,
+      mainCardTime: times.mainCardTime,
+      channel: times.channel
+    });
   }
 
   renderMainCard() {

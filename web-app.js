@@ -2,7 +2,7 @@
 // Version: 2.1.0 - Fixed Netlify environment detection
 class WebSportsApp {
   constructor() {
-    this.version = '2.1.1'; // Updated for cache busting
+    this.version = '2.1.0';
     this.footballMatches = [];
     this.ufcMainCard = [];
     this.ufcPrelimCard = [];
@@ -1902,28 +1902,6 @@ class WebSportsApp {
     } catch (error) {
       this.debugLog('requests', `Function test failed: ${error.message}`);
     }
-  }
-
-  // Quick test method for users to check which function URLs are being used
-  testFootballFunctionUrls() {
-    this.debugLog('requests', '🔧 Football Function URL Test');
-    
-    if (this.matchFetcher) {
-      this.debugLog('requests', `Primary Football Function: ${this.matchFetcher.netlifyFunctionUrl}`);
-      this.debugLog('requests', `Backup Football Function: ${this.matchFetcher.apiFunctionUrl}`);
-      this.debugLog('requests', `Environment (isLocal): ${this.matchFetcher.isLocal}`);
-      this.debugLog('requests', `Match Fetcher Version: ${this.matchFetcher.version}`);
-    } else {
-      this.debugLog('requests', 'ERROR: Match Fetcher not initialized!');
-    }
-    
-    console.log('🔧 Check the debug logs above to see which function URLs are being used');
-    return {
-      primary: this.matchFetcher?.netlifyFunctionUrl,
-      backup: this.matchFetcher?.apiFunctionUrl,
-      isLocal: this.matchFetcher?.isLocal,
-      version: this.matchFetcher?.version
-    };
   }
 
   initDebugWindow() {

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>🔧 Cache-Busting Function Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn.danger {
+            background: #dc3545;
+        }
+        .btn.danger:hover {
+            background: #c82333;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Cache-Busting Function Test</h1>
+        
+        <div class="test-result info">
+            <strong>Purpose:</strong> This page tests if your browser has loaded the latest JavaScript files and which Netlify function URLs are being used.
+        </div>
+        
+        <div id="results"></div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="btn" onclick="runTests()">🧪 Run Tests Again</button>
+            <button class="btn" onclick="forceRefresh()">🔄 Force Cache Clear</button>
+            <button class="btn danger" onclick="hardRefresh()">💥 Hard Refresh Page</button>
+        </div>
+        
+        <div class="test-result info">
+            <strong>Instructions:</strong>
+            <ol>
+                <li>If you see "❌ USING WRONG FUNCTION", try the "Hard Refresh Page" button</li>
+                <li>You can also press <kbd>Ctrl+F5</kbd> (Windows) or <kbd>Cmd+Shift+R</kbd> (Mac)</li>
+                <li>Try opening this page in incognito/private mode</li>
+                <li>Expected: Primary function should be "/.netlify/functions/fetch-football"</li>
+            </ol>
+        </div>
+        
+        <div class="test-result warning">
+            <strong>Still having issues?</strong> Copy the test results and send them for debugging.
+        </div>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function runTests() {
+            clearResults();
+            addResult('🔍 Starting cache-busting and function URL tests...', 'info');
+            
+            // Test 1: Check cache busting by testing script versions
+            addResult('Test 1: Checking script versions...', 'info');
+            const scripts = document.querySelectorAll('script[src*="?v="]');
+            if (scripts.length === 0) {
+                addResult('❌ No versioned scripts found - cache busting may not be working', 'error');
+            } else {
+                addResult(`✅ Found ${scripts.length} versioned scripts with cache busting`, 'success');
+            }
+            
+            // Test 2: Check if we can load the main app
+            addResult('Test 2: Testing main app availability...', 'info');
+            
+            // Load the main app scripts and test
+            try {
+                await loadMainAppScripts();
+                setTimeout(testFunctionUrls, 2000); // Wait for app to initialize
+            } catch (error) {
+                addResult(`❌ Failed to load main app scripts: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadMainAppScripts() {
+            const scripts = [
+                'web-datamanager.js?v=2.1.1',
+                'web-matchfetcher.js?v=2.1.1', 
+                'web-ufcfetcher.js?v=1.0.1',
+                'web-app.js?v=2.1.1'
+            ];
+            
+            for (const script of scripts) {
+                if (!document.querySelector(`script[src*="${script}"]`)) {
+                    await loadScript(script);
+                }
+            }
+        }
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        function testFunctionUrls() {
+            addResult('Test 3: Checking function URLs in Sports App...', 'info');
+            
+            if (window.WebSportsApp) {
+                addResult('✅ WebSportsApp class found', 'success');
+                
+                // Create a test instance
+                const testApp = new WebSportsApp();
+                
+                setTimeout(() => {
+                    if (testApp.matchFetcher) {
+                        const primaryUrl = testApp.matchFetcher.netlifyFunctionUrl;
+                        const backupUrl = testApp.matchFetcher.apiFunctionUrl;
+                        const version = testApp.matchFetcher.version;
+                        
+                        addResult(`📊 Match Fetcher Version: ${version}`, 'info');
+                        addResult(`🎯 Primary Function: ${primaryUrl}`, 'info');
+                        addResult(`🔄 Backup Function: ${backupUrl}`, 'info');
+                        
+                        if (primaryUrl.includes('fetch-football-api')) {
+                            addResult('❌ USING WRONG FUNCTION! Should be "fetch-football", not "fetch-football-api"', 'error');
+                            addResult('💡 Solution: Try hard refresh (Ctrl+F5) or clear browser cache', 'warning');
+                        } else if (primaryUrl.includes('fetch-football')) {
+                            addResult('✅ Using correct primary function: fetch-football', 'success');
+                        } else {
+                            addResult(`⚠️ Unexpected primary function URL: ${primaryUrl}`, 'warning');
+                        }
+                        
+                        // Test the actual function
+                        testActualFunction(primaryUrl);
+                        
+                    } else {
+                        addResult('❌ Match Fetcher not initialized', 'error');
+                    }
+                }, 1000);
+                
+            } else {
+                addResult('❌ WebSportsApp class not found - scripts may not have loaded', 'error');
+                addResult('💡 Try refreshing the page or clearing cache', 'warning');
+            }
+        }
+
+        async function testActualFunction(functionUrl) {
+            addResult('Test 4: Testing actual Netlify function...', 'info');
+            
+            try {
+                const response = await fetch(functionUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                addResult(`📡 Function Response: ${response.status} ${response.statusText}`, 
+                    response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`✅ Function Success: ${data.success ? 'YES' : 'NO'}`, 
+                        data.success ? 'success' : 'warning');
+                    addResult(`📊 Matches Found: ${data.matches ? data.matches.length : 0}`, 'info');
+                    addResult(`📝 Source: ${data.source || 'Unknown'}`, 'info');
+                    if (data.note) {
+                        addResult(`💬 Note: ${data.note}`, 'info');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    addResult(`❌ Function Error: ${errorText.substring(0, 200)}...`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Function Test Failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function forceRefresh() {
+            addResult('🔄 Clearing all caches...', 'info');
+            
+            // Clear service worker caches
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                for (const cacheName of cacheNames) {
+                    await caches.delete(cacheName);
+                }
+                addResult('✅ Cleared service worker caches', 'success');
+            }
+            
+            // Clear storage
+            localStorage.clear();
+            sessionStorage.clear();
+            addResult('✅ Cleared localStorage and sessionStorage', 'success');
+            
+            addResult('💡 Now try running tests again or hard refresh the page', 'warning');
+        }
+
+        function hardRefresh() {
+            addResult('💥 Performing hard refresh...', 'info');
+            // Add timestamp to force cache bypass
+            window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 500);
+        });
+    </script>
+</body>
+</html>

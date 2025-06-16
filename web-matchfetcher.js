@@ -2,7 +2,7 @@
 // Version: 2.1.0 - Fixed Netlify environment detection
 class WebMatchFetcher {
   constructor(debugLogCallback = null) {
-    this.version = '2.1.0';
+    this.version = '2.1.1'; // Updated version for cache busting
     // Use working scraping function instead of API function
     this.netlifyFunctionUrl = '/.netlify/functions/fetch-football';
     this.apiFunctionUrl = '/.netlify/functions/fetch-football-api'; // Backup if APIs are configured
@@ -14,8 +14,10 @@ class WebMatchFetcher {
       console.log(`[${category.toUpperCase()}] ${message}`, data || '');
     });
     
-    // Log version for debugging
+    // Log version and URLs for debugging
     this.debugLog('requests', `WebMatchFetcher v${this.version} initializing...`);
+    this.debugLog('requests', `Primary function URL: ${this.netlifyFunctionUrl}`);
+    this.debugLog('requests', `Backup function URL: ${this.apiFunctionUrl}`);
     
     // Then detect environment
     this.isLocal = this.detectLocalEnvironment();

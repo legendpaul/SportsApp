@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>UFC Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #e8f5e8; border-color: #4caf50; }
+        .error { background: #ffe8e8; border-color: #f44336; }
+        .info { background: #e8f4fd; border-color: #2196f3; }
+        .button { background: #2196f3; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .button:hover { background: #1976d2; }
+        .debug-output { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; margin: 10px 0; }
+        .copy-btn { background: #4caf50; }
+        .copy-btn:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🥊 UFC Integration Local Test</h1>
+        <p>This page will help diagnose why UFC integration isn't working locally.</p>
+        
+        <div class="test-section info">
+            <h3>📋 Environment Information</h3>
+            <div id="env-info">Loading...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 UFC Fetcher Tests</h3>
+            <button class="button" onclick="testEnvironmentDetection()">1. Test Environment Detection</button>
+            <button class="button" onclick="testUFCFetcher()">2. Test UFC Fetcher</button>
+            <button class="button" onclick="testCurrentEvents()">3. Test Current Events</button>
+            <button class="button" onclick="testDataManager()">4. Test Data Manager</button>
+            <button class="button" onclick="runAllTests()">🚀 Run All Tests</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Test Results</h3>
+            <div id="test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🐛 Debug Output</h3>
+            <button class="button copy-btn" onclick="copyDebugOutput()">📋 Copy Debug Output</button>
+            <button class="button" onclick="clearDebugOutput()">🧹 Clear Output</button>
+            <div id="debug-output" class="debug-output">Test output will appear here...</div>
+        </div>
+    </div>
+
+    <!-- Load the UFC fetcher -->
+    <script src="web-datamanager.js"></script>
+    <script src="web-ufcfetcher.js"></script>
+    
+    <script>
+        let debugOutput = '';
+        
+        function log(message, data = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logLine = `[${timestamp}] ${message}${data ? '\\n' + JSON.stringify(data, null, 2) : ''}\\n\\n`;
+            debugOutput += logLine;
+            document.getElementById('debug-output').textContent = debugOutput;
+            console.log(message, data);
+        }
+        
+        function updateResults(testName, success, message) {
+            const resultsDiv = document.getElementById('test-results');
+            const statusIcon = success ? '✅' : '❌';
+            const statusClass = success ? 'success' : 'error';
+            
+            resultsDiv.innerHTML += `
+                <div class="test-section ${statusClass}">
+                    <strong>${statusIcon} ${testName}</strong><br>
+                    ${message}
+                </div>
+            `;
+        }
+        
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+        
+        function clearDebugOutput() {
+            debugOutput = '';
+            document.getElementById('debug-output').textContent = 'Debug output cleared...';
+        }
+        
+        function copyDebugOutput() {
+            const fullOutput = `=== UFC INTEGRATION LOCAL TEST ===
+Generated: ${new Date().toLocaleString()}
+URL: ${window.location.href}
+User Agent: ${navigator.userAgent}
+
+=== ENVIRONMENT ===
+${document.getElementById('env-info').textContent}
+
+=== DEBUG OUTPUT ===
+${debugOutput}`;
+            
+            navigator.clipboard.writeText(fullOutput).then(() => {
+                alert('Debug output copied to clipboard!');
+            }).catch(() => {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = fullOutput;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('Debug output copied to clipboard (fallback method)!');
+            });
+        }
+        
+        function testEnvironmentDetection() {
+            log('🔍 Testing environment detection...');
+            
+            try {
+                const hostname = window.location.hostname;
+                const protocol = window.location.protocol;
+                const port = window.location.port;
+                
+                const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
+                const isFileProtocol = protocol === 'file:';
+                const hasDevPort = port && (port === '3000' || port === '8080' || port === '5000' || port === '8000');
+                const isNetlify = hostname.includes('.netlify.app') || hostname.includes('.netlify.com');
+                const isLocal = (isLocalhost || isFileProtocol || hasDevPort) && !isNetlify;
+                
+                const envData = {
+                    hostname, protocol, port, isLocalhost, isFileProtocol, hasDevPort, isNetlify, isLocal
+                };
+                
+                log('Environment detection results:', envData);
+                
+                if (isLocal) {
+                    updateResults('Environment Detection', true, 'Correctly detected as local development');
+                } else {
+                    updateResults('Environment Detection', false, `Detected as production. Check: hostname='${hostname}', protocol='${protocol}', port='${port}'`);
+                }
+                
+                return isLocal;
+            } catch (error) {
+                log('Environment detection error:', error.message);
+                updateResults('Environment Detection', false, `Error: ${error.message}`);
+                return false;
+            }
+        }
+        
+        function testUFCFetcher() {
+            log('🥊 Testing UFC Fetcher initialization...');
+            
+            try {
+                if (typeof WebUFCFetcher === 'undefined') {
+                    throw new Error('WebUFCFetcher class not found - check if web-ufcfetcher.js loaded');
+                }
+                
+                const fetcher = new WebUFCFetcher((category, message, data) => {
+                    log(`UFC-${category}: ${message}`, data);
+                });
+                
+                log('UFC Fetcher created successfully');
+                log('UFC Fetcher isLocal property:', fetcher.isLocal);
+                
+                updateResults('UFC Fetcher Initialization', true, `UFC Fetcher created successfully. Local mode: ${fetcher.isLocal}`);
+                return fetcher;
+            } catch (error) {
+                log('UFC Fetcher initialization error:', error.message);
+                updateResults('UFC Fetcher Initialization', false, `Error: ${error.message}`);
+                return null;
+            }
+        }
+        
+        async function testCurrentEvents() {
+            log('📅 Testing current UFC events...');
+            
+            try {
+                const fetcher = new WebUFCFetcher((category, message, data) => {
+                    log(`UFC-${category}: ${message}`, data);
+                });
+                
+                const events = fetcher.getCurrentUFCEvents();
+                log(`Current UFC events loaded: ${events.length} events`);
+                
+                if (events.length > 0) {
+                    const firstEvent = events[0];
+                    log('First event details:', {
+                        title: firstEvent.title,
+                        date: firstEvent.date,
+                        mainCardFights: firstEvent.mainCard.length,
+                        prelimFights: firstEvent.prelimCard.length
+                    });
+                    
+                    updateResults('Current UFC Events', true, `Loaded ${events.length} current events. Next: ${firstEvent.title}`);
+                } else {
+                    updateResults('Current UFC Events', false, 'No current events found');
+                }
+                
+                return events;
+            } catch (error) {
+                log('Current events test error:', error.message);
+                updateResults('Current UFC Events', false, `Error: ${error.message}`);
+                return [];
+            }
+        }
+        
+        async function testDataManager() {
+            log('💾 Testing Data Manager...');
+            
+            try {
+                if (typeof WebDataManager === 'undefined') {
+                    throw new Error('WebDataManager class not found - check if web-datamanager.js loaded');
+                }
+                
+                const dataManager = new WebDataManager();
+                log('Data Manager created successfully');
+                
+                const data = dataManager.loadData();
+                log('Data loaded from localStorage:', {
+                    footballMatches: data.footballMatches.length,
+                    ufcEvents: data.ufcEvents.length,
+                    lastFetch: data.lastFetch,
+                    lastUFCFetch: data.lastUFCFetch
+                });
+                
+                // Test saving UFC events
+                const testEvents = [{
+                    id: 'test_ufc_event',
+                    title: 'Test UFC Event',
+                    date: '2025-06-16',
+                    mainCard: [{ fighter1: 'Test Fighter 1', fighter2: 'Test Fighter 2', weightClass: 'Test Weight' }],
+                    prelimCard: []
+                }];
+                
+                data.ufcEvents = testEvents;
+                data.lastUFCFetch = new Date().toISOString();
+                
+                const saveResult = dataManager.saveData(data);
+                log('Data save test result:', saveResult);
+                
+                if (saveResult) {
+                    // Verify the save worked
+                    const reloadedData = dataManager.loadData();
+                    const savedCorrectly = reloadedData.ufcEvents.length > 0 && reloadedData.ufcEvents[0].id === 'test_ufc_event';
+                    
+                    if (savedCorrectly) {
+                        updateResults('Data Manager', true, 'Data Manager working correctly - can save and load UFC events');
+                    } else {
+                        updateResults('Data Manager', false, 'Data Manager save/load verification failed');
+                    }
+                } else {
+                    updateResults('Data Manager', false, 'Data Manager failed to save data');
+                }
+                
+                return dataManager;
+            } catch (error) {
+                log('Data Manager test error:', error.message);
+                updateResults('Data Manager', false, `Error: ${error.message}`);
+                return null;
+            }
+        }
+        
+        async function runAllTests() {
+            clearResults();
+            clearDebugOutput();
+            
+            log('🚀 Running all UFC integration tests...');
+            
+            const envResult = testEnvironmentDetection();
+            const fetcherResult = testUFCFetcher();
+            const eventsResult = await testCurrentEvents();
+            const dataResult = await testDataManager();
+            
+            log('🏁 All tests completed!');
+            
+            const allPassed = envResult && fetcherResult && eventsResult.length > 0 && dataResult;
+            
+            if (allPassed) {
+                updateResults('Overall Result', true, '🎉 All tests passed! UFC integration should work locally.');
+            } else {
+                updateResults('Overall Result', false, '⚠️ Some tests failed. Check the debug output and individual test results above.');
+            }
+        }
+        
+        // Initialize environment info on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const envInfo = document.getElementById('env-info');
+            envInfo.innerHTML = `
+                <strong>URL:</strong> ${window.location.href}<br>
+                <strong>Hostname:</strong> ${window.location.hostname}<br>
+                <strong>Protocol:</strong> ${window.location.protocol}<br>
+                <strong>Port:</strong> ${window.location.port || 'none'}<br>
+                <strong>User Agent:</strong> ${navigator.userAgent}
+            `;
+            
+            log('🔧 UFC Integration Test page loaded');
+            log('Environment info collected');
+        });
+    </script>
+</body>
+</html>

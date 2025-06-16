@@ -99,6 +99,8 @@
         <div class="filter-controls">
           <button onclick="window.sportsApp.toggleDebugWindow()" class="filter-btn debug-toggle" id="debug-toggle">Hide Debug</button>
           <button onclick="window.sportsApp.clearDebugLog()" class="filter-btn debug-clear">Clear Log</button>
+          <button onclick="window.sportsApp.copyDebugToClipboard()" class="filter-btn debug-copy" title="Copy all debug logs to clipboard">📋 Copy Debug</button>
+          <button onclick="window.sportsApp.testUFCConnection()" class="filter-btn debug-test" title="Test UFC API connection">🥊 Test UFC API</button>
         </div>
       </div>
       
@@ -161,6 +163,7 @@
   <!-- Web-compatible JavaScript modules with cache busting -->
   <script src="web-datamanager.js?v=2.1.0"></script>
   <script src="web-matchfetcher.js?v=2.1.0"></script>
+  <script src="web-ufcfetcher.js?v=1.0.0"></script>
   <script src="web-app.js?v=2.1.0"></script>
 </body>
 </html>

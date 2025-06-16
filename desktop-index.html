@@ -99,6 +99,8 @@
         <div class="filter-controls">
           <button onclick="window.sportsApp.toggleDebugWindow()" class="filter-btn debug-toggle" id="debug-toggle">Hide Debug</button>
           <button onclick="window.sportsApp.clearDebugLog()" class="filter-btn debug-clear">Clear Log</button>
+          <button onclick="window.sportsApp.copyDebugToClipboard()" class="filter-btn debug-copy" title="Copy all debug logs to clipboard">📋 Copy Debug</button>
+          <button onclick="window.sportsApp.testUFCConnection()" class="filter-btn debug-test" title="Test UFC API connection">🥊 Test UFC API</button>
         </div>
       </div>
       
@@ -154,13 +156,11 @@
 
     <!-- Footer -->
     <div class="footer">
-      <p>Data updated live • Times shown in UK timezone • Web Version</p>
+      <p>Desktop App • Data updated live • Times shown in UK timezone • Electron Version</p>
     </div>
   </div>
 
-  <!-- Web-compatible JavaScript modules -->
-  <script src="web-datamanager.js"></script>
-  <script src="web-matchfetcher.js"></script>
-  <script src="web-app.js"></script>
+  <!-- Desktop Electron JavaScript modules -->
+  <script src="app.js"></script>
 </body>
 </html>

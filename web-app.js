@@ -33,12 +33,19 @@ class WebSportsApp {
     try {
       this.debugLog('data', 'Initializing web data manager and fetchers...');
       
+      // Detect environment first
+      this.isLocal = this.detectLocalEnvironment();
+      this.debugLog('data', `Environment detected: ${this.isLocal ? 'Local Development' : 'Production'}`);
+      
       this.dataManager = new WebDataManager();
       this.matchFetcher = new WebMatchFetcher((category, message, data) => {
         this.debugLog(category, message, data);
       });
+      this.ufcFetcher = new WebUFCFetcher((category, message, data) => {
+        this.debugLog(category, message, data);
+      });
       
-      this.debugLog('data', 'Web fetchers initialized successfully');
+      this.debugLog('data', 'Web fetchers initialized successfully (Football + UFC)');
       
       await this.loadMatchData();
       
@@ -53,43 +60,102 @@ class WebSportsApp {
     }
   }
 
+  detectLocalEnvironment() {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const port = window.location.port;
+    
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
+    const isFileProtocol = protocol === 'file:';
+    const hasDevPort = port && (port === '3000' || port === '8080' || port === '5000' || port === '8000');
+    const isNetlify = hostname.includes('.netlify.app') || hostname.includes('.netlify.com');
+    
+    const isLocal = (isLocalhost || isFileProtocol || hasDevPort) && !isNetlify;
+    
+    this.debugLog('data', `Environment detection details:`, {
+      hostname, protocol, port, isLocalhost, isFileProtocol, hasDevPort, isNetlify, 
+      finalResult: isLocal ? 'Local Development' : 'Production'
+    });
+    
+    return isLocal;
+  }
+
   async performAutoFetch() {
     try {
       this.debugLog('requests', 'Auto-fetching sports data on startup...');
       
       const shouldFetchFootball = this.shouldAutoFetch('football');
+      const shouldFetchUFC = this.shouldAutoFetch('ufc');
       
-      if (shouldFetchFootball) {
+      this.debugLog('requests', `Should fetch football: ${shouldFetchFootball}, Should fetch UFC: ${shouldFetchUFC}`);
+      
+      if (shouldFetchFootball || shouldFetchUFC) {
         this.debugLog('requests', 'Fetching fresh sports data...');
         this.showStartupFetchingState();
         
         let footballResult = { success: true, added: 0 };
+        let ufcResult = { success: true, added: 0 };
         
-        try {
-          footballResult = await this.matchFetcher.updateMatchData();
-          this.debugLog('requests', `Football fetch result: ${footballResult.success ? 'Success' : 'Failed'} - ${footballResult.added} new matches`);
-        } catch (error) {
-          this.debugLog('requests', `Football fetch error: ${error.message}`);
-          footballResult = { success: false, error: error.message };
+        if (shouldFetchFootball) {
+          try {
+            this.debugLog('requests', 'Starting football fetch...');
+            footballResult = await this.matchFetcher.updateMatchData();
+            this.debugLog('requests', `Football fetch result: ${footballResult.success ? 'Success' : 'Failed'} - ${footballResult.added} new matches`);
+          } catch (error) {
+            this.debugLog('requests', `Football fetch error: ${error.message}`);
+            window.lastError = `Football: ${error.message}`;
+            footballResult = { success: false, error: error.message };
+          }
         }
         
-        const totalNew = footballResult.added || 0;
+        if (shouldFetchUFC) {
+          try {
+            this.debugLog('requests', 'Starting UFC fetch...');
+            ufcResult = await this.ufcFetcher.updateUFCData();
+            this.debugLog('requests', `UFC fetch result: ${ufcResult.success ? 'Success' : 'Failed'} - ${ufcResult.added} new events`);
+          } catch (error) {
+            this.debugLog('requests', `UFC fetch error: ${error.message}`);
+            window.lastError = `UFC: ${error.message}`;
+            ufcResult = { success: false, error: error.message };
+          }
+        }
+        
+        const totalNew = (footballResult.added || 0) + (ufcResult.added || 0);
+        this.debugLog('requests', `Total new items: ${totalNew} (Football: ${footballResult.added || 0}, UFC: ${ufcResult.added || 0})`);
+        
         if (totalNew > 0) {
+          if (footballResult.success) this.lastFetchTime = new Date().toISOString();
+          if (ufcResult.success) this.lastUFCFetch = new Date().toISOString();
+          
           await this.loadMatchData();
-          this.showStartupFetchResult(`📥 Found ${footballResult.added || 0} football matches!`);
-        } else if (footballResult.success) {
+          this.showStartupFetchResult(`📥 Found ${footballResult.added || 0} football matches, ${ufcResult.added || 0} UFC events!`);
+        } else if (footballResult.success || ufcResult.success) {
           this.showStartupFetchResult('✅ Sports data is up to date');
         } else {
-          this.showStartupFetchResult('⚠️ Using cached/demo sports data');
+          this.showStartupFetchResult('⚠️ Using cached/demo sports data - check debug for details');
         }
         
         await this.startupCleanup();
       } else {
         this.debugLog('requests', 'Skipping startup fetch (data is recent)');
+        // Still ensure we have UFC data for local development
+        if (this.isLocal && this.ufcEvents.length === 0) {
+          this.debugLog('requests', 'Local dev: Loading current UFC events...');
+          try {
+            const currentEvents = this.ufcFetcher.getCurrentUFCEvents();
+            this.ufcEvents = currentEvents;
+            this.lastUFCFetch = new Date().toISOString();
+            await this.saveMatchData();
+            this.debugLog('requests', `Local dev: Loaded ${currentEvents.length} current UFC events`);
+          } catch (error) {
+            this.debugLog('requests', `Local dev UFC load error: ${error.message}`);
+          }
+        }
       }
     } catch (error) {
       this.debugLog('requests', `Error during startup fetch: ${error.message}`);
-      this.showStartupFetchResult('⚠️ Using cached/demo data');
+      window.lastError = `Startup: ${error.message}`;
+      this.showStartupFetchResult('⚠️ Using cached/demo data - check debug for details');
     }
   }
 
@@ -638,14 +704,18 @@ class WebSportsApp {
       
       this.showFetchingState(true);
       
-      const footballResult = await this.matchFetcher.updateMatchData();
+      const [footballResult, ufcResult] = await Promise.all([
+        this.matchFetcher.updateMatchData().catch(e => ({ success: false, error: e.message })),
+        this.ufcFetcher.updateUFCData().catch(e => ({ success: false, error: e.message }))
+      ]);
       
-      this.debugLog('requests', 'Fetch results received', { footballResult });
+      this.debugLog('requests', 'Fetch results received', { footballResult, ufcResult });
       
-      const totalNew = footballResult.added || 0;
+      const totalNew = (footballResult.added || 0) + (ufcResult.added || 0);
       
       if (totalNew > 0) {
-        this.lastFetchTime = new Date().toISOString();
+        if (footballResult.success) this.lastFetchTime = new Date().toISOString();
+        if (ufcResult.success) this.lastUFCFetch = new Date().toISOString();
         
         await this.loadMatchData();
         this.renderFootballMatches();
@@ -653,17 +723,18 @@ class WebSportsApp {
         this.renderChannelFilter();
         this.updateStorageInfo();
         
-        this.showFetchResult(`✅ Added ${footballResult.added || 0} football matches!`);
-      } else if (footballResult.success) {
+        this.showFetchResult(`✅ Added ${footballResult.added || 0} football matches, ${ufcResult.added || 0} UFC events!`);
+      } else if (footballResult.success || ufcResult.success) {
         this.showFetchResult('✅ Sports data is up to date');
       } else {
-        this.showFetchResult(`❌ Failed to fetch: ${footballResult.error || 'Unknown error'}`);
+        this.showFetchResult(`❌ Failed to fetch: ${footballResult.error || ufcResult.error}`);
       }
       
       this.showFetchingState(false);
       return { 
-        success: footballResult.success, 
-        football: footballResult
+        success: footballResult.success || ufcResult.success, 
+        football: footballResult,
+        ufc: ufcResult
       };
       
     } catch (error) {
@@ -1137,6 +1208,702 @@ class WebSportsApp {
     console.log('🧹 Debug logs cleared');
   }
 
+  copyDebugToClipboard() {
+    try {
+      const debugContent = this.formatAllDebugLogs();
+      
+      if (navigator.clipboard && window.isSecureContext) {
+        // Use modern Clipboard API
+        navigator.clipboard.writeText(debugContent).then(() => {
+          this.showCopyNotification('✅ Debug logs copied to clipboard!');
+        }).catch(err => {
+          console.error('Failed to copy to clipboard:', err);
+          this.fallbackCopyToClipboard(debugContent);
+        });
+      } else {
+        // Fallback for older browsers or non-HTTPS
+        this.fallbackCopyToClipboard(debugContent);
+      }
+    } catch (error) {
+      console.error('Error copying debug logs:', error);
+      this.showCopyNotification('❌ Failed to copy debug logs');
+    }
+  }
+
+  fallbackCopyToClipboard(text) {
+    try {
+      // Create temporary textarea
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, 99999); // For mobile devices
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      
+      if (successful) {
+        this.showCopyNotification('✅ Debug logs copied to clipboard!');
+      } else {
+        this.showCopyNotification('❌ Failed to copy - try manually selecting the text');
+        this.displayDebugInModal(text);
+      }
+    } catch (error) {
+      console.error('Fallback copy failed:', error);
+      this.showCopyNotification('❌ Copy failed - displaying in modal');
+      this.displayDebugInModal(text);
+    }
+  }
+
+  formatAllDebugLogs() {
+    const timestamp = new Date().toISOString();
+    let output = `=== SPORTS APP DEBUG LOGS ===\n`;
+    output += `Generated: ${timestamp}\n`;
+    output += `App Version: ${this.version}\n`;
+    output += `Environment: ${this.detectEnvironment()}\n`;
+    output += `URL: ${window.location.href}\n`;
+    output += `User Agent: ${navigator.userAgent}\n`;
+    output += `\n`;
+    
+    // App state summary
+    output += `=== APP STATE ===\n`;
+    output += `Football Matches: ${this.footballMatches.length}\n`;
+    output += `UFC Events: ${this.ufcEvents.length}\n`;
+    output += `UFC Main Card: ${this.ufcMainCard.length} fights\n`;
+    output += `UFC Prelim Card: ${this.ufcPrelimCard.length} fights\n`;
+    output += `Last Football Fetch: ${this.lastFetchTime || 'Never'}\n`;
+    output += `Last UFC Fetch: ${this.lastUFCFetch || 'Never'}\n`;
+    output += `Available Channels: ${this.availableChannels.length}\n`;
+    output += `Selected Channels: ${this.selectedChannels.size}\n`;
+    output += `\n`;
+    
+    // Debug logs by category
+    Object.keys(this.debugLogs).forEach(category => {
+      const logs = this.debugLogs[category] || [];
+      output += `=== ${category.toUpperCase()} LOGS (${logs.length} entries) ===\n`;
+      
+      if (logs.length === 0) {
+        output += `No ${category} activity recorded\n`;
+      } else {
+        logs.forEach((log, index) => {
+          output += `[${log.timestamp}] ${log.message}\n`;
+          if (log.data) {
+            output += `  Data: ${log.data}\n`;
+          }
+          if (index < logs.length - 1) output += `\n`;
+        });
+      }
+      output += `\n`;
+    });
+    
+    // Recent errors from console
+    output += `=== ADDITIONAL INFO ===\n`;
+    output += `Local Storage Available: ${typeof(Storage) !== 'undefined'}\n`;
+    output += `Clipboard API Available: ${!!navigator.clipboard}\n`;
+    output += `Secure Context: ${window.isSecureContext}\n`;
+    output += `Online: ${navigator.onLine}\n`;
+    
+    return output;
+  }
+
+  detectEnvironment() {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const port = window.location.port;
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
+      return 'Local Development';
+    } else if (hostname.includes('.netlify.app') || hostname.includes('.netlify.com')) {
+      return 'Netlify Production';
+    } else if (protocol === 'file:') {
+      return 'Local File System';
+    } else {
+      return 'Production';
+    }
+  }
+
+  showCopyNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'copy-notification';
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 500;
+      animation: slideIn 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    
+    // Add animation styles
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.style.animation = 'slideIn 0.3s ease-out reverse';
+        setTimeout(() => {
+          notification.parentNode.removeChild(notification);
+        }, 300);
+      }
+    }, 3000);
+  }
+
+  displayDebugInModal(text) {
+    // Create modal for manual copying
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 80%;
+      max-height: 80%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    `;
+    
+    const header = document.createElement('div');
+    header.style.cssText = 'margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;';
+    header.innerHTML = `
+      <h3 style="margin: 0;">Debug Logs - Manual Copy</h3>
+      <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">Close</button>
+    `;
+    
+    const textarea = document.createElement('textarea');
+    textarea.style.cssText = `
+      width: 100%;
+      height: 400px;
+      font-family: monospace;
+      font-size: 12px;
+      border: 1px solid #ddd;
+      padding: 10px;
+      resize: vertical;
+    `;
+    textarea.value = text;
+    textarea.readOnly = true;
+    
+    const instructions = document.createElement('p');
+    instructions.style.cssText = 'margin: 10px 0 0 0; color: #666; font-size: 14px;';
+    instructions.textContent = 'Select all text (Ctrl+A) and copy (Ctrl+C)';
+    
+    content.appendChild(header);
+    content.appendChild(textarea);
+    content.appendChild(instructions);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // Auto-select text
+    textarea.focus();
+    textarea.select();
+  }
+
+  copyDebugToClipboard() {
+    try {
+      this.debugLog('display', 'Generating comprehensive debug report...');
+      
+      const debugContent = this.generateComprehensiveDebugReport();
+      
+      if (navigator.clipboard && window.isSecureContext) {
+        // Use modern Clipboard API
+        navigator.clipboard.writeText(debugContent).then(() => {
+          this.showCopySuccessNotification('✅ Debug logs copied to clipboard!');
+          this.debugLog('display', 'Debug logs successfully copied via Clipboard API');
+        }).catch(err => {
+          console.warn('Clipboard API failed, using fallback:', err);
+          this.fallbackCopyToClipboard(debugContent);
+        });
+      } else {
+        // Fallback for older browsers or non-HTTPS
+        this.fallbackCopyToClipboard(debugContent);
+      }
+    } catch (error) {
+      this.debugLog('display', `Critical error in copy function: ${error.message}`);
+      this.showFetchResult(`❌ Copy failed: ${error.message}`);
+      console.error('Critical error copying debug logs:', error);
+    }
+  }
+
+  generateComprehensiveDebugReport() {
+    const timestamp = new Date().toISOString();
+    let report = `=== SPORTS APP DEBUG REPORT ===\n`;
+    report += `Generated: ${timestamp}\n`;
+    report += `App Version: ${this.version}\n`;
+    report += `Environment: ${this.detectEnvironment()}\n`;
+    report += `URL: ${window.location.href}\n`;
+    report += `User Agent: ${navigator.userAgent}\n`;
+    report += `LocalStorage Available: ${typeof(Storage) !== 'undefined'}\n`;
+    report += `Clipboard API Available: ${!!navigator.clipboard}\n`;
+    report += `Secure Context: ${window.isSecureContext}\n`;
+    report += `Online Status: ${navigator.onLine}\n`;
+    report += `\n`;
+    
+    // App state summary
+    report += `=== APP STATE SUMMARY ===\n`;
+    report += `Football Matches: ${this.footballMatches.length}\n`;
+    report += `UFC Events: ${this.ufcEvents.length}\n`;
+    report += `UFC Main Card Fights: ${this.ufcMainCard.length}\n`;
+    report += `UFC Prelim Fights: ${this.ufcPrelimCard.length}\n`;
+    report += `Last Football Fetch: ${this.lastFetchTime || 'Never'}\n`;
+    report += `Last UFC Fetch: ${this.lastUFCFetch || 'Never'}\n`;
+    report += `Available Channels: ${this.availableChannels.length}\n`;
+    report += `Selected Channels: ${this.selectedChannels.size}\n`;
+    report += `Show All Channels: ${this.showAllChannels}\n`;
+    report += `Debug Visible: ${this.debugVisible}\n`;
+    report += `\n`;
+    
+    // API endpoints and configuration
+    report += `=== API CONFIGURATION ===\n`;
+    if (this.matchFetcher) {
+      report += `Match Fetcher: Available\n`;
+      report += `  Local Mode: ${this.isLocal}\n`;
+    } else {
+      report += `Match Fetcher: NOT AVAILABLE\n`;
+    }
+    
+    if (this.ufcFetcher) {
+      report += `UFC Fetcher: Available\n`;
+      report += `  Netlify Function URL: ${this.ufcFetcher.netlifyFunctionUrl || 'Not set'}\n`;
+      report += `  Local Mode: ${this.ufcFetcher.isLocal || 'Unknown'}\n`;
+    } else {
+      report += `UFC Fetcher: NOT AVAILABLE\n`;
+    }
+    report += `\n`;
+    
+    // Recent errors
+    if (window.lastError) {
+      report += `=== RECENT ERRORS ===\n`;
+      report += `Last Error: ${window.lastError}\n`;
+      report += `\n`;
+    }
+    
+    // Storage information
+    if (this.dataManager) {
+      const storageStatus = this.dataManager.getCleanupStatus();
+      report += `=== STORAGE STATUS ===\n`;
+      report += `Storage Used: ${storageStatus.storageUsed || 'Unknown'}\n`;
+      report += `Total Matches: ${storageStatus.totalMatches}\n`;
+      report += `Total UFC Events: ${storageStatus.totalUFCEvents}\n`;
+      report += `Last Cleanup: ${storageStatus.lastCleanup || 'Never'}\n`;
+      report += `\n`;
+    }
+    
+    // Debug logs by category
+    Object.keys(this.debugLogs).forEach(category => {
+      const logs = this.debugLogs[category] || [];
+      report += `=== ${category.toUpperCase()} LOGS (${logs.length} entries) ===\n`;
+      
+      if (logs.length === 0) {
+        report += `No ${category} activity recorded\n`;
+      } else {
+        // Show most recent 10 entries to keep report manageable
+        const recentLogs = logs.slice(-10);
+        if (logs.length > 10) {
+          report += `[Showing last 10 of ${logs.length} entries]\n`;
+        }
+        
+        recentLogs.forEach((log, index) => {
+          report += `[${log.timestamp}] ${log.message}\n`;
+          if (log.data) {
+            // Truncate very long data to keep report readable
+            const dataStr = typeof log.data === 'string' ? log.data : JSON.stringify(log.data, null, 2);
+            const truncatedData = dataStr.length > 500 ? dataStr.substring(0, 500) + '...[truncated]' : dataStr;
+            report += `  Data: ${truncatedData}\n`;
+          }
+          if (index < recentLogs.length - 1) report += `\n`;
+        });
+      }
+      report += `\n`;
+    });
+    
+    // Sample data for debugging
+    if (this.footballMatches.length > 0) {
+      report += `=== SAMPLE FOOTBALL MATCH ===\n`;
+      const sampleMatch = this.footballMatches[0];
+      report += JSON.stringify(sampleMatch, null, 2);
+      report += `\n\n`;
+    }
+    
+    if (this.ufcEvents.length > 0) {
+      report += `=== SAMPLE UFC EVENT ===\n`;
+      const sampleEvent = this.ufcEvents[0];
+      report += JSON.stringify(sampleEvent, null, 2);
+      report += `\n\n`;
+    }
+    
+    // Browser capabilities
+    report += `=== BROWSER CAPABILITIES ===\n`;
+    report += `Fetch API: ${typeof fetch !== 'undefined'}\n`;
+    report += `WebSockets: ${typeof WebSocket !== 'undefined'}\n`;
+    report += `Service Workers: ${typeof navigator.serviceWorker !== 'undefined'}\n`;
+    report += `LocalStorage: ${typeof localStorage !== 'undefined'}\n`;
+    report += `SessionStorage: ${typeof sessionStorage !== 'undefined'}\n`;
+    report += `IndexedDB: ${typeof indexedDB !== 'undefined'}\n`;
+    report += `Geolocation: ${typeof navigator.geolocation !== 'undefined'}\n`;
+    report += `\n`;
+    
+    report += `=== END OF REPORT ===\n`;
+    
+    return report;
+  }
+
+  fallbackCopyToClipboard(text) {
+    try {
+      // Method 1: Try execCommand
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      textarea.setSelectionRange(0, 99999); // For mobile devices
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      
+      if (successful) {
+        this.showCopySuccessNotification('✅ Debug logs copied (fallback method)!');
+        this.debugLog('display', 'Debug logs copied using execCommand fallback');
+      } else {
+        this.showCopyFallbackModal(text);
+      }
+    } catch (error) {
+      console.error('Fallback copy failed:', error);
+      this.showCopyFallbackModal(text);
+    }
+  }
+
+  showCopySuccessNotification(message) {
+    // Remove any existing notifications
+    const existing = document.querySelector('.copy-notification');
+    if (existing) existing.remove();
+    
+    const notification = document.createElement('div');
+    notification.className = 'copy-notification';
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 600;
+      max-width: 300px;
+      animation: slideInBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      cursor: pointer;
+    `;
+    notification.textContent = message;
+    
+    // Add animation styles if not already present
+    if (!document.getElementById('copy-notification-styles')) {
+      const style = document.createElement('style');
+      style.id = 'copy-notification-styles';
+      style.textContent = `
+        @keyframes slideInBounce {
+          0% { transform: translateX(100%) scale(0.8); opacity: 0; }
+          50% { transform: translateX(-10px) scale(1.05); opacity: 0.9; }
+          100% { transform: translateX(0) scale(1); opacity: 1; }
+        }
+        @keyframes slideOutBounce {
+          0% { transform: translateX(0) scale(1); opacity: 1; }
+          100% { transform: translateX(100%) scale(0.8); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    // Click to dismiss
+    notification.addEventListener('click', () => {
+      notification.style.animation = 'slideOutBounce 0.3s ease-in';
+      setTimeout(() => notification.remove(), 300);
+    });
+    
+    document.body.appendChild(notification);
+    
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.style.animation = 'slideOutBounce 0.3s ease-in';
+        setTimeout(() => notification.remove(), 300);
+      }
+    }, 4000);
+  }
+
+  showCopyFallbackModal(text) {
+    this.debugLog('display', 'Showing fallback modal for manual copy');
+    
+    // Remove any existing modal
+    const existingModal = document.querySelector('.debug-copy-modal');
+    if (existingModal) existingModal.remove();
+    
+    const modal = document.createElement('div');
+    modal.className = 'debug-copy-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.3s ease-out;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      max-width: 90%;
+      max-height: 90%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    `;
+    
+    const header = document.createElement('div');
+    header.style.cssText = 'margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;';
+    header.innerHTML = `
+      <div>
+        <h3 style="margin: 0; color: #333; font-size: 18px; font-weight: 600;">Debug Logs - Manual Copy</h3>
+        <p style="margin: 8px 0 0 0; color: #666; font-size: 14px;">Copy failed - please manually copy the text below</p>
+      </div>
+      <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+              style="background: #f44336; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: background 0.2s;"
+              onmouseover="this.style.background='#d32f2f'" 
+              onmouseout="this.style.background='#f44336'">Close</button>
+    `;
+    
+    const textarea = document.createElement('textarea');
+    textarea.style.cssText = `
+      width: 100%;
+      height: 400px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      resize: vertical;
+      min-height: 200px;
+      max-height: 60vh;
+      background: #f9f9f9;
+    `;
+    textarea.value = text;
+    textarea.readOnly = true;
+    
+    const instructions = document.createElement('div');
+    instructions.style.cssText = 'margin: 16px 0 0 0; padding: 12px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;';
+    instructions.innerHTML = `
+      <p style="margin: 0; color: #1976d2; font-size: 14px; font-weight: 500;">📋 Copy Instructions:</p>
+      <p style="margin: 8px 0 0 0; color: #424242; font-size: 13px; line-height: 1.4;">
+        1. Click in the text area above<br>
+        2. Select all text (Ctrl+A or Cmd+A)<br>
+        3. Copy to clipboard (Ctrl+C or Cmd+C)
+      </p>
+    `;
+    
+    // Add animation styles
+    if (!document.getElementById('modal-animation-styles')) {
+      const style = document.createElement('style');
+      style.id = 'modal-animation-styles';
+      style.textContent = `
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    content.appendChild(header);
+    content.appendChild(textarea);
+    content.appendChild(instructions);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // Auto-select text
+    setTimeout(() => {
+      textarea.focus();
+      textarea.select();
+    }, 100);
+    
+    // Close on escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        modal.remove();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    });
+  }
+
+  async testUFCConnection() {
+    try {
+      this.debugLog('requests', '🥊 Starting comprehensive UFC API connection test...');
+      
+      if (!this.ufcFetcher) {
+        this.debugLog('requests', 'ERROR: UFC Fetcher not available!');
+        this.showFetchResult('❌ UFC Fetcher not initialized');
+        return;
+      }
+      
+      // Test 1: Basic connection test
+      this.debugLog('requests', 'Test 1: Testing basic UFC connection...');
+      const basicTest = await this.ufcFetcher.testConnection();
+      this.debugLog('requests', `Basic connection test result: ${basicTest ? 'SUCCESS' : 'FAILED'}`);
+      
+      // Test 2: Environment detection
+      this.debugLog('requests', 'Test 2: Checking environment configuration...');
+      this.debugLog('requests', `UFC Fetcher isLocal: ${this.ufcFetcher.isLocal}`);
+      this.debugLog('requests', `UFC Fetcher URL: ${this.ufcFetcher.netlifyFunctionUrl}`);
+      
+      // Test 3: Direct API call
+      this.debugLog('requests', 'Test 3: Making direct UFC API call...');
+      try {
+        const testEvents = await this.ufcFetcher.fetchUpcomingUFCEvents();
+        this.debugLog('requests', `Direct API call result: ${testEvents.length} events returned`);
+        
+        if (testEvents.length > 0) {
+          this.debugLog('requests', 'Sample event data:', testEvents[0]);
+        }
+      } catch (apiError) {
+        this.debugLog('requests', `Direct API call failed: ${apiError.message}`);
+      }
+      
+      // Test 4: Check current stored data
+      this.debugLog('requests', 'Test 4: Checking stored UFC data...');
+      const storedData = this.dataManager.loadData();
+      this.debugLog('requests', `Stored UFC events: ${storedData.ufcEvents?.length || 0}`);
+      this.debugLog('requests', `Last UFC fetch: ${storedData.lastUFCFetch || 'Never'}`);
+      
+      // Test 5: Network and CORS check
+      this.debugLog('requests', 'Test 5: Testing network connectivity...');
+      try {
+        const networkTest = await fetch('/.netlify/functions/fetch-ufc', {
+          method: 'OPTIONS',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        this.debugLog('requests', `Network test (OPTIONS): ${networkTest.status} ${networkTest.statusText}`);
+      } catch (networkError) {
+        this.debugLog('requests', `Network test failed: ${networkError.message}`);
+      }
+      
+      // Final summary
+      if (basicTest) {
+        this.showFetchResult('✅ UFC API connection test completed - check debug logs for details');
+      } else {
+        this.showFetchResult('⚠️ UFC API connection issues detected - check debug logs');
+      }
+      
+    } catch (error) {
+      this.debugLog('requests', `UFC connection test failed: ${error.message}`);
+      this.showFetchResult(`❌ UFC test error: ${error.message}`);
+    }
+  }
+
+  async testNetlifyFunction(functionName = 'fetch-ufc') {
+    try {
+      this.debugLog('requests', `Testing Netlify function: ${functionName}`);
+      
+      const url = `/.netlify/functions/${functionName}`;
+      this.debugLog('requests', `Function URL: ${url}`);
+      
+      // Test with different methods
+      const methods = ['GET', 'POST', 'OPTIONS'];
+      
+      for (const method of methods) {
+        try {
+          this.debugLog('requests', `Testing ${method} request...`);
+          
+          const response = await fetch(url, {
+            method: method,
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            ...(method === 'POST' ? { body: JSON.stringify({}) } : {})
+          });
+          
+          this.debugLog('requests', `${method} response:`, {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            headers: Object.fromEntries(response.headers.entries())
+          });
+          
+          if (response.ok && method === 'GET') {
+            try {
+              const data = await response.json();
+              this.debugLog('requests', `${method} response data:`, data);
+            } catch (parseError) {
+              this.debugLog('requests', `${method} response parse error: ${parseError.message}`);
+            }
+          }
+          
+        } catch (methodError) {
+          this.debugLog('requests', `${method} request failed: ${methodError.message}`);
+        }
+      }
+      
+    } catch (error) {
+      this.debugLog('requests', `Function test failed: ${error.message}`);
+    }
+  }
+
   initDebugWindow() {
     const isLocal = window.location.hostname === 'localhost' || 
                    window.location.hostname === '127.0.0.1' || 
@@ -1167,6 +1934,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     window.fetchSportsData = () => app.fetchNewSportsData();
     window.fetchFootball = () => app.matchFetcher?.updateMatchData();
+    window.fetchUFC = () => app.ufcFetcher?.updateUFCData();
     window.manualCleanup = () => app.manualCleanup();
     window.addMatch = (match) => app.addFootballMatch(match);
     

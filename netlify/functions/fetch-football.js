@@ -25,45 +25,39 @@ exports.handler = async (event, context) => {
     let htmlContent;
     let fetchMethod = 'unknown';
     
-    // Try multiple fetch strategies
+    // Try multiple fetch strategies for better reliability
     try {
       htmlContent = await fetchWebsiteWithRetry('www.live-footballontv.com', '/');
       fetchMethod = 'direct';
+      console.log(`Successfully fetched via direct method: ${htmlContent.length} characters`);
     } catch (directError) {
       console.log('Direct fetch failed:', directError.message);
       
-      // Try alternative approach
+      // Try alternative approach with different headers
       try {
         htmlContent = await fetchWithUserAgentRotation('www.live-footballontv.com', '/');
         fetchMethod = 'user-agent-rotation';
+        console.log(`Successfully fetched via user agent rotation: ${htmlContent.length} characters`);
       } catch (rotationError) {
         console.log('User agent rotation failed:', rotationError.message);
         
-        // Return demo data as fallback
-        console.log('All fetch methods failed, returning demo data');
-        const demoMatches = generateDemoMatches();
-        
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            success: true,
-            matches: demoMatches,
-            totalFound: demoMatches.length,
-            todayCount: demoMatches.length,
-            fetchTime: new Date().toISOString(),
-            source: 'demo-data',
-            note: 'Using demo data due to website access issues'
-          })
-        };
+        // Try with different hostname variations
+        try {
+          htmlContent = await fetchWebsiteWithRetry('live-footballontv.com', '/');
+          fetchMethod = 'alternative-hostname';
+          console.log(`Successfully fetched via alternative hostname: ${htmlContent.length} characters`);
+        } catch (altError) {
+          console.log('All fetch methods failed:', altError.message);
+          throw new Error(`All data fetching methods failed. Direct: ${directError.message}, Rotation: ${rotationError.message}, Alt: ${altError.message}`);
+        }
       }
     }
     
-    if (!htmlContent) {
-      throw new Error('No content received from website');
+    if (!htmlContent || htmlContent.length < 1000) {
+      throw new Error(`Insufficient content received: ${htmlContent ? htmlContent.length : 0} characters`);
     }
 
-    console.log(`Received HTML content: ${htmlContent.length} characters via ${fetchMethod}`);
+    console.log(`Processing HTML content: ${htmlContent.length} characters via ${fetchMethod}`);
     
     const matches = parseMatches(htmlContent);
     
@@ -73,26 +67,7 @@ exports.handler = async (event, context) => {
     
     console.log(`Found ${matches.length} total matches, ${todayMatches.length} for today`);
     
-    // If no matches found, use demo data
-    if (todayMatches.length === 0) {
-      console.log('No matches found for today, returning demo data');
-      const demoMatches = generateDemoMatches();
-      
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          matches: demoMatches,
-          totalFound: demoMatches.length,
-          todayCount: demoMatches.length,
-          fetchTime: new Date().toISOString(),
-          source: 'demo-data',
-          note: 'No live matches found for today, showing demo data'
-        })
-      };
-    }
-    
+    // Return actual results, even if empty
     return {
       statusCode: 200,
       headers,
@@ -103,28 +78,27 @@ exports.handler = async (event, context) => {
         todayCount: todayMatches.length,
         fetchTime: new Date().toISOString(),
         source: 'live-data',
-        fetchMethod: fetchMethod
+        fetchMethod: fetchMethod,
+        note: todayMatches.length === 0 ? 'No matches found for today' : `Found ${todayMatches.length} matches for today`
       })
     };
 
   } catch (error) {
     console.error('Error fetching football data:', error);
     
-    // Return demo data even on error
-    const demoMatches = generateDemoMatches();
-    
+    // Return error response instead of demo data
     return {
-      statusCode: 200,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
-        success: true,
-        matches: demoMatches,
-        totalFound: demoMatches.length,
-        todayCount: demoMatches.length,
-        fetchTime: new Date().toISOString(),
-        source: 'demo-data',
+        success: false,
         error: error.message,
-        note: 'Using demo data due to error'
+        matches: [],
+        totalFound: 0,
+        todayCount: 0,
+        fetchTime: new Date().toISOString(),
+        source: 'error',
+        note: 'Failed to fetch live data'
       })
     };
   }
@@ -169,7 +143,7 @@ function fetchWebsite(hostname, path) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': 'en-GB,en;q=0.9,en-US;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Encoding': 'identity', // Don't use compression to avoid issues
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Sec-Fetch-Site': 'none',
@@ -187,11 +161,11 @@ function fetchWebsite(hostname, path) {
       let data = '';
       
       console.log(`Response status: ${res.statusCode} ${res.statusMessage}`);
-      console.log('Response headers:', res.headers);
+      console.log('Response headers:', JSON.stringify(res.headers, null, 2));
       
       // Handle redirects
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        console.log(`Redirect to: ${res.headers.location}`);
+        console.log(`Following redirect to: ${res.headers.location}`);
         const url = new URL(res.headers.location, `https://${hostname}`);
         fetchWebsite(url.hostname, url.pathname + url.search)
           .then(resolve)
@@ -208,7 +182,7 @@ function fetchWebsite(hostname, path) {
         if (res.statusCode === 200) {
           resolve(data);
         } else {
-          reject(new Error(`Website Error: ${res.statusCode} - ${data.substring(0, 200)}...`));
+          reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage} - ${data.substring(0, 200)}...`));
         }
       });
     });
@@ -218,9 +192,9 @@ function fetchWebsite(hostname, path) {
       reject(new Error(`Request Error: ${error.message}`));
     });
 
-    req.setTimeout(20000, () => {
+    req.setTimeout(30000, () => {
       req.destroy();
-      console.log('Request timed out after 20 seconds');
+      console.log('Request timed out after 30 seconds');
       reject(new Error('Request timeout'));
     });
 
@@ -234,7 +208,8 @@ function fetchWithUserAgentRotation(hostname, path) {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15'
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   ];
   
   return new Promise((resolve, reject) => {
@@ -251,7 +226,9 @@ function fetchWithUserAgentRotation(hostname, path) {
         'Accept-Encoding': 'identity',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
-        'DNT': '1'
+        'DNT': '1',
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-Mode': 'navigate'
       }
     };
 
@@ -262,6 +239,16 @@ function fetchWithUserAgentRotation(hostname, path) {
       
       console.log(`Alternative response status: ${res.statusCode} ${res.statusMessage}`);
       
+      // Handle redirects
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        console.log(`Alternative redirect to: ${res.headers.location}`);
+        const url = new URL(res.headers.location, `https://${hostname}`);
+        fetchWithUserAgentRotation(url.hostname, url.pathname + url.search)
+          .then(resolve)
+          .catch(reject);
+        return;
+      }
+      
       res.on('data', (chunk) => {
         data += chunk;
       });
@@ -271,7 +258,7 @@ function fetchWithUserAgentRotation(hostname, path) {
         if (res.statusCode === 200) {
           resolve(data);
         } else {
-          reject(new Error(`Alternative Website Error: ${res.statusCode} - ${data.substring(0, 200)}...`));
+          reject(new Error(`Alternative HTTP ${res.statusCode}: ${res.statusMessage} - ${data.substring(0, 200)}...`));
         }
       });
     });
@@ -281,9 +268,9 @@ function fetchWithUserAgentRotation(hostname, path) {
       reject(new Error(`Alternative Request Error: ${error.message}`));
     });
 
-    req.setTimeout(15000, () => {
+    req.setTimeout(25000, () => {
       req.destroy();
-      console.log('Alternative request timed out after 15 seconds');
+      console.log('Alternative request timed out after 25 seconds');
       reject(new Error('Alternative request timeout'));
     });
 
@@ -296,8 +283,9 @@ function parseMatches(htmlContent) {
   console.log('Starting to parse HTML content for matches...');
   console.log(`HTML Content length: ${htmlContent.length} characters`);
   
-  // Save HTML content for debugging (first 2000 characters)
-  console.log('HTML Content preview:', htmlContent.substring(0, 2000));
+  // Save HTML content preview for debugging
+  const preview = htmlContent.substring(0, 2000);
+  console.log('HTML Content preview:', preview);
   
   const matches = [];
   
@@ -306,84 +294,76 @@ function parseMatches(htmlContent) {
     const todayFormatted = today.toISOString().split('T')[0];
     
     console.log(`Today's date: ${todayFormatted}`);
-    console.log(`Today object: ${today.toString()}`);
     
     // Look for today's date section in HTML - Dynamic date patterns
     const todayPatterns = [
       `${today.toLocaleDateString('en-GB', { weekday: 'long' })} ${today.getDate()}${getOrdinalSuffix(today.getDate())} ${today.toLocaleDateString('en-GB', { month: 'long' })} ${today.getFullYear()}`,
       `${today.toLocaleDateString('en-US', { weekday: 'long' })} ${today.getDate()}${getOrdinalSuffix(today.getDate())} ${today.toLocaleDateString('en-US', { month: 'long' })} ${today.getFullYear()}`,
-      // Additional patterns for different date formats
       `${today.getDate()}${getOrdinalSuffix(today.getDate())} ${today.toLocaleDateString('en-GB', { month: 'long' })} ${today.getFullYear()}`,
       `${today.toLocaleDateString('en-GB', { month: 'long' })} ${today.getDate()}${getOrdinalSuffix(today.getDate())}, ${today.getFullYear()}`,
-      // Also try some common variations
+      // Common date patterns for June 16, 2025
       `Sunday ${today.getDate()}${getOrdinalSuffix(today.getDate())} June ${today.getFullYear()}`,
       `Sunday, ${today.getDate()}${getOrdinalSuffix(today.getDate())} June ${today.getFullYear()}`,
       `${today.getDate()}${getOrdinalSuffix(today.getDate())} June ${today.getFullYear()}`,
-      // Check for any date mentions
-      `${today.getDate()}${getOrdinalSuffix(today.getDate())}`,
-      `June ${today.getFullYear()}`,
-      'fixture',
-      'match'
+      `June ${today.getDate()}${getOrdinalSuffix(today.getDate())}, ${today.getFullYear()}`
     ];
     
     console.log('Looking for today\'s date patterns:', todayPatterns);
     
     // Find today's date section
     let todaySection = null;
-    let nextDayIndex = -1;
+    let sectionFound = false;
     
     for (const pattern of todayPatterns) {
       const patternIndex = htmlContent.indexOf(pattern);
       if (patternIndex !== -1) {
         console.log(`Found pattern "${pattern}" at index ${patternIndex}`);
         todaySection = pattern;
+        sectionFound = true;
         
-        const fixtureStartIndex = htmlContent.indexOf('<div class="fixture">', patternIndex);
-        const nextDayPattern = htmlContent.indexOf('class="fixture-date"', patternIndex + pattern.length);
-        nextDayIndex = nextDayPattern !== -1 ? nextDayPattern : htmlContent.length;
-        
-        console.log(`Fixture start index: ${fixtureStartIndex}, Next day index: ${nextDayIndex}`);
-        
-        if (fixtureStartIndex !== -1 && fixtureStartIndex < nextDayIndex) {
-          const todayFixturesSection = htmlContent.substring(fixtureStartIndex, nextDayIndex);
+        // Extract content from this date section
+        const fixtureStartIndex = htmlContent.indexOf('<div class="fixture"', patternIndex);
+        if (fixtureStartIndex !== -1) {
+          // Find the next date section or end of content
+          const nextDayIndex = htmlContent.indexOf('class="fixture-date"', patternIndex + pattern.length);
+          const endIndex = nextDayIndex !== -1 ? nextDayIndex : htmlContent.length;
+          
+          const todayFixturesSection = htmlContent.substring(fixtureStartIndex, endIndex);
           console.log(`Today's fixtures section length: ${todayFixturesSection.length}`);
           console.log(`Today's fixtures section preview:`, todayFixturesSection.substring(0, 500));
-          matches.push(...parseFixturesFromHTML(todayFixturesSection, todayFormatted));
+          
+          const sectionMatches = parseFixturesFromHTML(todayFixturesSection, todayFormatted);
+          matches.push(...sectionMatches);
         }
         break;
       }
     }
     
-    if (!todaySection) {
-      console.log('Could not find today\'s date section, parsing all fixtures');
+    if (!sectionFound) {
+      console.log('Could not find today\'s date section, parsing all fixtures and filtering by patterns');
       
-      // Look for ANY fixture divs
-      const fixtureMatches = htmlContent.match(/<div class="fixture"[^>]*>/g);
+      // Look for ANY fixture divs in the content
+      const fixtureRegex = /<div[^>]*class="[^"]*fixture[^"]*"[^>]*>/gi;
+      const fixtureMatches = htmlContent.match(fixtureRegex);
       console.log(`Found ${fixtureMatches ? fixtureMatches.length : 0} fixture divs in HTML`);
       
-      // Look for common football-related terms
-      const footballTerms = ['premier league', 'champions league', 'football', 'soccer', 'match', 'vs', 'v ', 'kick-off'];
-      for (const term of footballTerms) {
-        if (htmlContent.toLowerCase().includes(term)) {
-          console.log(`Found football term: "${term}"`);
-        }
-      }
-      
+      // Parse all fixtures and filter by today's date logic
       const allFixtures = parseAllFixturesFromHTML(htmlContent);
       console.log(`parseAllFixturesFromHTML returned ${allFixtures.length} matches`);
       
-      const todayMatches = allFixtures.filter(match => {
-        match.matchDate = todayFormatted;
-        return true;
-      });
+      // Set today's date for all matches found
+      const todayMatches = allFixtures.map(match => ({
+        ...match,
+        matchDate: todayFormatted
+      }));
       matches.push(...todayMatches);
     }
     
     console.log(`Parsing completed: ${matches.length} matches extracted`);
     
-    // Log each match found
+    // Log each match found for debugging
     matches.forEach((match, index) => {
-      console.log(`Match ${index + 1}: ${match.time} - ${match.teamA} vs ${match.teamB} (${match.competition})`);
+      console.log(`Match ${index + 1}: ${match.time} - ${match.teamA} vs ${match.teamB} (${match.competition}) [${match.channels.join(', ')}]`);
     });
     
   } catch (error) {
@@ -399,28 +379,41 @@ function parseFixturesFromHTML(htmlSection, matchDate) {
   
   try {
     console.log(`parseFixturesFromHTML called with section length: ${htmlSection.length}`);
-    console.log(`Section preview:`, htmlSection.substring(0, 500));
     
-    const fixtureRegex = /<div class="fixture"[^>]*>(.*?)<\/div>(?=<div class="fixture"|<div class="advertfixtures"|<div class="anchor"|$)/gs;
-    let match;
-    let matchCount = 0;
+    // Multiple regex patterns to catch different fixture formats
+    const fixturePatterns = [
+      /<div class="fixture"[^>]*>(.*?)<\/div>(?=<div class="fixture"|<div class="advertfixtures"|<div class="anchor"|<\/div>|$)/gs,
+      /<div[^>]*class="[^"]*fixture[^"]*"[^>]*>(.*?)<\/div>/gs
+    ];
     
-    while ((match = fixtureRegex.exec(htmlSection)) !== null) {
-      matchCount++;
-      console.log(`Processing fixture ${matchCount}:`, match[1].substring(0, 200));
+    for (let patternIndex = 0; patternIndex < fixturePatterns.length; patternIndex++) {
+      const fixtureRegex = fixturePatterns[patternIndex];
+      fixtureRegex.lastIndex = 0; // Reset regex
       
-      const fixtureHTML = match[1];
-      const parsedMatch = parseIndividualFixture(fixtureHTML, matchDate);
+      let match;
+      let matchCount = 0;
       
-      if (parsedMatch) {
-        console.log(`Successfully parsed match: ${parsedMatch.teamA} vs ${parsedMatch.teamB}`);
-        matches.push(parsedMatch);
-      } else {
-        console.log(`Failed to parse fixture ${matchCount}`);
+      while ((match = fixtureRegex.exec(htmlSection)) !== null && matchCount < 20) {
+        matchCount++;
+        console.log(`Pattern ${patternIndex + 1} - Processing fixture ${matchCount}:`, match[1].substring(0, 200));
+        
+        const fixtureHTML = match[1];
+        const parsedMatch = parseIndividualFixture(fixtureHTML, matchDate);
+        
+        if (parsedMatch) {
+          console.log(`Successfully parsed match: ${parsedMatch.teamA} vs ${parsedMatch.teamB}`);
+          matches.push(parsedMatch);
+        } else {
+          console.log(`Failed to parse fixture ${matchCount}`);
+        }
+      }
+      
+      console.log(`Pattern ${patternIndex + 1} found ${matchCount} fixture divs, parsed ${matches.length} matches so far`);
+      
+      if (matches.length > 0) {
+        break; // Found matches, no need to try other patterns
       }
     }
-    
-    console.log(`Found ${matchCount} fixture divs, parsed ${matches.length} matches`);
     
   } catch (error) {
     console.log(`Error parsing fixtures section: ${error.message}`);
@@ -452,7 +445,7 @@ function parseAllFixturesFromHTML(htmlContent) {
       // Reset regex
       regex.lastIndex = 0;
       
-      while ((match = regex.exec(htmlContent)) !== null && matchCount < 50) { // Limit to prevent infinite loops
+      while ((match = regex.exec(htmlContent)) !== null && matchCount < 50) {
         matchCount++;
         console.log(`Pattern ${i + 1} - Match ${matchCount}:`, match[1].substring(0, 100));
         
@@ -485,13 +478,13 @@ function parseIndividualFixture(fixtureHTML, matchDate) {
   try {
     console.log(`parseIndividualFixture called with HTML:`, fixtureHTML.substring(0, 300));
     
-    // Try multiple patterns for time
+    // Try multiple patterns for time extraction
     const timePatterns = [
       /<div class="fixture__time"[^>]*>([^<]+)<\/div>/,
       /<span class="time"[^>]*>([^<]+)<\/span>/,
       /<div[^>]*class="[^"]*time[^"]*"[^>]*>([^<]+)<\/div>/,
-      /\b(\d{1,2}:\d{2})\b/, // Just look for time pattern
-      /\b(\d{1,2}\.\d{2})\b/ // Alternative time format
+      /\b(\d{1,2}:\d{2})\b/,
+      /\b(\d{1,2}\.\d{2})\b/
     ];
     
     let time = null;
@@ -504,18 +497,18 @@ function parseIndividualFixture(fixtureHTML, matchDate) {
       }
     }
     
-    if (!time || time === 'TBC') {
-      console.log(`No valid time found in fixture`);
+    if (!time || time === 'TBC' || time === 'FT' || time === 'HT') {
+      console.log(`No valid time found in fixture (found: ${time})`);
       return null;
     }
     
-    // Try multiple patterns for teams
+    // Try multiple patterns for teams extraction
     const teamPatterns = [
       /<div class="fixture__teams"[^>]*>([^<]+)<\/div>/,
       /<span class="teams"[^>]*>([^<]+)<\/span>/,
       /<div[^>]*class="[^"]*teams[^"]*"[^>]*>([^<]+)<\/div>/,
-      /<h[2-4][^>]*>([^<]*\s+(?:v|vs|V)\s+[^<]*)<\/h[2-4]>/, // Look for headings with vs
-      /([A-Za-z\s]+)\s+(?:v|vs|V)\s+([A-Za-z\s]+)/ // Direct pattern match
+      /<h[2-6][^>]*>([^<]*\s+(?:v|vs|V)\s+[^<]*)<\/h[2-6]>/,
+      /([A-Za-z\s&'\-\.]+)\s+(?:v|vs|V)\s+([A-Za-z\s&'\-\.]+)/
     ];
     
     let teams = null;
@@ -586,20 +579,25 @@ function parseIndividualFixture(fixtureHTML, matchDate) {
 
 function parseTeamsFromText(teamsText) {
   try {
-    const cleanText = teamsText.replace(/&amp;/g, '&').replace(/&#x27;/g, "'").trim();
+    const cleanText = teamsText.replace(/&amp;/g, '&').replace(/&#x27;/g, "'").replace(/&nbsp;/g, ' ').trim();
     
     const patterns = [
-      /^(.+?)\s+v\s+(.+)$/,
-      /^(.+?)\s+vs\s+(.+)$/,
+      /^(.+?)\s+v\s+(.+)$/i,
+      /^(.+?)\s+vs\s+(.+)$/i,
       /^(.+?)\s+V\s+(.+)$/,
-      /(.+?)\s+-\s+(.+)/
+      /(.+?)\s+-\s+(.+)/,
+      /(.+?)\s+@\s+(.+)/ // Sometimes uses @ instead of vs
     ];
     
     for (const pattern of patterns) {
       const match = cleanText.match(pattern);
       if (match && match[1] && match[2]) {
-        const teamA = match[1].trim();
-        const teamB = match[2].trim();
+        let teamA = match[1].trim();
+        let teamB = match[2].trim();
+        
+        // Clean up team names
+        teamA = teamA.replace(/^\W+|\W+$/g, ''); // Remove leading/trailing non-word chars
+        teamB = teamB.replace(/^\W+|\W+$/g, '');
         
         if (teamA.length >= 2 && teamB.length >= 2 && teamA !== teamB) {
           return { teamA, teamB };
@@ -616,7 +614,7 @@ function parseTeamsFromText(teamsText) {
 function parseChannelsFromHTML(fixtureHTML) {
   const channels = [];
   
-  // UK TV Channel mappings
+  // UK TV Channel mappings - comprehensive list
   const channelMappings = {
     'BBC One': 'BBC One',
     'BBC Two': 'BBC Two', 
@@ -628,9 +626,11 @@ function parseChannelsFromHTML(fixtureHTML) {
     'ITV4': 'ITV4',
     'ITVX': 'ITVX',
     'Channel 4': 'Channel 4',
+    'Channel 5': 'Channel 5',
     'Sky Sports Premier League': 'Sky Sports Premier League',
     'Sky Sports Football': 'Sky Sports Football',
     'Sky Sports Main Event': 'Sky Sports Main Event',
+    'Sky Sports Action': 'Sky Sports Action',
     'TNT Sports': 'TNT Sports',
     'TNT Sports 1': 'TNT Sports 1',
     'TNT Sports 2': 'TNT Sports 2',
@@ -638,19 +638,33 @@ function parseChannelsFromHTML(fixtureHTML) {
     'Premier Sports 1': 'Premier Sports 1',
     'Premier Sports 2': 'Premier Sports 2',
     'Amazon Prime Video': 'Amazon Prime Video',
-    'Discovery+': 'Discovery+'
+    'Discovery+': 'Discovery+',
+    'Eurosport 1': 'Eurosport 1',
+    'Eurosport 2': 'Eurosport 2'
   };
   
   try {
-    const channelRegex = /<span class="channel-pill"[^>]*>([^<]+)<\/span>/g;
-    let match;
+    // Multiple patterns to catch different channel formats
+    const channelPatterns = [
+      /<span class="channel-pill"[^>]*>([^<]+)<\/span>/g,
+      /<div[^>]*class="[^"]*channel[^"]*"[^>]*>([^<]+)<\/div>/g,
+      /<span[^>]*class="[^"]*channel[^"]*"[^>]*>([^<]+)<\/span>/g
+    ];
     
-    while ((match = channelRegex.exec(fixtureHTML)) !== null) {
-      const channelText = cleanHTML(match[1].trim());
-      const mappedChannel = channelMappings[channelText] || channelText;
+    for (const pattern of channelPatterns) {
+      pattern.lastIndex = 0; // Reset regex
+      let match;
       
-      if (mappedChannel && mappedChannel !== 'Check TV Guide' && !channels.includes(mappedChannel)) {
-        channels.push(mappedChannel);
+      while ((match = pattern.exec(fixtureHTML)) !== null) {
+        const channelText = cleanHTML(match[1].trim());
+        const mappedChannel = channelMappings[channelText] || channelText;
+        
+        if (mappedChannel && 
+            mappedChannel !== 'Check TV Guide' && 
+            !channels.includes(mappedChannel) &&
+            mappedChannel.length > 1) {
+          channels.push(mappedChannel);
+        }
       }
     }
     
@@ -669,6 +683,7 @@ function cleanHTML(text) {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -679,61 +694,4 @@ function getOrdinalSuffix(day) {
   if (j == 2 && k != 12) return "nd";
   if (j == 3 && k != 13) return "rd";
   return "th";
-}
-
-// Generate demo matches for fallback
-function generateDemoMatches() {
-  const today = new Date().toISOString().split('T')[0];
-  const currentHour = new Date().getHours();
-  
-  // Generate times that make sense for today
-  const times = ['15:00', '17:30', '20:00'];
-  
-  const demoMatches = [
-    {
-      id: `netlify_demo_${Date.now()}_1`,
-      time: times[0],
-      teamA: "Manchester City",
-      teamB: "Arsenal", 
-      competition: "Premier League",
-      channel: "Sky Sports Premier League, Sky Sports Main Event",
-      channels: ["Sky Sports Premier League", "Sky Sports Main Event"],
-      status: "upcoming",
-      createdAt: new Date().toISOString(),
-      matchDate: today,
-      apiSource: 'netlify-demo',
-      venue: 'Etihad Stadium'
-    },
-    {
-      id: `netlify_demo_${Date.now()}_2`,
-      time: times[1],
-      teamA: "Liverpool",
-      teamB: "Chelsea",
-      competition: "Premier League", 
-      channel: "BBC One, BBC iPlayer",
-      channels: ["BBC One", "BBC iPlayer"],
-      status: "upcoming",
-      createdAt: new Date().toISOString(),
-      matchDate: today,
-      apiSource: 'netlify-demo',
-      venue: 'Anfield'
-    },
-    {
-      id: `netlify_demo_${Date.now()}_3`,
-      time: times[2],
-      teamA: "Real Madrid",
-      teamB: "Barcelona",
-      competition: "La Liga",
-      channel: "Premier Sports 1",
-      channels: ["Premier Sports 1"],
-      status: "upcoming",
-      createdAt: new Date().toISOString(),
-      matchDate: today,
-      apiSource: 'netlify-demo',
-      venue: 'Santiago Bernabéu'
-    }
-  ];
-
-  console.log(`Generated ${demoMatches.length} demo matches for fallback`);
-  return demoMatches;
 }

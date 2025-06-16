@@ -3,7 +3,8 @@
 class WebMatchFetcher {
   constructor(debugLogCallback = null) {
     this.version = '2.1.0';
-    this.netlifyFunctionUrl = '/.netlify/functions/fetch-football';
+    // Switch to API version for reliable live data
+    this.netlifyFunctionUrl = '/.netlify/functions/fetch-football-api';
     this.corsProxyUrl = 'https://api.allorigins.win/get?url=';
     this.directUrl = 'https://www.live-footballontv.com';
     
@@ -91,17 +92,17 @@ class WebMatchFetcher {
       
       // Try fallback methods if primary fails
       if (this.isLocal) {
-        this.debugLog('requests', 'CORS proxy failed, trying direct fetch...');
-        try {
-          return await this.fetchDirect();
-        } catch (fallbackError) {
-          this.debugLog('requests', 'All methods failed, using demo data for local development');
-          return this.generateLocalDemoMatches();
-        }
+      this.debugLog('requests', 'CORS proxy failed, trying direct fetch...');
+      try {
+      return await this.fetchDirect();
+      } catch (fallbackError) {
+      this.debugLog('requests', 'All data fetching methods failed');
+      throw new Error('Unable to fetch live football data - all methods failed');
+      }
       } else {
-        // In production, if Netlify function fails completely, use demo data
-        this.debugLog('requests', 'Netlify function failed completely, using demo data as fallback');
-        return this.generateLocalDemoMatches();
+      // In production, if Netlify function fails completely, throw error
+      this.debugLog('requests', 'Netlify function failed completely');
+      throw new Error('Netlify function failed to fetch live data');
       }
     }
   }
@@ -187,153 +188,110 @@ class WebMatchFetcher {
   async fetchWithCorsProxy() {
     this.debugLog('requests', 'Attempting CORS proxy fetch...');
     
-    const proxyUrl = `${this.corsProxyUrl}${encodeURIComponent(this.directUrl)}`;
-    const response = await fetch(proxyUrl, {
-      method: 'GET'
-    });
+    // Try multiple CORS proxy services for better reliability
+    const proxyServices = [
+      'https://api.allorigins.win/get?url=',
+      'https://corsproxy.io/?',
+      'https://cors-anywhere.herokuapp.com/',
+      'https://api.codetabs.com/v1/proxy?quest='
+    ];
+    
+    let lastError;
+    
+    for (const proxyUrl of proxyServices) {
+      try {
+        this.debugLog('requests', `Trying CORS proxy: ${proxyUrl}`);
+        
+        const fullUrl = `${proxyUrl}${encodeURIComponent(this.directUrl)}`;
+        const response = await fetch(fullUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json, text/html, */*',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
 
-    if (!response.ok) {
-      throw new Error(`CORS proxy failed: ${response.status} ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        let htmlContent;
+        const contentType = response.headers.get('content-type') || '';
+        
+        if (contentType.includes('application/json')) {
+          const data = await response.json();
+          htmlContent = data.contents || data.body || data.data;
+        } else {
+          htmlContent = await response.text();
+        }
+        
+        if (!htmlContent || htmlContent.length < 1000) {
+          throw new Error(`Insufficient content: ${htmlContent ? htmlContent.length : 0} characters`);
+        }
+
+        this.debugLog('requests', `CORS proxy successful - received ${htmlContent.length} characters`);
+        
+        const matches = this.parseMatches(htmlContent);
+        const today = new Date().toISOString().split('T')[0];
+        const todayMatches = matches.filter(match => match.matchDate === today);
+        
+        this.debugLog('requests', `Parsed ${matches.length} total matches, ${todayMatches.length} for today`);
+        
+        return todayMatches;
+        
+      } catch (error) {
+        lastError = error;
+        this.debugLog('requests', `CORS proxy ${proxyUrl} failed: ${error.message}`);
+        continue;
+      }
     }
-
-    const data = await response.json();
-    if (!data.contents) {
-      throw new Error('CORS proxy returned no content');
-    }
-
-    this.debugLog('requests', `CORS proxy successful - received ${data.contents.length} characters`);
     
-    const matches = this.parseMatches(data.contents);
-    const today = new Date().toISOString().split('T')[0];
-    const todayMatches = matches.filter(match => match.matchDate === today);
-    
-    this.debugLog('requests', `Parsed ${matches.length} total matches, ${todayMatches.length} for today`);
-    
-    return todayMatches;
+    throw new Error(`All CORS proxies failed. Last error: ${lastError.message}`);
   }
 
   async fetchDirect() {
     this.debugLog('requests', 'Attempting direct fetch (will likely fail due to CORS)...');
     
-    const response = await fetch(this.directUrl, {
-      method: 'GET',
-      mode: 'cors',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-      }
-    });
+    try {
+      const response = await fetch(this.directUrl, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-GB,en;q=0.9',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
 
-    if (!response.ok) {
-      throw new Error(`Direct fetch failed: ${response.status} ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`Direct fetch failed: ${response.status} ${response.statusText}`);
+      }
+
+      const html = await response.text();
+      
+      if (!html || html.length < 1000) {
+        throw new Error(`Insufficient content from direct fetch: ${html ? html.length : 0} characters`);
+      }
+      
+      this.debugLog('requests', `Direct fetch successful - received ${html.length} characters`);
+      
+      const matches = this.parseMatches(html);
+      const today = new Date().toISOString().split('T')[0];
+      const todayMatches = matches.filter(match => match.matchDate === today);
+      
+      this.debugLog('requests', `Direct fetch parsed ${matches.length} total matches, ${todayMatches.length} for today`);
+      
+      return todayMatches;
+      
+    } catch (error) {
+      this.debugLog('requests', `Direct fetch failed: ${error.message}`);
+      throw error;
     }
-
-    const html = await response.text();
-    this.debugLog('requests', `Direct fetch successful - received ${html.length} characters`);
-    
-    const matches = this.parseMatches(html);
-    const today = new Date().toISOString().split('T')[0];
-    const todayMatches = matches.filter(match => match.matchDate === today);
-    
-    return todayMatches;
   }
 
-  generateLocalDemoMatches() {
-    this.debugLog('requests', 'Generating demo matches for web version...');
-    
-    const today = new Date().toISOString().split('T')[0];
-    const currentHour = new Date().getHours();
-    
-    const demoMatches = [
-      {
-        id: `web_demo_${Date.now()}_1`,
-        time: "13:30",
-        teamA: "Manchester City",
-        teamB: "Arsenal", 
-        competition: "Premier League",
-        channel: "Sky Sports Premier League, Sky Sports Main Event",
-        channels: ["Sky Sports Premier League", "Sky Sports Main Event"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'web-demo',
-        venue: 'Etihad Stadium'
-      },
-      {
-        id: `web_demo_${Date.now()}_2`,
-        time: "15:00",
-        teamA: "Liverpool",
-        teamB: "Chelsea",
-        competition: "Premier League", 
-        channel: "BBC One, BBC iPlayer",
-        channels: ["BBC One", "BBC iPlayer"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'web-demo',
-        venue: 'Anfield'
-      },
-      {
-        id: `web_demo_${Date.now()}_3`,
-        time: "17:30",
-        teamA: "Real Madrid",
-        teamB: "Barcelona",
-        competition: "La Liga",
-        channel: "Premier Sports 1",
-        channels: ["Premier Sports 1"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'web-demo',
-        venue: 'Santiago Bernabéu'
-      },
-      {
-        id: `web_demo_${Date.now()}_4`,
-        time: "19:45",
-        teamA: "Bayern Munich",
-        teamB: "Borussia Dortmund",
-        competition: "Bundesliga",
-        channel: "Sky Sports Football",
-        channels: ["Sky Sports Football"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'web-demo',
-        venue: 'Allianz Arena'
-      },
-      {
-        id: `web_demo_${Date.now()}_5`,
-        time: "19:45",
-        teamA: "Paris Saint-Germain",
-        teamB: "Olympique Marseille",
-        competition: "Ligue 1",
-        channel: "Discovery+",
-        channels: ["Discovery+"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'web-demo',
-        venue: 'Parc des Princes'
-      },
-      {
-        id: `web_demo_${Date.now()}_6`,
-        time: "21:00",
-        teamA: "AC Milan",
-        teamB: "Inter Milan",
-        competition: "Serie A",
-        channel: "TNT Sports 1",
-        channels: ["TNT Sports 1"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'web-demo',
-        venue: 'San Siro'
-      }
-    ];
 
-    this.debugLog('requests', `Generated ${demoMatches.length} demo matches for today`);
-    return demoMatches;
-  }
 
   async updateMatchData() {
     try {
@@ -349,21 +307,7 @@ class WebMatchFetcher {
         return { success: true, added: 0, total: existingData.footballMatches.length };
       }
       
-      // Check if matches are from demo data
-      const isDemoData = newMatches.length > 0 && newMatches[0].apiSource && 
-                        (newMatches[0].apiSource.includes('demo') || newMatches[0].apiSource.includes('local'));
-      
-      if (isDemoData) {
-        this.debugLog('data', 'Received demo data - not adding to existing matches to avoid duplicates');
-        return { 
-          success: true, 
-          added: 0, 
-          total: existingData.footballMatches.length,
-          matches: newMatches,
-          source: 'demo-data',
-          note: 'Demo data not persisted to avoid duplicates'
-        };
-      }
+
 
       const existingIds = new Set(
         existingData.footballMatches.map(m => 
@@ -459,9 +403,7 @@ class WebMatchFetcher {
             note: data.note || ''
           });
           
-          if (data.source === 'demo-data') {
-            this.debugLog('requests', 'Function returned demo data - this may indicate issues with live data fetching');
-          }
+
           
           return testResponse.ok;
           
@@ -504,22 +446,44 @@ class WebMatchFetcher {
     return Array.from(allChannels).sort();
   }
 
-  // HTML parsing methods for local development
+  // Improved HTML parsing methods for local development
   parseMatches(htmlContent) {
     console.log('Starting to parse HTML content for matches...');
+    console.log(`HTML content length: ${htmlContent.length} characters`);
+    
+    // Log a preview of the HTML to understand its structure
+    const htmlPreview = htmlContent.substring(0, 2000);
+    console.log('HTML preview:', htmlPreview);
+    
     const matches = [];
     
     try {
       const today = new Date();
       const todayFormatted = today.toISOString().split('T')[0];
       
-      // Look for today's date section in HTML
+      // Comprehensive date patterns for better matching
       const todayPatterns = [
+        `${today.toLocaleDateString('en-GB', { weekday: 'long' })} ${today.getDate()}${this.getOrdinalSuffix(today.getDate())} ${today.toLocaleDateString('en-GB', { month: 'long' })} ${today.getFullYear()}`,
+        `${today.toLocaleDateString('en-US', { weekday: 'long' })} ${today.getDate()}${this.getOrdinalSuffix(today.getDate())} ${today.toLocaleDateString('en-US', { month: 'long' })} ${today.getFullYear()}`,
         `Sunday ${today.getDate()}${this.getOrdinalSuffix(today.getDate())} June ${today.getFullYear()}`,
-        `${today.toLocaleDateString('en-GB', { weekday: 'long' })} ${today.getDate()}${this.getOrdinalSuffix(today.getDate())} ${today.toLocaleDateString('en-GB', { month: 'long' })} ${today.getFullYear()}`
+        `${today.getDate()}${this.getOrdinalSuffix(today.getDate())} June ${today.getFullYear()}`,
+        `June ${today.getDate()}${this.getOrdinalSuffix(today.getDate())}, ${today.getFullYear()}`,
+        `${today.getDate()}-06-${today.getFullYear()}`, // Alternative date format
+        `${today.getFullYear()}-06-${today.getDate().toString().padStart(2, '0')}`, // ISO format
+        // Generic patterns
+        'fixture',
+        'match',
+        'today'
       ];
       
       console.log('Looking for today\'s date patterns:', todayPatterns);
+      
+      // Also look for any date-like patterns in the HTML
+      const dateRegex = /\b(\d{1,2})(st|nd|rd|th)?\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})\b/g;
+      let dateMatch;
+      while ((dateMatch = dateRegex.exec(htmlContent)) !== null) {
+        console.log(`Found date pattern in HTML: ${dateMatch[0]}`);
+      }
       
       // Find today's date section
       let todaySection = null;
@@ -544,12 +508,40 @@ class WebMatchFetcher {
       }
       
       if (!todaySection) {
-        console.log('Could not find today\'s date section, parsing all fixtures for today');
+        console.log('Could not find today\'s date section, parsing all fixtures and looking for matches');
+        
+        // Look for fixture indicators in the HTML
+        const fixtureIndicators = [
+          'class="fixture"',
+          'class="match"',
+          'vs ',
+          ' v ',
+          'kick-off',
+          'premier league',
+          'champions league',
+          'football'
+        ];
+        
+        let hasFootballContent = false;
+        for (const indicator of fixtureIndicators) {
+          if (htmlContent.toLowerCase().includes(indicator.toLowerCase())) {
+            console.log(`Found football indicator: ${indicator}`);
+            hasFootballContent = true;
+          }
+        }
+        
+        if (!hasFootballContent) {
+          console.log('No football content indicators found in HTML');
+          return [];
+        }
+        
         const allFixtures = this.parseAllFixturesFromHTML(htmlContent);
-        const todayMatches = allFixtures.filter(match => {
-          match.matchDate = todayFormatted;
-          return true;
-        });
+        console.log(`parseAllFixturesFromHTML returned ${allFixtures.length} matches`);
+        
+        const todayMatches = allFixtures.map(match => ({
+          ...match,
+          matchDate: todayFormatted
+        }));
         matches.push(...todayMatches);
       }
       
@@ -612,27 +604,80 @@ class WebMatchFetcher {
 
   parseIndividualFixture(fixtureHTML, matchDate) {
     try {
-      // Extract time
-      const timeMatch = fixtureHTML.match(/<div class="fixture__time">([^<]+)<\/div>/);
-      if (!timeMatch) return null;
+      console.log(`Parsing fixture HTML: ${fixtureHTML.substring(0, 300)}...`);
       
-      const time = timeMatch[1].trim();
-      if (time === 'TBC') return null;
+      // Try multiple patterns for time extraction
+      const timePatterns = [
+        /<div class="fixture__time"[^>]*>([^<]+)<\/div>/,
+        /<span class="time"[^>]*>([^<]+)<\/span>/,
+        /<div[^>]*class="[^"]*time[^"]*"[^>]*>([^<]+)<\/div>/,
+        /\b(\d{1,2}:\d{2})\b/,
+        /\b(\d{1,2}\.\d{2})\b/
+      ];
       
-      // Extract teams
-      const teamsMatch = fixtureHTML.match(/<div class="fixture__teams">([^<]+)<\/div>/);
-      if (!teamsMatch) return null;
+      let time = null;
+      for (const pattern of timePatterns) {
+        const timeMatch = fixtureHTML.match(pattern);
+        if (timeMatch && timeMatch[1]) {
+          time = timeMatch[1].trim();
+          console.log(`Found time: ${time}`);
+          break;
+        }
+      }
       
-      const teamsText = teamsMatch[1].trim();
-      const teams = this.parseTeamsFromText(teamsText);
-      if (!teams) return null;
+      if (!time || time === 'TBC' || time === 'FT' || time === 'HT') {
+        console.log(`Invalid or missing time: ${time}`);
+        return null;
+      }
       
-      // Extract competition
-      const competitionMatch = fixtureHTML.match(/<div class="fixture__competition">([^<]+)<\/div>/);
-      const competition = competitionMatch ? this.cleanHTML(competitionMatch[1].trim()) : 'Football';
+      // Try multiple patterns for teams extraction
+      const teamPatterns = [
+        /<div class="fixture__teams"[^>]*>([^<]+)<\/div>/,
+        /<span class="teams"[^>]*>([^<]+)<\/span>/,
+        /<div[^>]*class="[^"]*teams[^"]*"[^>]*>([^<]+)<\/div>/,
+        /<h[2-6][^>]*>([^<]*\s+(?:v|vs|V)\s+[^<]*)<\/h[2-6]>/,
+        /([A-Za-z\s&'\-\.]+)\s+(?:v|vs|V)\s+([A-Za-z\s&'\-\.]+)/
+      ];
+      
+      let teams = null;
+      for (const pattern of teamPatterns) {
+        const teamsMatch = fixtureHTML.match(pattern);
+        if (teamsMatch && teamsMatch[1]) {
+          const teamsText = teamsMatch[1].trim();
+          console.log(`Found teams text: ${teamsText}`);
+          teams = this.parseTeamsFromText(teamsText);
+          if (teams) {
+            console.log(`Successfully parsed teams: ${teams.teamA} vs ${teams.teamB}`);
+            break;
+          }
+        }
+      }
+      
+      if (!teams) {
+        console.log('No valid teams found');
+        return null;
+      }
+      
+      // Try multiple patterns for competition
+      const competitionPatterns = [
+        /<div class="fixture__competition"[^>]*>([^<]+)<\/div>/,
+        /<span class="competition"[^>]*>([^<]+)<\/span>/,
+        /<div[^>]*class="[^"]*competition[^"]*"[^>]*>([^<]+)<\/div>/
+      ];
+      
+      let competition = 'Football';
+      for (const pattern of competitionPatterns) {
+        const competitionMatch = fixtureHTML.match(pattern);
+        if (competitionMatch && competitionMatch[1]) {
+          competition = this.cleanHTML(competitionMatch[1].trim());
+          console.log(`Found competition: ${competition}`);
+          break;
+        }
+      }
       
       // Extract channels
       const channels = this.parseChannelsFromHTML(fixtureHTML);
+      console.log(`Found channels: ${channels.join(', ')}`);
       
       const matchObj = {
         id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -661,26 +706,42 @@ class WebMatchFetcher {
 
   parseTeamsFromText(teamsText) {
     try {
-      const cleanText = teamsText.replace(/&amp;/g, '&').replace(/&#x27;/g, "'").trim();
+      const cleanText = teamsText
+        .replace(/&amp;/g, '&')
+        .replace(/&#x27;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      console.log(`Attempting to parse teams from: "${cleanText}"`);
       
       const patterns = [
-        /^(.+?)\s+v\s+(.+)$/,
-        /^(.+?)\s+vs\s+(.+)$/,
+        /^(.+?)\s+v\s+(.+)$/i,
+        /^(.+?)\s+vs\s+(.+)$/i,
         /^(.+?)\s+V\s+(.+)$/,
-        /(.+?)\s+-\s+(.+)/
+        /(.+?)\s+-\s+(.+)/,
+        /(.+?)\s+@\s+(.+)/, // Sometimes uses @ instead of vs
+        /^(.+?)\s+versus\s+(.+)$/i
       ];
       
       for (const pattern of patterns) {
         const match = cleanText.match(pattern);
         if (match && match[1] && match[2]) {
-          const teamA = match[1].trim();
-          const teamB = match[2].trim();
+          let teamA = match[1].trim();
+          let teamB = match[2].trim();
+          
+          // Clean up team names
+          teamA = teamA.replace(/^\W+|\W+$/g, ''); // Remove leading/trailing non-word chars
+          teamB = teamB.replace(/^\W+|\W+$/g, '');
           
           if (teamA.length >= 2 && teamB.length >= 2 && teamA !== teamB) {
+            console.log(`Successfully parsed teams: "${teamA}" vs "${teamB}"`);
             return { teamA, teamB };
           }
         }
       }
+      
+      console.log(`Could not parse teams from: "${cleanText}"`);
     } catch (error) {
       console.log(`Error parsing teams from "${teamsText}": ${error.message}`);
     }
@@ -691,7 +752,7 @@ class WebMatchFetcher {
   parseChannelsFromHTML(fixtureHTML) {
     const channels = [];
     
-    // UK TV Channel mappings
+    // Comprehensive UK TV Channel mappings
     const channelMappings = {
       'BBC One': 'BBC One',
       'BBC Two': 'BBC Two', 
@@ -703,9 +764,11 @@ class WebMatchFetcher {
       'ITV4': 'ITV4',
       'ITVX': 'ITVX',
       'Channel 4': 'Channel 4',
+      'Channel 5': 'Channel 5',
       'Sky Sports Premier League': 'Sky Sports Premier League',
       'Sky Sports Football': 'Sky Sports Football',
       'Sky Sports Main Event': 'Sky Sports Main Event',
+      'Sky Sports Action': 'Sky Sports Action',
       'TNT Sports': 'TNT Sports',
       'TNT Sports 1': 'TNT Sports 1',
       'TNT Sports 2': 'TNT Sports 2',
@@ -713,19 +776,35 @@ class WebMatchFetcher {
       'Premier Sports 1': 'Premier Sports 1',
       'Premier Sports 2': 'Premier Sports 2',
       'Amazon Prime Video': 'Amazon Prime Video',
-      'Discovery+': 'Discovery+'
+      'Discovery+': 'Discovery+',
+      'Eurosport 1': 'Eurosport 1',
+      'Eurosport 2': 'Eurosport 2'
     };
     
     try {
-      const channelRegex = /<span class="channel-pill"[^>]*>([^<]+)<\/span>/g;
-      let match;
+      // Multiple patterns to catch different channel formats
+      const channelPatterns = [
+        /<span class="channel-pill"[^>]*>([^<]+)<\/span>/g,
+        /<div[^>]*class="[^"]*channel[^"]*"[^>]*>([^<]+)<\/div>/g,
+        /<span[^>]*class="[^"]*channel[^"]*"[^>]*>([^<]+)<\/span>/g,
+        /<li[^>]*class="[^"]*channel[^"]*"[^>]*>([^<]+)<\/li>/g
+      ];
       
-      while ((match = channelRegex.exec(fixtureHTML)) !== null) {
-        const channelText = this.cleanHTML(match[1].trim());
-        const mappedChannel = channelMappings[channelText] || channelText;
+      for (const pattern of channelPatterns) {
+        pattern.lastIndex = 0; // Reset regex
+        let match;
         
-        if (mappedChannel && mappedChannel !== 'Check TV Guide' && !channels.includes(mappedChannel)) {
-          channels.push(mappedChannel);
+        while ((match = pattern.exec(fixtureHTML)) !== null) {
+          const channelText = this.cleanHTML(match[1].trim());
+          const mappedChannel = channelMappings[channelText] || channelText;
+          
+          if (mappedChannel && 
+              mappedChannel !== 'Check TV Guide' && 
+              !channels.includes(mappedChannel) &&
+              mappedChannel.length > 1) {
+            channels.push(mappedChannel);
+            console.log(`Found channel: ${mappedChannel}`);
+          }
         }
       }
       

@@ -1,6 +1,6 @@
 const https = require('https');
 
-// Alternative Football API Function - Uses reliable API instead of web scraping
+// Alternative Football API Function - Uses reliable APIs instead of web scraping
 exports.handler = async (event, context) => {
   // Set CORS headers
   const headers = {
@@ -20,36 +20,57 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    console.log('Fetching football data from Football-Data.org API...');
+    console.log('Fetching football data from multiple API sources...');
     
     // Get today's date
     const today = new Date().toISOString().split('T')[0];
     console.log(`Looking for matches on: ${today}`);
     
-    // Try multiple API sources
     let matches = [];
     let apiSource = 'unknown';
+    let lastError = null;
     
-    // Method 1: Try Football-Data.org (free tier)
+    // Method 1: Try FootballData.org API (free tier)
     try {
+      console.log('Attempting FootballData.org API...');
       matches = await fetchFromFootballData(today);
       apiSource = 'football-data.org';
-      console.log(`Football-Data.org returned ${matches.length} matches`);
+      console.log(`FootballData.org returned ${matches.length} matches`);
     } catch (apiError) {
-      console.log('Football-Data.org failed:', apiError.message);
+      console.log('FootballData.org failed:', apiError.message);
+      lastError = apiError;
       
-      // Method 2: Try free-to-use API
+      // Method 2: Try API-Football free tier
       try {
-        matches = await fetchFromFreeAPI(today);
-        apiSource = 'free-api';
-        console.log(`Free API returned ${matches.length} matches`);
-      } catch (freeApiError) {
-        console.log('Free API failed:', freeApiError.message);
+        console.log('Attempting API-Football...');
+        matches = await fetchFromAPIFootball(today);
+        apiSource = 'api-football';
+        console.log(`API-Football returned ${matches.length} matches`);
+      } catch (apiFreeError) {
+        console.log('API-Football failed:', apiFreeError.message);
+        lastError = apiFreeError;
         
-        // Method 3: Use demo data as last resort
-        matches = generateRealisticDemoMatches();
-        apiSource = 'demo-data';
-        console.log('Using demo data as fallback');
+        // Method 3: Try OpenLigaDB (German league data, but free)
+        try {
+          console.log('Attempting OpenLigaDB...');
+          matches = await fetchFromOpenLigaDB(today);
+          apiSource = 'openligadb';
+          console.log(`OpenLigaDB returned ${matches.length} matches`);
+        } catch (ligaError) {
+          console.log('OpenLigaDB failed:', ligaError.message);
+          lastError = ligaError;
+          
+          // Method 4: Try FIFA API (if available)
+          try {
+            console.log('Attempting alternative APIs...');
+            matches = await fetchFromAlternativeAPI(today);
+            apiSource = 'alternative-api';
+            console.log(`Alternative API returned ${matches.length} matches`);
+          } catch (altError) {
+            console.log('All APIs failed:', altError.message);
+            throw new Error(`All API sources failed. Last error: ${altError.message}`);
+          }
+        }
       }
     }
     
@@ -63,28 +84,26 @@ exports.handler = async (event, context) => {
         todayCount: matches.length,
         fetchTime: new Date().toISOString(),
         source: apiSource,
-        note: apiSource === 'demo-data' ? 'APIs unavailable, using demo data' : `Live data from ${apiSource}`
+        note: matches.length > 0 ? `Live data from ${apiSource}` : 'No matches found for today from API sources'
       })
     };
 
   } catch (error) {
-    console.error('Error fetching football data:', error);
+    console.error('Error fetching football data from APIs:', error);
     
-    // Always return demo data on error
-    const demoMatches = generateRealisticDemoMatches();
-    
+    // Return error response instead of demo data
     return {
-      statusCode: 200,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
-        success: true,
-        matches: demoMatches,
-        totalFound: demoMatches.length,
-        todayCount: demoMatches.length,
-        fetchTime: new Date().toISOString(),
-        source: 'demo-data',
+        success: false,
         error: error.message,
-        note: 'Using demo data due to API error'
+        matches: [],
+        totalFound: 0,
+        todayCount: 0,
+        fetchTime: new Date().toISOString(),
+        source: 'error',
+        note: 'Failed to fetch live data from any API source'
       })
     };
   }
@@ -93,12 +112,20 @@ exports.handler = async (event, context) => {
 // Fetch from Football-Data.org (free tier - 10 calls per minute)
 function fetchFromFootballData(date) {
   return new Promise((resolve, reject) => {
+    // Note: You need to register at https://www.football-data.org/ for a free API key
+    const apiKey = process.env.FOOTBALL_DATA_API_KEY || 'YOUR_API_KEY_HERE';
+    
+    if (apiKey === 'YOUR_API_KEY_HERE') {
+      reject(new Error('Football-Data.org API key not configured'));
+      return;
+    }
+    
     const options = {
       hostname: 'api.football-data.org',
       path: `/v4/matches?dateFrom=${date}&dateTo=${date}`,
       method: 'GET',
       headers: {
-        'X-Auth-Token': 'YOUR_API_KEY_HERE', // You'd need to register for a free key
+        'X-Auth-Token': apiKey,
         'Accept': 'application/json'
       }
     };
@@ -121,40 +148,154 @@ function fetchFromFootballData(date) {
             const matches = parseFootballDataMatches(jsonData);
             resolve(matches);
           } catch (parseError) {
-            reject(new Error(`Parse error: ${parseError.message}`));
+            reject(new Error(`Football-Data.org parse error: ${parseError.message}`));
           }
+        } else if (res.statusCode === 429) {
+          reject(new Error('Football-Data.org rate limit exceeded'));
+        } else if (res.statusCode === 403) {
+          reject(new Error('Football-Data.org API key invalid or expired'));
         } else {
-          reject(new Error(`API Error: ${res.statusCode} - ${data}`));
+          reject(new Error(`Football-Data.org API Error: ${res.statusCode} - ${data}`));
         }
       });
     });
 
     req.on('error', (error) => {
-      reject(new Error(`Request Error: ${error.message}`));
+      reject(new Error(`Football-Data.org Request Error: ${error.message}`));
     });
 
-    req.setTimeout(10000, () => {
+    req.setTimeout(15000, () => {
       req.destroy();
-      reject(new Error('Request timeout'));
+      reject(new Error('Football-Data.org request timeout'));
     });
 
     req.end();
   });
 }
 
-// Fetch from a free API (no key required)
-function fetchFromFreeAPI(date) {
+// Fetch from API-Football (free tier available)
+function fetchFromAPIFootball(date) {
   return new Promise((resolve, reject) => {
-    // Note: This would use a real free API like api-football.com free tier
-    // For demo purposes, we'll simulate a successful response
+    const apiKey = process.env.API_FOOTBALL_KEY || 'YOUR_API_FOOTBALL_KEY';
     
-    console.log('Attempting free API call...');
+    if (apiKey === 'YOUR_API_FOOTBALL_KEY') {
+      reject(new Error('API-Football key not configured'));
+      return;
+    }
     
-    // Simulate API delay
-    setTimeout(() => {
-      // For now, return empty array (would implement real API call)
-      resolve([]);
-    }, 1000);
+    const options = {
+      hostname: 'v3.football.api-sports.io',
+      path: `/fixtures?date=${date}`,
+      method: 'GET',
+      headers: {
+        'X-RapidAPI-Key': apiKey,
+        'X-RapidAPI-Host': 'v3.football.api-sports.io'
+      }
+    };
+
+    console.log(`Calling API-Football: ${options.hostname}${options.path}`);
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        console.log(`API-Football response: ${res.statusCode}`);
+        
+        if (res.statusCode === 200) {
+          try {
+            const jsonData = JSON.parse(data);
+            const matches = parseAPIFootballMatches(jsonData);
+            resolve(matches);
+          } catch (parseError) {
+            reject(new Error(`API-Football parse error: ${parseError.message}`));
+          }
+        } else {
+          reject(new Error(`API-Football Error: ${res.statusCode} - ${data}`));
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      reject(new Error(`API-Football Request Error: ${error.message}`));
+    });
+
+    req.setTimeout(15000, () => {
+      req.destroy();
+      reject(new Error('API-Football request timeout'));
+    });
+
+    req.end();
+  });
+}
+
+// Fetch from OpenLigaDB (German league data, free)
+function fetchFromOpenLigaDB(date) {
+  return new Promise((resolve, reject) => {
+    // OpenLigaDB provides German league data for free
+    const year = new Date().getFullYear();
+    
+    const options = {
+      hostname: 'api.openligadb.de',
+      path: `/getmatchdata/bl1/${year}`, // Bundesliga data
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    };
+
+    console.log(`Calling OpenLigaDB: ${options.hostname}${options.path}`);
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        console.log(`OpenLigaDB response: ${res.statusCode}`);
+        
+        if (res.statusCode === 200) {
+          try {
+            const jsonData = JSON.parse(data);
+            const matches = parseOpenLigaDBMatches(jsonData, date);
+            resolve(matches);
+          } catch (parseError) {
+            reject(new Error(`OpenLigaDB parse error: ${parseError.message}`));
+          }
+        } else {
+          reject(new Error(`OpenLigaDB Error: ${res.statusCode} - ${data}`));
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      reject(new Error(`OpenLigaDB Request Error: ${error.message}`));
+    });
+
+    req.setTimeout(15000, () => {
+      req.destroy();
+      reject(new Error('OpenLigaDB request timeout'));
+    });
+
+    req.end();
+  });
+}
+
+// Try alternative free APIs
+function fetchFromAlternativeAPI(date) {
+  return new Promise((resolve, reject) => {
+    // This could be expanded to try other free APIs like:
+    // - TheSportsDB (free tier)
+    // - SportRadar (free tier)
+    // - API-FOOTBALL (different endpoint)
+    
+    console.log('No alternative APIs configured yet');
+    reject(new Error('No alternative APIs available'));
   });
 }
 
@@ -176,7 +317,7 @@ function parseFootballDataMatches(apiResponse) {
         let channels = determineUKChannel(match.competition.name);
         
         const parsedMatch = {
-          id: `api_${match.id}`,
+          id: `football_data_${match.id}`,
           time: ukTime,
           teamA: match.homeTeam.name,
           teamB: match.awayTeam.name,
@@ -191,10 +332,103 @@ function parseFootballDataMatches(apiResponse) {
         };
         
         matches.push(parsedMatch);
-        console.log(`Parsed API match: ${parsedMatch.teamA} vs ${parsedMatch.teamB} at ${parsedMatch.time}`);
+        console.log(`Parsed Football-Data match: ${parsedMatch.teamA} vs ${parsedMatch.teamB} at ${parsedMatch.time}`);
         
       } catch (parseError) {
-        console.log(`Error parsing match: ${parseError.message}`);
+        console.log(`Error parsing Football-Data match: ${parseError.message}`);
+      }
+    });
+  }
+  
+  return matches;
+}
+
+// Parse API-Football response
+function parseAPIFootballMatches(apiResponse) {
+  const matches = [];
+  
+  if (apiResponse.response && Array.isArray(apiResponse.response)) {
+    apiResponse.response.forEach(match => {
+      try {
+        const matchTime = new Date(match.fixture.date);
+        const ukTime = matchTime.toLocaleTimeString('en-GB', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: 'Europe/London'
+        });
+        
+        let channels = determineUKChannel(match.league.name);
+        
+        const parsedMatch = {
+          id: `api_football_${match.fixture.id}`,
+          time: ukTime,
+          teamA: match.teams.home.name,
+          teamB: match.teams.away.name,
+          competition: match.league.name,
+          channel: channels.join(', '),
+          channels: channels,
+          status: match.fixture.status.short.toLowerCase(),
+          createdAt: new Date().toISOString(),
+          matchDate: new Date(match.fixture.date).toISOString().split('T')[0],
+          apiSource: 'api-football',
+          venue: match.fixture.venue ? match.fixture.venue.name : ''
+        };
+        
+        matches.push(parsedMatch);
+        console.log(`Parsed API-Football match: ${parsedMatch.teamA} vs ${parsedMatch.teamB} at ${parsedMatch.time}`);
+        
+      } catch (parseError) {
+        console.log(`Error parsing API-Football match: ${parseError.message}`);
+      }
+    });
+  }
+  
+  return matches;
+}
+
+// Parse OpenLigaDB response
+function parseOpenLigaDBMatches(apiResponse, targetDate) {
+  const matches = [];
+  
+  if (Array.isArray(apiResponse)) {
+    apiResponse.forEach(match => {
+      try {
+        const matchTime = new Date(match.matchDateTime);
+        const matchDate = matchTime.toISOString().split('T')[0];
+        
+        // Only return matches for the target date
+        if (matchDate !== targetDate) {
+          return;
+        }
+        
+        const ukTime = matchTime.toLocaleTimeString('en-GB', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: 'Europe/London'
+        });
+        
+        let channels = ['Sky Sports Football', 'Discovery+']; // Typical German league channels in UK
+        
+        const parsedMatch = {
+          id: `openligadb_${match.matchID}`,
+          time: ukTime,
+          teamA: match.team1.teamName,
+          teamB: match.team2.teamName,
+          competition: 'Bundesliga',
+          channel: channels.join(', '),
+          channels: channels,
+          status: match.matchIsFinished ? 'finished' : 'upcoming',
+          createdAt: new Date().toISOString(),
+          matchDate: matchDate,
+          apiSource: 'openligadb',
+          venue: match.location || ''
+        };
+        
+        matches.push(parsedMatch);
+        console.log(`Parsed OpenLigaDB match: ${parsedMatch.teamA} vs ${parsedMatch.teamB} at ${parsedMatch.time}`);
+        
+      } catch (parseError) {
+        console.log(`Error parsing OpenLigaDB match: ${parseError.message}`);
       }
     });
   }
@@ -204,134 +438,43 @@ function parseFootballDataMatches(apiResponse) {
 
 // Determine UK TV channel based on competition
 function determineUKChannel(competition) {
-  const channelMap = {
-    'Premier League': ['Sky Sports Premier League', 'BBC One'],
-    'Championship': ['Sky Sports Football'],
-    'FA Cup': ['BBC One', 'ITV1'],
-    'UEFA Champions League': ['TNT Sports 1', 'TNT Sports 2'],
-    'UEFA Europa League': ['TNT Sports 1'],
-    'FIFA World Cup': ['BBC One', 'ITV1'],
-    'UEFA European Championship': ['BBC One', 'ITV1'],
-    'Primera División': ['Premier Sports 1'], // La Liga
-    'Serie A': ['TNT Sports'],
-    'Bundesliga': ['Sky Sports Football'],
-    'Ligue 1': ['Discovery+']
-  };
+  const lowerComp = competition.toLowerCase();
   
-  // Find matching competition
-  for (const [comp, channels] of Object.entries(channelMap)) {
-    if (competition.toLowerCase().includes(comp.toLowerCase())) {
-      return channels;
-    }
+  // Mapping based on typical UK broadcasting rights
+  if (lowerComp.includes('premier league')) {
+    return ['Sky Sports Premier League', 'Sky Sports Main Event'];
+  } else if (lowerComp.includes('championship')) {
+    return ['Sky Sports Football'];
+  } else if (lowerComp.includes('fa cup')) {
+    return ['BBC One', 'ITV1'];
+  } else if (lowerComp.includes('champions league') || lowerComp.includes('uefa champions')) {
+    return ['TNT Sports 1', 'TNT Sports 2'];
+  } else if (lowerComp.includes('europa league') || lowerComp.includes('uefa europa')) {
+    return ['TNT Sports 1'];
+  } else if (lowerComp.includes('conference league') || lowerComp.includes('uefa conference')) {
+    return ['TNT Sports 2'];
+  } else if (lowerComp.includes('world cup') || lowerComp.includes('fifa')) {
+    return ['BBC One', 'ITV1'];
+  } else if (lowerComp.includes('european championship') || lowerComp.includes('euros')) {
+    return ['BBC One', 'ITV1'];
+  } else if (lowerComp.includes('primera division') || lowerComp.includes('la liga')) {
+    return ['Premier Sports 1'];
+  } else if (lowerComp.includes('serie a')) {
+    return ['TNT Sports'];
+  } else if (lowerComp.includes('bundesliga')) {
+    return ['Sky Sports Football', 'Discovery+'];
+  } else if (lowerComp.includes('ligue 1')) {
+    return ['Discovery+'];
+  } else if (lowerComp.includes('eredivisie')) {
+    return ['Premier Sports 2'];
+  } else if (lowerComp.includes('scottish premiership')) {
+    return ['Sky Sports Football'];
+  } else if (lowerComp.includes('carabao cup') || lowerComp.includes('efl cup')) {
+    return ['Sky Sports Football'];
+  } else if (lowerComp.includes('community shield')) {
+    return ['ITV1'];
+  } else {
+    // Default channels for unknown competitions
+    return ['Check TV Guide'];
   }
-  
-  // Default channels for unknown competitions
-  return ['Sky Sports Football'];
-}
-
-// Generate realistic demo matches
-function generateRealisticDemoMatches() {
-  const today = new Date().toISOString().split('T')[0];
-  const dayOfWeek = new Date().getDay(); // 0 = Sunday, 6 = Saturday
-  
-  // Adjust match times based on day of week
-  let matches = [];
-  
-  if (dayOfWeek === 0) { // Sunday
-    matches = [
-      {
-        id: `api_demo_${Date.now()}_1`,
-        time: "14:00",
-        teamA: "Manchester United",
-        teamB: "Liverpool",
-        competition: "Premier League",
-        channel: "Sky Sports Premier League, Sky Sports Main Event",
-        channels: ["Sky Sports Premier League", "Sky Sports Main Event"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'api-demo',
-        venue: 'Old Trafford'
-      },
-      {
-        id: `api_demo_${Date.now()}_2`,
-        time: "16:30",
-        teamA: "Chelsea",
-        teamB: "Arsenal",
-        competition: "Premier League",
-        channel: "Sky Sports Premier League",
-        channels: ["Sky Sports Premier League"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'api-demo',
-        venue: 'Stamford Bridge'
-      }
-    ];
-  } else if (dayOfWeek === 6) { // Saturday
-    matches = [
-      {
-        id: `api_demo_${Date.now()}_1`,
-        time: "12:30",
-        teamA: "Manchester City",
-        teamB: "Tottenham",
-        competition: "Premier League",
-        channel: "TNT Sports 1",
-        channels: ["TNT Sports 1"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'api-demo',
-        venue: 'Etihad Stadium'
-      },
-      {
-        id: `api_demo_${Date.now()}_2`,
-        time: "15:00",
-        teamA: "Newcastle United",
-        teamB: "Brighton",
-        competition: "Premier League",
-        channel: "Sky Sports Premier League",
-        channels: ["Sky Sports Premier League"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'api-demo',
-        venue: 'St. James\' Park'
-      },
-      {
-        id: `api_demo_${Date.now()}_3`,
-        time: "17:30",
-        teamA: "West Ham",
-        teamB: "Aston Villa",
-        competition: "Premier League",
-        channel: "Sky Sports Premier League",
-        channels: ["Sky Sports Premier League"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'api-demo',
-        venue: 'London Stadium'
-      }
-    ];
-  } else { // Weekday
-    matches = [
-      {
-        id: `api_demo_${Date.now()}_1`,
-        time: "20:00",
-        teamA: "Real Madrid",
-        teamB: "Barcelona",
-        competition: "UEFA Champions League",
-        channel: "TNT Sports 1",
-        channels: ["TNT Sports 1"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: today,
-        apiSource: 'api-demo',
-        venue: 'Santiago Bernabéu'
-      }
-    ];
-  }
-  
-  console.log(`Generated ${matches.length} realistic demo matches for ${new Date().toLocaleDateString('en-GB', { weekday: 'long' })}`);
-  return matches;
 }

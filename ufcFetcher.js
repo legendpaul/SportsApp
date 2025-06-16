@@ -1,16 +1,12 @@
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const GoogleUFCScraper = require('./googleUFCScraper');
 
 class UFCFetcher {
   constructor() {
     // Using multiple data sources for better accuracy
     this.baseUrl = 'www.thesportsdb.com';
     this.apiPath = '/api/v1/json/3';
-    
-    // Initialize Google scraper for accurate times
-    this.googleScraper = new GoogleUFCScraper();
     
     // Map TheSportsDB event statuses to our system
     this.statusMap = {
@@ -93,126 +89,6 @@ class UFCFetcher {
     return broadcastInfo;
   }
 
-  /**
-   * Enhance UFC event with accurate times from Google search
-   * @param {object} event - UFC event object
-   * @returns {Promise<object>} Enhanced event with Google data
-   */
-  async enhanceEventWithGoogleData(event) {
-    try {
-      console.log(`🔍 Searching Google for accurate times: ${event.title}`);
-      
-      // Search Google for this specific event
-      const googleData = await this.googleScraper.searchUFCEvent(event.title);
-      
-      if (googleData && googleData.hasValidTimes) {
-        console.log(`✅ Found Google data for: ${event.title}`);
-        
-        // Update event with Google data
-        const enhancedEvent = { ...event };
-        
-        // Update start times if found
-        if (googleData.startTimes.mainCard) {
-          const mainCardTime = googleData.startTimes.mainCard;
-          enhancedEvent.mainCardTime = `${mainCardTime.formatted}:00`;
-          enhancedEvent.time = `${mainCardTime.formatted}:00`;
-          
-          // Calculate UK datetime from the time
-          enhancedEvent.mainCardUkTime = this.calculateUKDateTime(event.date, mainCardTime.hours, mainCardTime.minutes);
-          enhancedEvent.ukDateTime = enhancedEvent.mainCardUkTime;
-        }
-        
-        if (googleData.startTimes.prelims) {
-          const prelimsTime = googleData.startTimes.prelims;
-          enhancedEvent.prelimsTime = `${prelimsTime.formatted}:00`;
-          enhancedEvent.prelimsUkTime = this.calculateUKDateTime(event.date, prelimsTime.hours, prelimsTime.minutes);
-        }
-        
-        if (googleData.startTimes.earlyPrelims) {
-          const earlyTime = googleData.startTimes.earlyPrelims;
-          enhancedEvent.earlyPrelimsTime = `${earlyTime.formatted}:00`;
-          enhancedEvent.earlyPrelimsUkTime = this.calculateUKDateTime(event.date, earlyTime.hours, earlyTime.minutes);
-        }
-        
-        // Update venue if found
-        if (googleData.venue) {
-          enhancedEvent.venue = googleData.venue;
-          enhancedEvent.location = googleData.venue;
-        }
-        
-        // Update broadcast info if found
-        if (googleData.broadcastInfo) {
-          enhancedEvent.broadcast = this.mapGoogleBroadcastToUK(googleData.broadcastInfo);
-        }
-        
-        // Update fight card if found
-        if (googleData.fightCard && googleData.fightCard.length > 0) {
-          enhancedEvent.mainCard = googleData.fightCard.slice(0, 5).map((fight, index) => ({
-            fighter1: fight.fighter1,
-            fighter2: fight.fighter2,
-            weightClass: fight.weightClass,
-            title: index === 0 ? 'Main Event' : ''
-          }));
-        }
-        
-        // Mark as Google-enhanced
-        enhancedEvent.apiSource = 'google_enhanced';
-        enhancedEvent.googleData = true;
-        
-        console.log(`📊 Enhanced event with Google data:`);
-        console.log(`   Main Card: ${enhancedEvent.mainCardTime} (${enhancedEvent.mainCardUkTime})`);
-        console.log(`   Venue: ${enhancedEvent.venue}`);
-        console.log(`   Broadcast: ${enhancedEvent.broadcast}`);
-        
-        return enhancedEvent;
-      } else {
-        console.log(`⚠️ No Google data found for: ${event.title}`);
-        return event;
-      }
-      
-    } catch (error) {
-      console.error(`❌ Error enhancing event with Google: ${error.message}`);
-      return event;
-    }
-  }
-  
-  /**
-   * Calculate UK datetime from date and time components
-   * @param {string} date - Date in YYYY-MM-DD format
-   * @param {number} hours - Hour (0-23)
-   * @param {number} minutes - Minutes
-   * @returns {string} ISO datetime string
-   */
-  calculateUKDateTime(date, hours, minutes) {
-    try {
-      const dateObj = new Date(date);
-      dateObj.setHours(hours, minutes, 0, 0);
-      return dateObj.toISOString();
-    } catch (error) {
-      console.error(`Error calculating UK datetime: ${error.message}`);
-      return new Date().toISOString();
-    }
-  }
-  
-  /**
-   * Map Google broadcast info to UK channels
-   * @param {string} googleBroadcast - Broadcast info from Google
-   * @returns {string} UK channel
-   */
-  mapGoogleBroadcastToUK(googleBroadcast) {
-    const broadcast = googleBroadcast.toLowerCase();
-    
-    if (broadcast.includes('ppv') || broadcast.includes('pay-per-view') || broadcast.includes('box office')) {
-      return 'TNT Sports Box Office';
-    } else if (broadcast.includes('abc') || broadcast.includes('espn')) {
-      return 'TNT Sports 1';
-    } else if (broadcast.includes('tnt sports')) {
-      return googleBroadcast; // Already correct
-    } else {
-      return 'TNT Sports 2'; // Default for Fight Nights
-    }
-  }
-
   async fetchUpcomingUFCEvents() {
     try {
       console.log('🥊 Fetching upcoming UFC events...');
@@ -222,25 +98,16 @@ class UFCFetcher {
       
       if (apiEvents && apiEvents.length > 0) {
         console.log(`📊 Found ${apiEvents.length} UFC events from API`);
-        console.log('🔍 Trying to enhance events with Google search data...');
-      
-      // Enhance events with Google data
-      const enhancedEvents = [];
-      for (const event of apiEvents) {
-        const enhancedEvent = await this.enhanceEventWithGoogleData(event);
-        enhancedEvents.push(enhancedEvent);
-      }
-      
-      return enhancedEvents;
+        return apiEvents;
       } else {
-        console.log('⚠️ API returned no current events - using accurate current event data enhanced with Google');
-        return this.getGoogleEnhancedEvents();
+        console.log('⚠️ API returned no current events - using accurate current event data');
+        return this.getCurrentUFCEvents();
       }
       
     } catch (error) {
       console.error('❌ Error fetching UFC events:', error.message);
-      console.log('🎯 Using accurate current UFC event data enhanced with Google');
-      return this.getGoogleEnhancedEvents();
+      console.log('🎯 Using accurate current UFC event data');
+      return this.getCurrentUFCEvents();
     }
   }
 
@@ -268,33 +135,6 @@ class UFCFetcher {
     } catch (error) {
       console.log('API request failed, using fallback data');
       return null;
-    }
-  }
-
-  /**
-   * Get current UFC events enhanced with Google search data
-   * @returns {Promise<array>} Enhanced UFC events
-   */
-  async getGoogleEnhancedEvents() {
-    console.log('🚀 Getting UFC events with Google enhancement...');
-    
-    try {
-      const baseEvents = this.getCurrentUFCEvents();
-      const enhancedEvents = [];
-      
-      for (const event of baseEvents) {
-        console.log(`🔍 Enhancing event: ${event.title}`);
-        const enhancedEvent = await this.enhanceEventWithGoogleData(event);
-        enhancedEvents.push(enhancedEvent);
-      }
-      
-      console.log(`✅ Enhanced ${enhancedEvents.length} events with Google data`);
-      return enhancedEvents;
-      
-    } catch (error) {
-      console.error(`❌ Error getting Google enhanced events: ${error.message}`);
-      console.log('⚠️ Falling back to base events');
-      return this.getCurrentUFCEvents();
     }
   }
 

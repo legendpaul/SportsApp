@@ -56,23 +56,18 @@
         </div>
       </div>
 
-      <!-- UK Start Times - CORRECTED -->
+      <!-- UK Start Times -->
       <div class="uk-times">
-        <h4 class="times-title">UK Start Times (CORRECTED)</h4>
+        <h4 class="times-title">UK Start Times</h4>
         <div class="times-grid">
           <div class="time-slot prelims">
             <div class="time-label">Prelims</div>
-            <div class="time-value">1:00 AM (Sun) - TNT Sports</div>
-            <div class="time-note">📍 Correct UK Time</div>
+            <div class="time-value">11:00 PM (Sat) - TNT Sports</div>
           </div>
           <div class="time-slot main-card">
             <div class="time-label">Main Card</div>
-            <div class="time-value">3:00 AM (Sun) - TNT Sports</div>
-            <div class="time-note">📍 Correct UK Time</div>
+            <div class="time-value">2:00 AM (Sun) - TNT Sports</div>
           </div>
-        </div>
-        <div class="time-explanation">
-          <p><strong>🕐 Time Zone Info:</strong> UFC events are typically held at 10:00 PM ET (Eastern Time) for main cards, which converts to 3:00 AM UK time the next day. Prelims start 2 hours earlier at 1:00 AM UK time.</p>
         </div>
       </div>
 
@@ -104,8 +99,8 @@
         <div class="filter-controls">
           <button onclick="window.sportsApp.toggleDebugWindow()" class="filter-btn debug-toggle" id="debug-toggle">Hide Debug</button>
           <button onclick="window.sportsApp.clearDebugLog()" class="filter-btn debug-clear">Clear Log</button>
-          <button onclick="window.sportsApp.copyDebugToClipboard()" class="filter-btn debug-copy" title="Copy all debug logs to clipboard - FIXED for Netlify">📋 Copy Debug (FIXED)</button>
-          <button onclick="window.sportsApp.testUFCConnection()" class="filter-btn debug-test" title="Test UFC API connection with enhanced diagnostics">🥊 Test UFC API</button>
+          <button onclick="window.sportsApp.copyDebugToClipboard()" class="filter-btn debug-copy" title="Copy all debug logs to clipboard">📋 Copy Debug</button>
+          <button onclick="window.sportsApp.testUFCConnection()" class="filter-btn debug-test" title="Test UFC API connection">🥊 Test UFC API</button>
         </div>
       </div>
       
@@ -161,7 +156,7 @@
 
     <!-- Footer -->
     <div class="footer">
-      <p>Live data from live-footballontv.com • Times shown in UK timezone • Powered by Netlify Functions • UFC times CORRECTED</p>
+      <p>Live data from live-footballontv.com • Times shown in UK timezone • Powered by Netlify Functions</p>
     </div>
   </div>
 
@@ -170,58 +165,5 @@
   <script src="web-matchfetcher.js?v=2.1.0"></script>
   <script src="web-ufcfetcher.js?v=1.0.0"></script>
   <script src="web-app.js?v=2.1.0"></script>
-
-  <!-- Enhanced clipboard support styles -->
-  <style>
-    .time-explanation {
-      margin-top: 12px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      border-left: 4px solid #4CAF50;
-    }
-    .time-explanation p {
-      margin: 0;
-      font-size: 13px;
-      line-height: 1.4;
-      color: rgba(255, 255, 255, 0.9);
-    }
-    .time-note {
-      font-size: 11px;
-      color: #4CAF50;
-      margin-top: 4px;
-      font-weight: 600;
-    }
-    .debug-copy {
-      background: linear-gradient(135deg, #4CAF50, #45a049) !important;
-      color: white !important;
-      font-weight: 600;
-    }
-    .debug-copy:hover {
-      background: linear-gradient(135deg, #45a049, #3d8b40) !important;
-      transform: translateY(-1px);
-    }
-    .copy-notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, #4CAF50, #45a049);
-      color: white;
-      padding: 16px 24px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
-      z-index: 10000;
-      font-size: 14px;
-      font-weight: 600;
-      max-width: 300px;
-      animation: slideInBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      cursor: pointer;
-    }
-    @keyframes slideInBounce {
-      0% { transform: translateX(100%) scale(0.8); opacity: 0; }
-      50% { transform: translateX(-10px) scale(1.05); opacity: 0.9; }
-      100% { transform: translateX(0) scale(1); opacity: 1; }
-    }
-  </style>
 </body>
 </html>

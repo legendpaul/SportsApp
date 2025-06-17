@@ -234,15 +234,21 @@ function parseFixturesFromHTML(htmlSection, specificMatchDate) {
 
 function parseAllFixturesFromHTML(htmlContent) {
     const matches = [];
-    console.log('[DATA] Starting to parse all fixtures from HTML content...');
+    const MAX_FIXTURES_TO_PARSE_FALLBACK = 100; // Cap for fallback scenario
+    let fixturesProcessedCount = 0;
+    console.log(`[DATA] Starting to parse all fixtures from HTML content (fallback mode, cap: ${MAX_FIXTURES_TO_PARSE_FALLBACK})...`);
+
     try {
-        // Regex to find date sections. Example: <div class="fixture-date">Saturday 1st July 2023</div>
         const dateSectionRegex = /<div class="fixture-date"[^>]*>([^<]+)<\/div>/g;
         let dateSectionMatch;
-        let lastIndex = 0;
 
         while ((dateSectionMatch = dateSectionRegex.exec(htmlContent)) !== null) {
-            const dateHeaderText = dateSectionMatch[1].trim(); // e.g., "Saturday 1st July 2023"
+            if (fixturesProcessedCount >= MAX_FIXTURES_TO_PARSE_FALLBACK) {
+                console.log(`[DATA] Fallback parsing cap (${MAX_FIXTURES_TO_PARSE_FALLBACK}) reached. Stopping further processing of all fixtures.`);
+                break;
+            }
+
+            const dateHeaderText = dateSectionMatch[1].trim();
             console.log(`[DATA] Found date header: ${dateHeaderText}`);
 
             // Attempt to parse this date string into YYYY-MM-DD
@@ -266,47 +272,66 @@ function parseAllFixturesFromHTML(htmlContent) {
                 continue;
             }
 
-            // Format to YYYY-MM-DD
             const matchDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             console.log(`[DATA] Parsed date as: ${matchDate}`);
 
-            // Define the section of HTML for this date
-            const currentSectionStart = dateSectionMatch.index + dateSectionMatch[0].length;
-            let nextDateSectionMatch = dateSectionRegex.exec(htmlContent); // find next date
-            dateSectionRegex.lastIndex = dateSectionMatch.index + dateSectionMatch[0].length; // Reset search for next iteration from current
+            const currentSectionContentStart = dateSectionMatch.index + dateSectionMatch[0].length;
 
-            const currentSectionEnd = nextDateSectionMatch ? nextDateSectionMatch.index : htmlContent.length;
+            // Find the start of the *next* date header to define the end of the current date's fixtures
+            // Use indexOf for this search to avoid interfering with the main dateSectionRegex's lastIndex
+            const nextDateHeaderGlobalIndex = htmlContent.indexOf('<div class="fixture-date"', currentSectionContentStart);
+            const currentSectionContentEnd = (nextDateHeaderGlobalIndex !== -1) ? nextDateHeaderGlobalIndex : htmlContent.length;
 
-            const fixturesHTMLForDate = htmlContent.substring(currentSectionStart, currentSectionEnd);
+            const fixturesHTMLForDate = htmlContent.substring(currentSectionContentStart, currentSectionContentEnd);
 
             const dateMatches = parseFixturesFromHTML(fixturesHTMLForDate, matchDate);
-            if(dateMatches.length > 0){
-                console.log(`[DATA] Found ${dateMatches.length} matches for ${matchDate}`);
-                matches.push(...dateMatches);
+
+            for (const match of dateMatches) {
+                if (fixturesProcessedCount >= MAX_FIXTURES_TO_PARSE_FALLBACK) {
+                    console.log(`[DATA] Fallback parsing cap (${MAX_FIXTURES_TO_PARSE_FALLBACK}) reached during match addition. Halting.`);
+                    break;
+                }
+                matches.push(match);
+                fixturesProcessedCount++;
             }
-            lastIndex = currentSectionEnd;
-             if (nextDateSectionMatch) { // reset lastIndex for the regex if we jumped ahead
-                dateSectionRegex.lastIndex = nextDateSectionMatch.lastIndex;
-            } else {
-                break; // No more date sections
+
+            if (dateMatches.length > 0) {
+                 console.log(`[DATA] Found and processed ${dateMatches.length} matches for ${matchDate}. Total processed so far: ${fixturesProcessedCount}`);
             }
-        }
-        if (matches.length === 0) {
-             console.log("[DATA] No date sections found, trying to parse all fixtures without date context.");
-             // Fallback if no date sections are found, parse all and assign today's date
-             const today = new Date().toISOString().split('T')[0];
-             const allRawFixturesHtml = htmlContent.match(/<div class="fixture">(.*?)<\/div>/gs) || [];
-             allRawFixturesHtml.forEach(fixtureHTML => {
-                 const parsedMatch = parseIndividualFixture(fixtureHTML, today);
-                 if (parsedMatch) matches.push(parsedMatch);
-             });
+            // The main dateSectionRegex.lastIndex is automatically handled by the .exec() in the while loop condition.
+            // No need to manually adjust dateSectionRegex.lastIndex here.
+            if (fixturesProcessedCount >= MAX_FIXTURES_TO_PARSE_FALLBACK) break; // Check cap before next iteration of outer while loop
         }
 
+        // Fallback for content without any date sections, or if initial date sections yield no matches and still under cap
+        if (matches.length === 0 && fixturesProcessedCount < MAX_FIXTURES_TO_PARSE_FALLBACK && htmlContent.indexOf('<div class="fixture-date"') === -1) {
+             console.log("[DATA] No date sections found in HTML, or no matches from date sections and still under cap. Attempting to parse all raw fixture divs from page (up to cap).");
+             const today = new Date().toISOString().split('T')[0]; // Default date if no context
+             const fixtureRegex = /<div class="fixture">(.*?)<\/div>(?=<div class="fixture">|<div class="advertfixtures">|<div class="anchor">|$)/gs;
+             let rawMatch;
+             let rawFixturesParsedThisPass = 0;
+             while ((rawMatch = fixtureRegex.exec(htmlContent)) !== null) {
+                 if (fixturesProcessedCount >= MAX_FIXTURES_TO_PARSE_FALLBACK) {
+                     console.log(`[DATA] Fallback parsing cap (${MAX_FIXTURES_TO_PARSE_FALLBACK}) reached during raw fixture parsing.`);
+                     break;
+                 }
+                 const fixtureHTML = rawMatch[1];
+                 const parsedMatch = parseIndividualFixture(fixtureHTML, today);
+                 if (parsedMatch) {
+                     matches.push(parsedMatch);
+                     fixturesProcessedCount++;
+                     rawFixturesParsedThisPass++;
+                 }
+             }
+             if (rawFixturesParsedThisPass > 0) {
+                console.log(`[DATA] Parsed ${rawFixturesParsedThisPass} raw fixtures (total processed: ${fixturesProcessedCount}). Assigned today's date as fallback.`);
+             }
+        }
 
     } catch (error) {
-        console.log(`[DATA] Error parsing all fixtures by date: ${error.message}`);
+        console.log(`[DATA] Error parsing all fixtures by date (fallback mode): ${error.message}`);
     }
-    console.log(`[DATA] Total matches parsed: ${matches.length}`);
+    console.log(`[DATA] Total matches parsed in fallback mode: ${matches.length} (Processed fixture count: ${fixturesProcessedCount})`);
     return matches;
 }
 
@@ -334,29 +359,96 @@ exports.handler = async (event, context) => {
       throw new Error('No HTML content received from live-footballontv.com');
     }
 
-    console.log(`[HANDLER] HTML content received (${htmlContent.length} chars). Parsing matches...`);
-    // const allParsedMatches = parseMatches(htmlContent); // This function was the old entry point
-    const allParsedMatches = parseAllFixturesFromHTML(htmlContent);
+    console.log(`[HANDLER] HTML content received (${htmlContent.length} chars). Attempting optimized parse for today...`);
+
+    const today = new Date();
+    const todayDateStringYMD = today.toISOString().split('T')[0]; // YYYY-MM-DD for matchDate property
+
+    // Generate date string pattern: e.g., "Sunday 1st July 2024"
+    const dayOfMonth = today.getDate();
+    const todayDatePattern = `${today.toLocaleDateString('en-GB', { weekday: 'long' })} ${dayOfMonth}${getOrdinalSuffix(dayOfMonth)} ${today.toLocaleDateString('en-GB', { month: 'long' })} ${today.getFullYear()}`;
+    console.log(`[HANDLER] Generated today's date pattern: "${todayDatePattern}"`);
+
+    let parsedMatches = [];
+    let totalParsedOnPage = 0; // To count all matches if we do a full parse
+
+    const todaySectionHeaderIndex = htmlContent.indexOf(todayDatePattern);
+
+    if (todaySectionHeaderIndex !== -1) {
+      console.log(`[HANDLER] Found today's date section header: "${todayDatePattern}" at index ${todaySectionHeaderIndex}.`);
+
+      // Determine start of fixtures for today
+      // Look for the first <div class="fixture"> after today's date header
+      const fixtureSearchStartIndex = todaySectionHeaderIndex + todayDatePattern.length;
+      const firstFixtureIndexInTodaySection = htmlContent.indexOf('<div class="fixture">', fixtureSearchStartIndex);
+
+      if (firstFixtureIndexInTodaySection !== -1) {
+        // Determine end of today's section
+        // It's before the next <div class="fixture-date" or end of content
+        const nextDateHeaderPattern = '<div class="fixture-date"';
+        const nextDateHeaderIndex = htmlContent.indexOf(nextDateHeaderPattern, fixtureSearchStartIndex);
+
+        let todaySectionEndIndex;
+        if (nextDateHeaderIndex !== -1) {
+          todaySectionEndIndex = nextDateHeaderIndex;
+          console.log(`[HANDLER] Next date header found at index ${nextDateHeaderIndex}. Today's section ends before it.`);
+        } else {
+          // If no next date header, parse till a reasonable end or end of file.
+          // This might need refinement if the page has a lot of trailing content.
+          // For now, let's assume it goes to the end of the file or a common footer.
+          // A common way to limit this is to find the end of the main fixtures container if known.
+          // For simplicity, using htmlContent.length, parseFixturesFromHTML will handle multiple fixtures.
+          todaySectionEndIndex = htmlContent.length;
+          console.log("[HANDLER] No next date header found, assuming today's section continues to end of content.");
+        }
+
+        const todayHTMLSnippet = htmlContent.substring(firstFixtureIndexInTodaySection, todaySectionEndIndex);
+        console.log(`[HANDLER] Extracted HTML snippet for today (length: ${todayHTMLSnippet.length} chars). Parsing snippet...`);
+
+        parsedMatches = parseFixturesFromHTML(todayHTMLSnippet, todayDateStringYMD);
+        totalParsedOnPage = parsedMatches.length; // In this optimized path, totalParsed is just today's matches.
+
+        console.log(`[HANDLER] Parsed ${parsedMatches.length} matches from today's snippet.`);
+
+        // If snippet parsing yields no matches, it might be an empty day or parsing issue
+        // Consider fallback if parsedMatches.length === 0 here? For now, trust the snippet.
+      } else {
+        console.log("[HANDLER] Today's date header found, but no fixtures (<div class=\"fixture\">) found immediately after it. Will attempt full parse.");
+        // Fall through to full parse
+      }
+    } else {
+      console.log("[HANDLER] Today's date section header not found. Attempting full parse of the page.");
+      // Fall through to full parse
+    }
+
+    // Fallback: If today's section wasn't found, or if logic dictates a full parse (e.g., snippet parse failed)
+    if (parsedMatches.length === 0 && todaySectionHeaderIndex === -1) { // Only do full parse if section not found at all
+        console.log("[HANDLER] Fallback: Executing parseAllFixturesFromHTML for the entire page content.");
+        const allFixturesOnPage = parseAllFixturesFromHTML(htmlContent);
+        totalParsedOnPage = allFixturesOnPage.length;
+        // Filter for today after full parse
+        parsedMatches = allFixturesOnPage.filter(match => match.matchDate === todayDateStringYMD);
+        console.log(`[HANDLER] Full parse yielded ${allFixturesOnPage.length} matches, ${parsedMatches.length} are for today.`);
+    } else if (parsedMatches.length === 0 && todaySectionHeaderIndex !== -1) {
+        console.log("[HANDLER] Today's section was found and snippet parsed, but resulted in 0 matches. Assuming it's an empty day or snippet was not conclusive. Not falling back to full parse to save resources.");
+        // We already parsed the specific snippet and got 0, so we trust that for an empty day.
+        // If we wanted to be more aggressive, we could trigger full parse here too.
+    }
 
 
-    const todayDateString = new Date().toISOString().split('T')[0];
-    console.log(`[HANDLER] Filtering for today's matches: ${todayDateString}`);
-
-    const todayMatches = allParsedMatches.filter(match => match.matchDate === todayDateString);
-
-    console.log(`[HANDLER] Found ${allParsedMatches.length} total matches, ${todayMatches.length} for today.`);
+    console.log(`[HANDLER] Final processing: ${parsedMatches.length} matches for today (${todayDateStringYMD}).`);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        matches: todayMatches, // Return only today's matches
-        totalFound: allParsedMatches.length, // Total parsed from page
-        todayCount: todayMatches.length,    // Count for today
+        matches: parsedMatches, // Matches for today
+        totalFound: totalParsedOnPage, // Total matches found in the scope of parsing (snippet or full)
+        todayCount: parsedMatches.length,    // Count for today
         fetchTime: new Date().toISOString(),
         source: 'live-footballontv.com',
-        note: todayMatches.length > 0 ? 'Live football data from live-footballontv.com' : 'No live matches found today on live-footballontv.com'
+        note: parsedMatches.length > 0 ? 'Live football data from live-footballontv.com' : 'No live matches found today on live-footballontv.com'
       })
     };
 

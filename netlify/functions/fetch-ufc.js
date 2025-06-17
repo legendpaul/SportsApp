@@ -181,10 +181,26 @@ function processUFCEventWithRealTime(event) {
       actualTime = '22:00:00'; // Standard 10 PM ET for UFC main cards
     }
     
-    console.log(`FIXED: Using event time: ${actualTime}`);
+    console.log(`FIXED: Using event time: ${actualTime} (assumed ET for TheSportsDB source)`);
+
+    // Parse date and time components
+    const [year, month, day] = event.dateEvent.split('-').map(Number);
+    const [hours, minutes, seconds] = actualTime.split(':').map(Number);
+
+    // Create a preliminary Date object as if the input time was UTC, then adjust for ET->UTC
+    // This represents the event time in US Eastern Time.
+    // Note: JavaScript's month is 0-indexed (0 for January, 11 for December).
+    const preliminaryETDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
     
-    // FIXED: Convert to correct UK time with proper logic
-    const ukTimes = convertRealTimeToUK(event.dateEvent, actualTime);
+    // Convert ET to UTC: ET is UTC-4 (add 4 hours to ET to get UTC)
+    // This does not account for DST changes in ET, assumes standard UTC-4 offset.
+    // For more accurate DST handling, a timezone library would be needed.
+    const mainCardUTCDate = new Date(preliminaryETDate.getTime() + (4 * 60 * 60 * 1000));
+
+    console.log(`Original event time (assumed ET): ${event.dateEvent} ${actualTime}, Calculated UTC: ${mainCardUTCDate.toISOString()}`);
+
+    // FIXED: Convert to correct UK time with proper logic, now passing the UTC Date object
+    const ukTimes = convertRealTimeToUK(mainCardUTCDate);
     
     const processedEvent = {
       id: `ufc_api_${event.idEvent}`,
@@ -221,26 +237,21 @@ function processUFCEventWithRealTime(event) {
   }
 }
 
-// Converts event time to UK time, assuming eventTimeStr is in UTC.
-function convertRealTimeToUK(eventDateStr, eventTimeStr) {
+// Converts a UTC Date object to UK display times.
+function convertRealTimeToUK(mainCardUTCDate) { // Signature changed
   try {
-    console.log(`Converting UFC event time: Date: ${eventDateStr}, Time: ${eventTimeStr} (assuming UTC)`);
-
-    // Construct a UTC Date object for the main card.
-    // TheSportsDB API provides dateEvent (YYYY-MM-DD) and strTime (HH:MM:SS) separately.
-    // We assume these are UTC. Combine them into a full ISO-like string 'YYYY-MM-DDTHH:MM:SSZ'.
-    const mainCardUTCString = `${eventDateStr}T${eventTimeStr}Z`;
-    const mainCardUTC = new Date(mainCardUTCString);
-
-    // Check for invalid date parsing
-    if (isNaN(mainCardUTC.getTime())) {
-      throw new Error(`Invalid date constructed: ${mainCardUTCString}`);
+    if (!(mainCardUTCDate instanceof Date) || isNaN(mainCardUTCDate.getTime())) {
+      throw new Error(`Invalid mainCardUTCDate object received: ${mainCardUTCDate}`);
     }
+    console.log(`Converting UTC event time to UK display: ${mainCardUTCDate.toISOString()}`);
 
-    console.log(`Main card UTC: ${mainCardUTC.toISOString()}`);
+    // mainCardUTCDate is already the authoritative UTC time for the main card.
+    // No need to construct it from strings.
+
+    console.log(`Main card UTC (received): ${mainCardUTCDate.toISOString()}`);
 
     // Prelims are typically 2 hours before the main card.
-    const prelimsUTC = new Date(mainCardUTC.getTime() - (2 * 60 * 60 * 1000));
+    const prelimsUTC = new Date(mainCardUTCDate.getTime() - (2 * 60 * 60 * 1000));
     console.log(`Prelims UTC: ${prelimsUTC.toISOString()}`);
 
     // Format times for display in UK (London) timezone, including weekday.
@@ -251,34 +262,29 @@ function convertRealTimeToUK(eventDateStr, eventTimeStr) {
       weekday: 'short'
     };
     
-    const ukMainCardTime = mainCardUTC.toLocaleTimeString('en-GB', options);
+    const ukMainCardTime = mainCardUTCDate.toLocaleTimeString('en-GB', options);
     const ukPrelimTime = prelimsUTC.toLocaleTimeString('en-GB', options);
 
     const result = {
-      ukDateTime: mainCardUTC.toISOString(), // Store the main card time as ISO string (UTC)
+      ukDateTime: mainCardUTCDate.toISOString(), // Store the main card time as ISO string (UTC)
       ukMainCardTime: ukMainCardTime,
       ukPrelimTime: ukPrelimTime
     };
 
     console.log(`Final UK display times - Main: ${result.ukMainCardTime}, Prelims: ${result.ukPrelimTime}`);
-    console.log(`Conversion complete: ${eventTimeStr} UTC (${eventDateStr}) → Main: ${result.ukMainCardTime}, Prelims: ${result.ukPrelimTime}`);
+    console.log(`Conversion complete: ${mainCardUTCDate.toISOString()} (UTC) → Main: ${result.ukMainCardTime}, Prelims: ${result.ukPrelimTime}`);
     
     return result;
 
   } catch (error) {
-    console.error('Error converting event time to UK, using defaults:', error);
+    console.error('Error converting event time to UK (from mainCardUTCDate), using defaults:', error);
     
-    // Fallback for safety, though ideally all API times should be parsable.
-    // This default assumes a common pattern if specific event data is problematic.
-    // The date part of the fallback might not be accurate if eventDateStr itself is unusual.
-    const eventParts = eventDateStr.split('-');
-    const nextDay = parseInt(eventParts[2]) + 1; // Placeholder logic
-    const nextDayStr = nextDay.toString().padStart(2, '0');
-    
+    // Fallback for safety if mainCardUTCDate is invalid or other error occurs.
+    // Return fixed default values as we can't rely on input strings anymore.
     return {
-      ukDateTime: `${eventParts[0]}-${eventParts[1]}-${nextDayStr}T02:00:00.000Z`, // Default to 02:00 UTC if conversion fails
-      ukMainCardTime: '03:00 (Sun)', // Default display, matches common UK time for US events
-      ukPrelimTime: '01:00 (Sun)'    // Default display
+      ukDateTime: '1970-01-01T02:00:00.000Z', // Default to a known UTC time
+      ukMainCardTime: '03:00 (Thu)', // Default display
+      ukPrelimTime: '01:00 (Thu)'    // Default display
     };
   }
 }

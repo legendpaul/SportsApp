@@ -152,7 +152,13 @@ function parseTheSportsDBMatches(apiResponse, targetDate) {
           return;
         }
         
-        const matchTime = new Date(`${event.dateEvent} ${event.strTime}`);
+        // TheSportsDB API provides dateEvent (YYYY-MM-DD) and strTime (HH:MM:SS) separately.
+        // To ensure correct parsing, especially across different environments,
+        // we combine them into a full ISO-like string and explicitly mark it as UTC (by adding 'Z').
+        // This avoids ambiguity where new Date() might otherwise interpret a local time string
+        // based on the server's timezone, leading to incorrect match times.
+        const dateTimeStringUTC = `${event.dateEvent}T${event.strTime}Z`;
+        const matchTime = new Date(dateTimeStringUTC);
         const ukTime = matchTime.toLocaleTimeString('en-GB', { 
           hour: '2-digit', 
           minute: '2-digit',

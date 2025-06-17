@@ -221,67 +221,64 @@ function processUFCEventWithRealTime(event) {
   }
 }
 
-// FIXED: Convert event time to correct UK time with accurate timezone handling
-function convertRealTimeToUK(eventDate, eventTime) {
+// Converts event time to UK time, assuming eventTimeStr is in UTC.
+function convertRealTimeToUK(eventDateStr, eventTimeStr) {
   try {
-    console.log(`FIXED: Converting UFC event time: ${eventDate} ${eventTime}`);
-    
-    // Parse the event time
-    const [hours, minutes, seconds] = eventTime.split(':');
-    const eventHour = parseInt(hours);
-    const eventMinute = parseInt(minutes || '0');
-    
-    console.log(`FIXED: Parsed time - Hour: ${eventHour}, Minute: ${eventMinute}`);
-    
-    // Create date object for the event in ET timezone
-    const eventYear = parseInt(eventDate.split('-')[0]);
-    const eventMonth = parseInt(eventDate.split('-')[1]) - 1; // Month is 0-indexed
-    const eventDay = parseInt(eventDate.split('-')[2]);
-    
-    // Create the event date/time in ET
-    const eventInET = new Date(eventYear, eventMonth, eventDay, eventHour, eventMinute, 0);
-    console.log(`FIXED: Event in ET: ${eventInET.toISOString()}`);
-    
-    // Convert ET to UK time (ET + 5 hours for standard time, +4 for daylight saving)
-    // For June events, UK is in BST (British Summer Time), so ET + 5 hours
-    const ukDateTime = new Date(eventInET.getTime() + (5 * 60 * 60 * 1000));
-    console.log(`FIXED: Event in UK: ${ukDateTime.toISOString()}`);
-    
-    // Prelims are 2 hours before main card
-    const prelimDateTime = new Date(ukDateTime.getTime() - (2 * 60 * 60 * 1000));
-    console.log(`FIXED: Prelims in UK: ${prelimDateTime.toISOString()}`);
-    
-    // Format times for display with correct day names
-    const formatDisplayTime = (date) => {
-      const displayHours = date.getHours().toString().padStart(2, '0');
-      const displayMinutes = date.getMinutes().toString().padStart(2, '0');
-      const dayName = date.toLocaleDateString('en-GB', { weekday: 'short' });
-      return `${displayHours}:${displayMinutes} (${dayName})`;
+    console.log(`Converting UFC event time: Date: ${eventDateStr}, Time: ${eventTimeStr} (assuming UTC)`);
+
+    // Construct a UTC Date object for the main card.
+    // TheSportsDB API provides dateEvent (YYYY-MM-DD) and strTime (HH:MM:SS) separately.
+    // We assume these are UTC. Combine them into a full ISO-like string 'YYYY-MM-DDTHH:MM:SSZ'.
+    const mainCardUTCString = `${eventDateStr}T${eventTimeStr}Z`;
+    const mainCardUTC = new Date(mainCardUTCString);
+
+    // Check for invalid date parsing
+    if (isNaN(mainCardUTC.getTime())) {
+      throw new Error(`Invalid date constructed: ${mainCardUTCString}`);
+    }
+
+    console.log(`Main card UTC: ${mainCardUTC.toISOString()}`);
+
+    // Prelims are typically 2 hours before the main card.
+    const prelimsUTC = new Date(mainCardUTC.getTime() - (2 * 60 * 60 * 1000));
+    console.log(`Prelims UTC: ${prelimsUTC.toISOString()}`);
+
+    // Format times for display in UK (London) timezone, including weekday.
+    const options = {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/London',
+      weekday: 'short'
     };
     
+    const ukMainCardTime = mainCardUTC.toLocaleTimeString('en-GB', options);
+    const ukPrelimTime = prelimsUTC.toLocaleTimeString('en-GB', options);
+
     const result = {
-      ukDateTime: ukDateTime.toISOString(),
-      ukMainCardTime: formatDisplayTime(ukDateTime),
-      ukPrelimTime: formatDisplayTime(prelimDateTime)
+      ukDateTime: mainCardUTC.toISOString(), // Store the main card time as ISO string (UTC)
+      ukMainCardTime: ukMainCardTime,
+      ukPrelimTime: ukPrelimTime
     };
-    
-    console.log(`FIXED: Final UK times - Main: ${result.ukMainCardTime}, Prelims: ${result.ukPrelimTime}`);
-    console.log(`FIXED: Conversion complete: ${eventTime} ET (${eventDate}) → Main: ${result.ukMainCardTime}, Prelims: ${result.ukPrelimTime}`);
+
+    console.log(`Final UK display times - Main: ${result.ukMainCardTime}, Prelims: ${result.ukPrelimTime}`);
+    console.log(`Conversion complete: ${eventTimeStr} UTC (${eventDateStr}) → Main: ${result.ukMainCardTime}, Prelims: ${result.ukPrelimTime}`);
     
     return result;
-    
+
   } catch (error) {
-    console.error('FIXED: Error converting event time to UK, using defaults:', error);
+    console.error('Error converting event time to UK, using defaults:', error);
     
-    // Create proper default times for a typical Saturday 10 PM ET event
-    const eventParts = eventDate.split('-');
-    const nextDay = parseInt(eventParts[2]) + 1;
+    // Fallback for safety, though ideally all API times should be parsable.
+    // This default assumes a common pattern if specific event data is problematic.
+    // The date part of the fallback might not be accurate if eventDateStr itself is unusual.
+    const eventParts = eventDateStr.split('-');
+    const nextDay = parseInt(eventParts[2]) + 1; // Placeholder logic
     const nextDayStr = nextDay.toString().padStart(2, '0');
     
     return {
-      ukDateTime: `${eventParts[0]}-${eventParts[1]}-${nextDayStr}T03:00:00.000Z`,
-      ukMainCardTime: '03:00 (Sun)', // 10 PM ET Saturday = 3 AM UK Sunday
-      ukPrelimTime: '01:00 (Sun)'    // Prelims 2 hours earlier = 1 AM UK Sunday
+      ukDateTime: `${eventParts[0]}-${eventParts[1]}-${nextDayStr}T02:00:00.000Z`, // Default to 02:00 UTC if conversion fails
+      ukMainCardTime: '03:00 (Sun)', // Default display, matches common UK time for US events
+      ukPrelimTime: '01:00 (Sun)'    // Default display
     };
   }
 }
@@ -495,10 +492,10 @@ function getRealCurrentUFCEvents() {
       id: 'ufc_on_abc_6_hill_vs_rountree_2025',
       title: 'UFC on ABC 6: Hill vs Rountree Jr.',
       date: '2025-06-21',
-      time: '22:00:00', // 10 PM ET (typical Saturday main card start)
-      ukDateTime: '2025-06-22T03:00:00.000Z', // FIXED: 3:00 AM UK (next day)
-      ukMainCardTime: '03:00 (Sun)', // FIXED: Correct UK main card time
-      ukPrelimTime: '01:00 (Sun)', // FIXED: Correct UK prelim time (2 hours earlier)
+      time: '22:00:00', // This represents 10 PM ET, which is typically 02:00 UTC the next day during US DST.
+      ukDateTime: '2025-06-22T02:00:00.000Z', // Main card starts 02:00 UTC (Sun). Displayed as 03:00 BST (Sun) in UK.
+      ukMainCardTime: '03:00 (Sun)', // Displayed UK main card time (BST)
+      ukPrelimTime: '01:00 (Sun)', // Displayed UK prelim time (BST)
       location: 'UFC APEX, Las Vegas, Nevada, United States',
       venue: 'UFC APEX',
       status: 'upcoming',
@@ -575,10 +572,10 @@ function getRealCurrentUFCEvents() {
       id: 'ufc_fight_night_blanchfield_vs_barber_2025',
       title: 'UFC Fight Night: Blanchfield vs Barber',
       date: '2025-05-31',
-      time: '22:00:00', // 10 PM ET (typical Fight Night start)
-      ukDateTime: '2025-06-01T03:00:00.000Z', // FIXED: 3:00 AM UK (next day)
-      ukMainCardTime: '03:00 (Sun)', // FIXED: Correct UK main card time
-      ukPrelimTime: '01:00 (Sun)', // FIXED: Correct UK prelim time
+      time: '22:00:00', // This represents 10 PM ET, which is typically 02:00 UTC the next day during US DST.
+      ukDateTime: '2025-06-01T02:00:00.000Z', // Main card starts 02:00 UTC (Sun). Displayed as 03:00 BST (Sun) in UK.
+      ukMainCardTime: '03:00 (Sun)', // Displayed UK main card time (BST)
+      ukPrelimTime: '01:00 (Sun)', // Displayed UK prelim time (BST)
       location: 'UFC APEX, Las Vegas, Nevada, United States',
       venue: 'UFC APEX',
       status: 'upcoming',
@@ -647,8 +644,8 @@ function getRealCurrentUFCEvents() {
   ];
   
   console.log('FIXED: Returning current 2025 UFC events with CORRECT UK times');
-  console.log('Main card times: 3:00 AM UK (next day) - Prelim times: 1:00 AM UK (next day)');
-  console.log('Time conversion: 10 PM ET = 3:00 AM UK (next day) - CORRECT!');
+  console.log('Main card display times (BST): 03:00 (Sun) - Prelim display times (BST): 01:00 (Sun)');
+  console.log('Underlying UTC for main cards is typically 02:00Z for these ET evening events.');
   
   return events;
 }

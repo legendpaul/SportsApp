@@ -48,8 +48,18 @@ function performGoogleSearch(query) {
       res.on('end', () => {
         console.log(`[GoogleSearch] Response ended. Status: ${res.statusCode}, Length: ${data.length}`);
         if (res.statusCode === 200) {
+          // Log the beginning of the HTML content for debugging
+          console.log("--- START OF GOOGLE HTML LOG ---");
+          console.log(data.substring(0, 15000)); // Log the first 15000 characters
+          console.log("--- END OF GOOGLE HTML LOG ---");
           resolve(data);
         } else {
+          // Also log partial data on error if any was received
+          if (data && data.length > 0) {
+            console.log("--- START OF GOOGLE HTML LOG (ERROR RESPONSE) ---");
+            console.log(data.substring(0, 15000));
+            console.log("--- END OF GOOGLE HTML LOG (ERROR RESPONSE) ---");
+          }
           reject(new Error(`Google search failed with status: ${res.statusCode}`));
         }
       });

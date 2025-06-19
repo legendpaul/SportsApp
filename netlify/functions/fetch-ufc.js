@@ -373,72 +373,94 @@ exports.handler = async (event, context) => {
   }
 
   console.log('🚀 UFC Event Scraping from Google (UK Time Focus) - START');
-  // More specific queries might yield better, more structured results.
+
+  const isDebugMode = event.queryStringParameters && event.queryStringParameters.debug_google_html === 'true';
+  if(isDebugMode) {
+    console.log('[Handler] Debug mode enabled: Will include Google HTML in response.');
+  }
+
   const queriesToTry = [
       "upcoming UFC events UK time",
       "UFC schedule UK",
-      // "what channel is ufc on tonight uk" // This might be too specific if not event day
   ];
 
-  let htmlContent = null;
+  let htmlContent = null; // To store the HTML content if debug mode is on
   let ufcEvents = [];
   let queryUsed = "";
+  let lastError = null;
 
   for (const query of queriesToTry) {
       try {
           console.log(`[Handler] Attempting Google search with query: "${query}"`);
           queryUsed = query;
-          htmlContent = await performGoogleSearch(query);
+          const currentHtml = await performGoogleSearch(query); // Fetch HTML for current query
 
-          if (htmlContent && htmlContent.length > 1000) { // Basic check for valid HTML
-              console.log(`[Handler] Received HTML (${htmlContent.length} chars). Parsing...`);
-              ufcEvents = parseUFCEventsFromGoogleHTML(htmlContent);
+          // Store the first successfully fetched HTML if in debug mode
+          if (isDebugMode && currentHtml && !htmlContent) {
+            htmlContent = currentHtml;
+          }
+
+          if (currentHtml && currentHtml.length > 1000) {
+              console.log(`[Handler] Received HTML (${currentHtml.length} chars). Parsing...`);
+              ufcEvents = parseUFCEventsFromGoogleHTML(currentHtml);
               if (ufcEvents.length > 0) {
                   console.log(`[Handler] Successfully parsed ${ufcEvents.length} events from query: "${query}"`);
-                  break; // Stop if events are found
+                  htmlContent = currentHtml; // Ensure we use the HTML from the successful query for debugging
+                  lastError = null; // Reset error if successful
+                  break;
               } else {
                 console.log(`[Handler] Query "${query}" parsed 0 events. Trying next query.`);
+                lastError = 'Query parsed 0 events.'; // Keep track of minor errors
               }
           } else {
-              console.log(`[Handler] Insufficient HTML content from query: "${query}". Length: ${htmlContent ? htmlContent.length : 0}`);
+              console.log(`[Handler] Insufficient HTML content from query: "${query}". Length: ${currentHtml ? currentHtml.length : 0}`);
+              lastError = 'Insufficient HTML content from query.';
           }
       } catch (error) {
           console.error(`[Handler] Error during processing query "${query}": ${error.message}`, error.stack);
-          // Continue to next query if one fails
+          lastError = error.message; // Store the last error message
+          // Store HTML from the failing query if in debug mode and no HTML stored yet
+          if (isDebugMode && error.htmlContent && !htmlContent) {
+            htmlContent = error.htmlContent; // Assuming error object might carry html
+          } else if (isDebugMode && !htmlContent && queryUsed) {
+            // If performGoogleSearch itself failed, htmlContent might not be set from its direct output
+            // This is a bit speculative, depends on how performGoogleSearch rejects
+          }
       }
   }
 
+  const responsePayload = {
+    fetchTime: new Date().toISOString(),
+    source: 'google.com',
+    query: queryUsed, // The last query tried, or the successful one
+  };
+
   if (ufcEvents.length > 0) {
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        events: ufcEvents,
-        totalFound: ufcEvents.length,
-        fetchTime: new Date().toISOString(),
-        source: 'google.com',
-        query: queryUsed,
-        note: `UFC data scraped from Google. Prioritizes UK times. Found ${ufcEvents.length} event(s).`
-      })
-    };
+    responsePayload.success = true;
+    responsePayload.events = ufcEvents;
+    responsePayload.totalFound = ufcEvents.length;
+    responsePayload.note = `UFC data scraped from Google. Prioritizes UK times. Found ${ufcEvents.length} event(s).`;
   } else {
     console.log('[Handler] No UFC events found after trying all Google queries.');
-    return {
-      statusCode: 200, // Still success, but no data
-      headers,
-      body: JSON.stringify({
-        success: false,
-        events: [],
-        totalFound: 0,
-        fetchTime: new Date().toISOString(),
-        source: 'google.com',
-        query: queryUsed,
-        error: 'No UFC events found or parsed successfully from Google search results.',
-        note: 'Could not retrieve UFC event data from Google.'
-      })
+    responsePayload.success = false;
+    responsePayload.events = [];
+    responsePayload.totalFound = 0;
+    responsePayload.error = lastError || 'No UFC events found or parsed successfully from Google search results.';
+    responsePayload.note = 'Could not retrieve UFC event data from Google.';
+  }
+
+  if (isDebugMode) {
+    responsePayload.debugInfo = {
+      googleHtml: htmlContent ? htmlContent.substring(0, 20000) : "No HTML content captured for debug.",
+      finalErrorAttempt: lastError // Include the last error if any, for context with HTML
     };
   }
+
+  return {
+    statusCode: 200,
+    headers,
+    body: JSON.stringify(responsePayload)
+  };
 };
 
 // --- Deprecated/Old Functions (Commented Out) ---

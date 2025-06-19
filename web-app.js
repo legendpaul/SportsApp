@@ -1533,354 +1533,6 @@ class WebSportsApp {
 
   fallbackCopyToClipboard(text) {
     try {
-      // Create temporary textarea
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      textarea.setSelectionRange(0, 99999); // For mobile devices
-      
-      const successful = document.execCommand('copy');
-      document.body.removeChild(textarea);
-      
-      if (successful) {
-        this.showCopyNotification('✅ Debug logs copied to clipboard!');
-      } else {
-        this.showCopyNotification('❌ Failed to copy - try manually selecting the text');
-        this.displayDebugInModal(text);
-      }
-    } catch (error) {
-      console.error('Fallback copy failed:', error);
-      this.showCopyNotification('❌ Copy failed - displaying in modal');
-      this.displayDebugInModal(text);
-    }
-  }
-
-  formatAllDebugLogs() {
-    const timestamp = new Date().toISOString();
-    let output = `=== SPORTS APP DEBUG LOGS ===\n`;
-    output += `Generated: ${timestamp}\n`;
-    output += `App Version: ${this.version}\n`;
-    output += `Environment: ${this.detectEnvironment()}\n`;
-    output += `URL: ${window.location.href}\n`;
-    output += `User Agent: ${navigator.userAgent}\n`;
-    output += `\n`;
-    
-    // App state summary
-    output += `=== APP STATE ===\n`;
-    output += `Football Matches: ${this.footballMatches.length}\n`;
-    output += `UFC Events: ${this.ufcEvents.length}\n`;
-    output += `UFC Main Card: ${this.ufcMainCard.length} fights\n`;
-    output += `UFC Prelim Card: ${this.ufcPrelimCard.length} fights\n`;
-    output += `Last Football Fetch: ${this.lastFetchTime || 'Never'}\n`;
-    output += `Last UFC Fetch: ${this.lastUFCFetch || 'Never'}\n`;
-    output += `Available Channels: ${this.availableChannels.length}\n`;
-    output += `Selected Channels: ${this.selectedChannels.size}\n`;
-    output += `\n`;
-    
-    // Debug logs by category
-    Object.keys(this.debugLogs).forEach(category => {
-      const logs = this.debugLogs[category] || [];
-      output += `=== ${category.toUpperCase()} LOGS (${logs.length} entries) ===\n`;
-      
-      if (logs.length === 0) {
-        output += `No ${category} activity recorded\n`;
-      } else {
-        logs.forEach((log, index) => {
-          output += `[${log.timestamp}] ${log.message}\n`;
-          if (log.data) {
-            output += `  Data: ${log.data}\n`;
-          }
-          if (index < logs.length - 1) output += `\n`;
-        });
-      }
-      output += `\n`;
-    });
-    
-    // Recent errors from console
-    output += `=== ADDITIONAL INFO ===\n`;
-    output += `Local Storage Available: ${typeof(Storage) !== 'undefined'}\n`;
-    output += `Clipboard API Available: ${!!navigator.clipboard}\n`;
-    output += `Secure Context: ${window.isSecureContext}\n`;
-    output += `Online: ${navigator.onLine}\n`;
-    
-    return output;
-  }
-
-  detectEnvironment() {
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    const port = window.location.port;
-    
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
-      return 'Local Development';
-    } else if (hostname.includes('.netlify.app') || hostname.includes('.netlify.com')) {
-      return 'Netlify Production';
-    } else if (protocol === 'file:') {
-      return 'Local File System';
-    } else {
-      return 'Production';
-    }
-  }
-
-  showCopyNotification(message) {
-    const notification = document.createElement('div');
-    notification.className = 'copy-notification';
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #4CAF50;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 10000;
-      font-size: 14px;
-      font-weight: 500;
-      animation: slideIn 0.3s ease-out;
-    `;
-    notification.textContent = message;
-    
-    // Add animation styles
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-      }
-    `;
-    document.head.appendChild(style);
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.style.animation = 'slideIn 0.3s ease-out reverse';
-        setTimeout(() => {
-          notification.parentNode.removeChild(notification);
-        }, 300);
-      }
-    }, 3000);
-  }
-
-  displayDebugInModal(text) {
-    // Create modal for manual copying
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      z-index: 10001;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    `;
-    
-    const content = document.createElement('div');
-    content.style.cssText = `
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 80%;
-      max-height: 80%;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    `;
-    
-    const header = document.createElement('div');
-    header.style.cssText = 'margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;';
-    header.innerHTML = `
-      <h3 style="margin: 0;">Debug Logs - Manual Copy</h3>
-      <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">Close</button>
-    `;
-    
-    const textarea = document.createElement('textarea');
-    textarea.style.cssText = `
-      width: 100%;
-      height: 400px;
-      font-family: monospace;
-      font-size: 12px;
-      border: 1px solid #ddd;
-      padding: 10px;
-      resize: vertical;
-    `;
-    textarea.value = text;
-    textarea.readOnly = true;
-    
-    const instructions = document.createElement('p');
-    instructions.style.cssText = 'margin: 10px 0 0 0; color: #666; font-size: 14px;';
-    instructions.textContent = 'Select all text (Ctrl+A) and copy (Ctrl+C)';
-    
-    content.appendChild(header);
-    content.appendChild(textarea);
-    content.appendChild(instructions);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-    
-    // Auto-select text
-    textarea.focus();
-    textarea.select();
-  }
-
-  copyDebugToClipboard() {
-    try {
-      this.debugLog('display', 'Generating comprehensive debug report...');
-      
-      const debugContent = this.generateComprehensiveDebugReport();
-      
-      if (navigator.clipboard && window.isSecureContext) {
-        // Use modern Clipboard API
-        navigator.clipboard.writeText(debugContent).then(() => {
-          this.showCopySuccessNotification('✅ Debug logs copied to clipboard!');
-          this.debugLog('display', 'Debug logs successfully copied via Clipboard API');
-        }).catch(err => {
-          console.warn('Clipboard API failed, using fallback:', err);
-          this.fallbackCopyToClipboard(debugContent);
-        });
-      } else {
-        // Fallback for older browsers or non-HTTPS
-        this.fallbackCopyToClipboard(debugContent);
-      }
-    } catch (error) {
-      this.debugLog('display', `Critical error in copy function: ${error.message}`);
-      this.showFetchResult(`❌ Copy failed: ${error.message}`);
-      console.error('Critical error copying debug logs:', error);
-    }
-  }
-
-  generateComprehensiveDebugReport() {
-    const timestamp = new Date().toISOString();
-    let report = `=== SPORTS APP DEBUG REPORT ===\n`;
-    report += `Generated: ${timestamp}\n`;
-    report += `App Version: ${this.version}\n`;
-    report += `Environment: ${this.detectEnvironment()}\n`;
-    report += `URL: ${window.location.href}\n`;
-    report += `User Agent: ${navigator.userAgent}\n`;
-    report += `LocalStorage Available: ${typeof(Storage) !== 'undefined'}\n`;
-    report += `Clipboard API Available: ${!!navigator.clipboard}\n`;
-    report += `Secure Context: ${window.isSecureContext}\n`;
-    report += `Online Status: ${navigator.onLine}\n`;
-    report += `\n`;
-    
-    // App state summary
-    report += `=== APP STATE SUMMARY ===\n`;
-    report += `Football Matches: ${this.footballMatches.length}\n`;
-    report += `UFC Events: ${this.ufcEvents.length}\n`;
-    report += `UFC Main Card Fights: ${this.ufcMainCard.length}\n`;
-    report += `UFC Prelim Fights: ${this.ufcPrelimCard.length}\n`;
-    report += `Last Football Fetch: ${this.lastFetchTime || 'Never'}\n`;
-    report += `Last UFC Fetch: ${this.lastUFCFetch || 'Never'}\n`;
-    report += `Available Channels: ${this.availableChannels.length}\n`;
-    report += `Selected Channels: ${this.selectedChannels.size}\n`;
-    report += `Show All Channels: ${this.showAllChannels}\n`;
-    report += `Debug Visible: ${this.debugVisible}\n`;
-    report += `\n`;
-    
-    // API endpoints and configuration
-    report += `=== API CONFIGURATION ===\n`;
-    if (this.matchFetcher) {
-      report += `Match Fetcher: Available\n`;
-      report += `  Local Mode: ${this.isLocal}\n`;
-    } else {
-      report += `Match Fetcher: NOT AVAILABLE\n`;
-    }
-    
-    if (this.ufcFetcher) {
-      report += `UFC Fetcher: Available\n`;
-      report += `  Netlify Function URL: ${this.ufcFetcher.netlifyFunctionUrl || 'Not set'}\n`;
-      report += `  Local Mode: ${this.ufcFetcher.isLocal || 'Unknown'}\n`;
-    } else {
-      report += `UFC Fetcher: NOT AVAILABLE\n`;
-    }
-    report += `\n`;
-    
-    // Recent errors
-    if (window.lastError) {
-      report += `=== RECENT ERRORS ===\n`;
-      report += `Last Error: ${window.lastError}\n`;
-      report += `\n`;
-    }
-    
-    // Storage information
-    if (this.dataManager) {
-      const storageStatus = this.dataManager.getCleanupStatus();
-      report += `=== STORAGE STATUS ===\n`;
-      report += `Storage Used: ${storageStatus.storageUsed || 'Unknown'}\n`;
-      report += `Total Matches: ${storageStatus.totalMatches}\n`;
-      report += `Total UFC Events: ${storageStatus.totalUFCEvents}\n`;
-      report += `Last Cleanup: ${storageStatus.lastCleanup || 'Never'}\n`;
-      report += `\n`;
-    }
-    
-    // Debug logs by category
-    Object.keys(this.debugLogs).forEach(category => {
-      const logs = this.debugLogs[category] || [];
-      report += `=== ${category.toUpperCase()} LOGS (${logs.length} entries) ===\n`;
-      
-      if (logs.length === 0) {
-        report += `No ${category} activity recorded\n`;
-      } else {
-        // Show most recent 10 entries to keep report manageable
-        const recentLogs = logs.slice(-10);
-        if (logs.length > 10) {
-          report += `[Showing last 10 of ${logs.length} entries]\n`;
-        }
-        
-        recentLogs.forEach((log, index) => {
-          report += `[${log.timestamp}] ${log.message}\n`;
-          if (log.data) {
-            // Truncate very long data to keep report readable
-            const dataStr = typeof log.data === 'string' ? log.data : JSON.stringify(log.data, null, 2);
-            const truncatedData = dataStr.length > 500 ? dataStr.substring(0, 500) + '...[truncated]' : dataStr;
-            report += `  Data: ${truncatedData}\n`;
-          }
-          if (index < recentLogs.length - 1) report += `\n`;
-        });
-      }
-      report += `\n`;
-    });
-    
-    // Sample data for debugging
-    if (this.footballMatches.length > 0) {
-      report += `=== SAMPLE FOOTBALL MATCH ===\n`;
-      const sampleMatch = this.footballMatches[0];
-      report += JSON.stringify(sampleMatch, null, 2);
-      report += `\n\n`;
-    }
-    
-    if (this.ufcEvents.length > 0) {
-      report += `=== SAMPLE UFC EVENT ===\n`;
-      const sampleEvent = this.ufcEvents[0];
-      report += JSON.stringify(sampleEvent, null, 2);
-      report += `\n\n`;
-    }
-    
-    // Browser capabilities
-    report += `=== BROWSER CAPABILITIES ===\n`;
-    report += `Fetch API: ${typeof fetch !== 'undefined'}\n`;
-    report += `WebSockets: ${typeof WebSocket !== 'undefined'}\n`;
-    report += `Service Workers: ${typeof navigator.serviceWorker !== 'undefined'}\n`;
-    report += `LocalStorage: ${typeof localStorage !== 'undefined'}\n`;
-    report += `SessionStorage: ${typeof sessionStorage !== 'undefined'}\n`;
-    report += `IndexedDB: ${typeof indexedDB !== 'undefined'}\n`;
-    report += `Geolocation: ${typeof navigator.geolocation !== 'undefined'}\n`;
-    report += `\n`;
-    
-    report += `=== END OF REPORT ===\n`;
-    
-    return report;
-  }
-
-  fallbackCopyToClipboard(text) {
-    try {
       // Method 1: Try execCommand
       const textarea = document.createElement('textarea');
       textarea.value = text;
@@ -2263,3 +1915,77 @@ window.addEventListener('error', (e) => {
 });
 
 console.log('📺 Web Sports App script loaded successfully!');
+
+
+// --- START: Added for UFC Google Debug Info Button ---
+try {
+  document.addEventListener('DOMContentLoaded', () => {
+    const copyUfcDebugButton = document.getElementById('copyUfcDebugInfoButton');
+    if (copyUfcDebugButton) {
+      copyUfcDebugButton.addEventListener('click', async () => {
+        console.log('Copying UFC Google Debug Info button clicked...');
+        let debugDataText = '=== UFC Google Debug Info ===\n\n';
+        const ufcFunctionUrl = '/.netlify/functions/fetch-ufc?debug_google_html=true';
+
+        try {
+          debugDataText += `Request URL: ${window.location.origin}${ufcFunctionUrl}\n`;
+          debugDataText += `Request Timestamp: ${new Date().toISOString()}\n\n`;
+
+          const response = await fetch(ufcFunctionUrl);
+          const responseText = await response.text(); // Get raw text first
+
+          debugDataText += `Response Status: ${response.status} ${response.statusText}\n`;
+          debugDataText += `Response OK: ${response.ok}\n\n`;
+          debugDataText += 'Raw JSON Response Body From Netlify Function:\n';
+          debugDataText += '--------------------------------------------\n';
+          debugDataText += responseText + '\n';
+          debugDataText += '--------------------------------------------\n\n';
+
+          if (response.ok) {
+            try {
+              const jsonData = JSON.parse(responseText);
+              if (jsonData.debugInfo && jsonData.debugInfo.googleHtml) {
+                debugDataText += 'Extracted Google HTML (first 20k chars from debugInfo.googleHtml):\n';
+                debugDataText += '******************************************************************\n';
+                debugDataText += jsonData.debugInfo.googleHtml + '\n';
+                debugDataText += '******************************************************************\n\n';
+              } else if (jsonData.debugInfo) {
+                debugDataText += 'debugInfo object was present but did not contain googleHtml.\nFull debugInfo: ' + JSON.stringify(jsonData.debugInfo, null, 2) + '\n\n';
+              } else {
+                debugDataText += 'debugInfo object was NOT present in the JSON response.\n';
+              }
+            } catch (e) {
+              debugDataText += 'Error parsing JSON response from Netlify function: ' + e.message + '\n';
+              debugDataText += 'This usually means the Netlify function did not return valid JSON.\n';
+            }
+          }
+
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(debugDataText);
+            console.log('UFC Google Debug Info copied to clipboard!');
+            alert('UFC Google Debug Info copied to clipboard!');
+          } else {
+            console.warn('Clipboard API not available or insecure context. Manually copy from console.');
+            console.log('---BEGIN UFC GOOGLE DEBUG INFO---\n' + debugDataText + '\n---END UFC GOOGLE DEBUG INFO---');
+            alert('UFC Google Debug Info logged to console. Please copy it from there.');
+          }
+
+        } catch (error) {
+          console.error('Error fetching/processing UFC debug info:', error);
+          debugDataText += `CLIENT-SIDE Fetch Error: ${error.name} - ${error.message}\n`;
+          if (error.stack) {
+            debugDataText += `Client-side Stack: ${error.stack}\n`;
+          }
+          alert('Client-side error fetching UFC debug info. Check console.');
+          // Log to console as well if clipboard fails
+          console.log('---BEGIN UFC GOOGLE DEBUG INFO (WITH CLIENT ERROR)---\n' + debugDataText + '\n---END UFC GOOGLE DEBUG INFO (WITH CLIENT ERROR)---');
+        }
+      });
+    } else {
+      console.warn('copyUfcDebugInfoButton not found. Ensure it exists in your HTML.');
+    }
+  });
+} catch (e) {
+  console.error("Error setting up UFC Debug button listener: ", e);
+}
+// --- END: Added for UFC Google Debug Info Button ---

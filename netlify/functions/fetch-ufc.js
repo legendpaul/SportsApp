@@ -35,6 +35,7 @@ function performGoogleSearch(query, maxRedirects = 5) {
       };
 
       console.log(`[GoogleSearch] Requesting (Redirect #${redirectCount}): https://${requestOptions.hostname}${requestOptions.path}`);
+      console.log('[UFC Google Scraper] Requesting Google with options:', JSON.stringify(requestOptions, null, 2)); // Added this line
 
       const req = https.request(requestOptions, (res) => {
         let data = '';

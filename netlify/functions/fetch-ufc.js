@@ -92,7 +92,7 @@ function performGoogleSearch(query, maxRedirects = 5) {
               // Log the HTML of this problematic redirect response
               if (data && data.length > 0) {
                 console.log("--- START OF GOOGLE HTML LOG (REDIRECT PARSE ERROR RESPONSE) ---");
-                console.log(data.substring(0, 15000));
+                console.log(data.substring(0, 20000)); // Adjusted length
                 console.log("--- END OF GOOGLE HTML LOG (REDIRECT PARSE ERROR RESPONSE) ---");
               }
               reject(new Error(`[GoogleSearch] Failed to parse redirect location: ${locationHeader}`));
@@ -110,7 +110,7 @@ function performGoogleSearch(query, maxRedirects = 5) {
             console.error(`[GoogleSearch] Terminal redirect error: ${reason}. Status: ${res.statusCode}`);
             if (data && data.length > 0) {
               console.log(`--- START OF GOOGLE HTML LOG (TERMINAL REDIRECT ERROR ${res.statusCode}) ---`);
-              console.log(data.substring(0, 15000));
+              console.log(data.substring(0, 20000)); // Adjusted length
               console.log(`--- END OF GOOGLE HTML LOG (TERMINAL REDIRECT ERROR ${res.statusCode}) ---`);
             }
             reject(new Error(`[GoogleSearch] ${reason}. Final status: ${res.statusCode} at ${requestOptions.hostname}${requestOptions.path}`));
@@ -118,7 +118,7 @@ function performGoogleSearch(query, maxRedirects = 5) {
           } else if (res.statusCode === 200) {
             // Terminal state: Success
             console.log("--- START OF GOOGLE HTML LOG (SUCCESS 200) ---");
-            console.log(data.substring(0, 15000));
+            console.log(data.substring(0, 20000)); // Adjusted length
             console.log("--- END OF GOOGLE HTML LOG (SUCCESS 200) ---");
             resolve(data);
 
@@ -127,7 +127,7 @@ function performGoogleSearch(query, maxRedirects = 5) {
             console.error(`[GoogleSearch] Terminal error. Status: ${res.statusCode}`);
             if (data && data.length > 0) {
               console.log(`--- START OF GOOGLE HTML LOG (TERMINAL ERROR ${res.statusCode}) ---`);
-              console.log(data.substring(0, 15000));
+              console.log(data.substring(0, 20000)); // Adjusted length
               console.log(`--- END OF GOOGLE HTML LOG (TERMINAL ERROR ${res.statusCode}) ---`);
             }
             reject(new Error(`[GoogleSearch] Failed with status: ${res.statusCode} at ${requestOptions.hostname}${requestOptions.path}`));

@@ -1917,27 +1917,38 @@ window.addEventListener('error', (e) => {
 console.log('📺 Web Sports App script loaded successfully!');
 
 
-// --- START: Added for UFC Google Debug Info Button ---
+// --- START: Added for UFC Google Debug Info Button (with Textarea) ---
 document.addEventListener('DOMContentLoaded', () => {
   try {
-    console.log('[UFC Debug Button] DOMContentLoaded fired. Attempting to find button...');
+    console.log('[UFC Debug Button] DOMContentLoaded fired. Attempting to find button and textarea...');
     const copyUfcDebugButton = document.getElementById('copyUfcDebugInfoButton');
-    console.log('[UFC Debug Button] Button element:', copyUfcDebugButton);
+    const debugTextbox = document.getElementById('ufcDebugOutputTextbox');
 
-    if (copyUfcDebugButton) {
-      console.log('[UFC Debug Button] Button found. Adding click listener...');
+    console.log('[UFC Debug Button] Button element:', copyUfcDebugButton);
+    console.log('[UFC Debug Button] Textarea element:', debugTextbox);
+
+    if (copyUfcDebugButton && debugTextbox) {
+      console.log('[UFC Debug Button] Both button and textarea found. Adding click listener...');
       copyUfcDebugButton.addEventListener('click', async () => {
         console.log('[UFC Debug Button] Click listener triggered.');
-        console.log('Copying UFC Google Debug Info button clicked...'); // Kept original log too
+
+        if (!debugTextbox) { // Double check, though it should be available from outer scope
+          console.error('[UFC Debug Button] Debug textarea #ufcDebugOutputTextbox not found at click time!');
+          alert('Debug textarea not found! Cannot display info.');
+          return;
+        }
+
+        debugTextbox.value = 'Fetching UFC Debug Info... Please wait.\n';
         let debugDataText = '=== UFC Google Debug Info ===\n\n';
         const ufcFunctionUrl = '/.netlify/functions/fetch-ufc?debug_google_html=true';
 
         try {
           debugDataText += `Request URL: ${window.location.origin}${ufcFunctionUrl}\n`;
           debugDataText += `Request Timestamp: ${new Date().toISOString()}\n\n`;
+          debugTextbox.value = debugDataText + "Fetching response from Netlify function...\n";
 
           const response = await fetch(ufcFunctionUrl);
-          const responseText = await response.text(); // Get raw text first
+          const responseText = await response.text();
 
           debugDataText += `Response Status: ${response.status} ${response.statusText}\n`;
           debugDataText += `Response OK: ${response.ok}\n\n`;
@@ -1945,6 +1956,7 @@ document.addEventListener('DOMContentLoaded', () => {
           debugDataText += '--------------------------------------------\n';
           debugDataText += responseText + '\n';
           debugDataText += '--------------------------------------------\n\n';
+          debugTextbox.value = debugDataText + "Processing JSON and Google HTML...\n";
 
           if (response.ok) {
             try {
@@ -1965,19 +1977,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
 
-          // Enhanced Clipboard Error Handling
+          debugTextbox.value = debugDataText; // Populate textarea with all info
+
+          // Secondary Action: Attempt to copy to clipboard
           try {
             if (navigator.clipboard && window.isSecureContext) {
               await navigator.clipboard.writeText(debugDataText);
-              console.log('UFC Google Debug Info copied to clipboard!');
-              alert('UFC Google Debug Info copied to clipboard!');
+              console.log('[UFC Debug Button] UFC Google Debug Info populated and copied to clipboard!');
+              alert('UFC Google Debug Info populated in textbox and copied to clipboard!');
             } else {
-              throw new Error('Clipboard API not available/insecure.'); // Force fallback
+              throw new Error('Clipboard API not available/insecure.');
             }
           } catch (copyError) {
+            alert('UFC Google Debug Info populated in textbox. Could not copy to clipboard (see console for details). Please copy from textbox.');
             console.warn('[UFC Debug Button] Clipboard copy failed or not available:', copyError.message);
-            console.log('---BEGIN UFC GOOGLE DEBUG INFO (MANUAL COPY REQUIRED)---\n' + debugDataText + '\n---END UFC GOOGLE DEBUG INFO (MANUAL COPY REQUIRED)---');
-            alert('Failed to copy to clipboard. UFC Google Debug Info logged to console. Please copy it from there.');
           }
 
         } catch (error) {
@@ -1986,16 +1999,19 @@ document.addEventListener('DOMContentLoaded', () => {
           if (error.stack) {
             debugDataText += `Client-side Stack: ${error.stack}\n`;
           }
-          alert('Client-side error fetching UFC debug info. Check console.');
+          debugTextbox.value = debugDataText; // Show error in textarea
+          alert('Client-side error fetching UFC debug info. Check console and textarea.');
           console.log('---BEGIN UFC GOOGLE DEBUG INFO (WITH CLIENT ERROR)---\n' + debugDataText + '\n---END UFC GOOGLE DEBUG INFO (WITH CLIENT ERROR)---');
         }
       });
     } else {
-      console.error('[UFC Debug Button] CRITICAL: copyUfcDebugInfoButton element not found in DOM.');
+      if (!copyUfcDebugButton) console.error('[UFC Debug Button] CRITICAL: copyUfcDebugInfoButton element not found in DOM.');
+      if (!debugTextbox) console.error('[UFC Debug Button] CRITICAL: ufcDebugOutputTextbox element not found in DOM.');
+      alert('CRITICAL ERROR: Debug button or textarea missing from page. Check console.');
     }
   } catch (setupError) {
     console.error('[UFC Debug Button] CRITICAL ERROR setting up listener:', setupError);
-    alert('CRITICAL ERROR setting up UFC Debug Button. Check console.');
+    alert('CRITICAL ERROR setting up UFC Debug Button components. Check console.');
   }
 });
-// --- END: Added for UFC Google Debug Info Button ---
+// --- END: Added for UFC Google Debug Info Button (with Textarea) ---

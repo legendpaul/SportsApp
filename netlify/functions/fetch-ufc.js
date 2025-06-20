@@ -58,38 +58,77 @@ function performGoogleSearch(query, maxRedirects = 5) {
         res.on('end', () => {
           console.log(`[GoogleSearch] Response ended. Status: ${res.statusCode}, Length: ${data.length} for ${requestOptions.hostname}${requestOptions.path}`);
 
-          if (res.statusCode >= 300 && res.statusCode < 400 && (res.headers.location || res.headers.Location)) {
-            const locationHeader = res.headers.location || res.headers.Location;
-            console.log(`[GoogleSearch] Redirect response ${res.statusCode}. Location: ${locationHeader}`);
+          const isRedirect = res.statusCode >= 300 && res.statusCode < 400;
+          const locationHeader = res.headers.location || res.headers.Location;
+
+          if (isRedirect && locationHeader && redirectCount < maxRedirects) {
+            console.log(`[GoogleSearch] Redirecting (${res.statusCode}) to: ${locationHeader}. Count: ${redirectCount + 1}`);
 
             let nextHost, nextPath;
-            if (locationHeader.startsWith('http://') || locationHeader.startsWith('https://')) {
-                const url = new URL(locationHeader);
-                nextHost = url.hostname;
-                nextPath = url.pathname + url.search;
-            } else if (locationHeader.startsWith('/')) { // Relative path on the same host
-                nextHost = currentHost;
-                nextPath = locationHeader;
-            } else { // Unclear relative path, or different format - attempt with current host
-                nextHost = currentHost;
-                nextPath = require('path').posix.resolve(require('path').posix.dirname(currentPath), locationHeader);
-                 console.warn(`[GoogleSearch] Redirect location is relative but not starting with '/': "${locationHeader}". Resolved to: ${nextPath} on host ${nextHost}`);
+            try {
+              if (locationHeader.startsWith('http://') || locationHeader.startsWith('https://')) {
+                  const url = new URL(locationHeader);
+                  nextHost = url.hostname;
+                  nextPath = url.pathname + url.search;
+              } else if (locationHeader.startsWith('/')) {
+                  nextHost = currentHost;
+                  nextPath = locationHeader;
+              } else {
+                  // This case for relative paths not starting with '/' is complex and less common for Google.
+                  // For simplicity and robustness, we might choose to reject if not absolute or path-absolute.
+                  // However, the previous logic tried to resolve it. Let's keep a simplified version.
+                  console.warn(`[GoogleSearch] Redirect location "${locationHeader}" is relative and not path-absolute. Attempting to resolve against current host ${currentHost}.`);
+                  // Basic resolution: new URL(relative, base) needs a full base URL.
+                  const baseForResolve = `https://${currentHost}`; // Assuming https
+                  const resolvedUrl = new URL(locationHeader, baseForResolve);
+                  nextHost = resolvedUrl.hostname;
+                  nextPath = resolvedUrl.pathname + resolvedUrl.search;
+
+                  // The require('path') logic was Node-specific and not ideal for URL resolution.
+                  // Using URL constructor is better.
+              }
+            } catch (urlParseError) {
+              console.error(`[GoogleSearch] Error parsing redirect URL "${locationHeader}": ${urlParseError.message}`);
+              // Log the HTML of this problematic redirect response
+              if (data && data.length > 0) {
+                console.log("--- START OF GOOGLE HTML LOG (REDIRECT PARSE ERROR RESPONSE) ---");
+                console.log(data.substring(0, 15000));
+                console.log("--- END OF GOOGLE HTML LOG (REDIRECT PARSE ERROR RESPONSE) ---");
+              }
+              reject(new Error(`[GoogleSearch] Failed to parse redirect location: ${locationHeader}`));
+              return;
             }
 
+            // Make the recursive call
             makeRequestRecursive(locationHeader, redirectCount + 1, nextHost, nextPath)
-              .then(resolve)
-              .catch(reject);
+              .then(resolve) // Chain the promise
+              .catch(reject); // Chain the promise
+
+          } else if (isRedirect && (!locationHeader || redirectCount >= maxRedirects)) {
+            // Terminal state: Redirect status but cannot follow (no location or limit exceeded)
+            const reason = redirectCount >= maxRedirects ? "Too many redirects" : "Redirect location missing";
+            console.error(`[GoogleSearch] Terminal redirect error: ${reason}. Status: ${res.statusCode}`);
+            if (data && data.length > 0) {
+              console.log(`--- START OF GOOGLE HTML LOG (TERMINAL REDIRECT ERROR ${res.statusCode}) ---`);
+              console.log(data.substring(0, 15000));
+              console.log(`--- END OF GOOGLE HTML LOG (TERMINAL REDIRECT ERROR ${res.statusCode}) ---`);
+            }
+            reject(new Error(`[GoogleSearch] ${reason}. Final status: ${res.statusCode} at ${requestOptions.hostname}${requestOptions.path}`));
 
           } else if (res.statusCode === 200) {
-            console.log("--- START OF GOOGLE HTML LOG ---");
+            // Terminal state: Success
+            console.log("--- START OF GOOGLE HTML LOG (SUCCESS 200) ---");
             console.log(data.substring(0, 15000));
-            console.log("--- END OF GOOGLE HTML LOG ---");
+            console.log("--- END OF GOOGLE HTML LOG (SUCCESS 200) ---");
             resolve(data);
+
           } else {
+            // Terminal state: Non-200, non-redirect error (e.g., 4xx, 5xx)
+            console.error(`[GoogleSearch] Terminal error. Status: ${res.statusCode}`);
             if (data && data.length > 0) {
-              console.log("--- START OF GOOGLE HTML LOG (ERROR RESPONSE) ---");
+              console.log(`--- START OF GOOGLE HTML LOG (TERMINAL ERROR ${res.statusCode}) ---`);
               console.log(data.substring(0, 15000));
-              console.log("--- END OF GOOGLE HTML LOG (ERROR RESPONSE) ---");
+              console.log(`--- END OF GOOGLE HTML LOG (TERMINAL ERROR ${res.statusCode}) ---`);
             }
             reject(new Error(`[GoogleSearch] Failed with status: ${res.statusCode} at ${requestOptions.hostname}${requestOptions.path}`));
           }

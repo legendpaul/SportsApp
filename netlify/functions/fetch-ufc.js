@@ -9,75 +9,108 @@ const https = require('https');
  * @param {string} query - Search query
  * @returns {Promise<string>} HTML content
  */
-function performGoogleSearch(query) {
-  return new Promise((resolve, reject) => {
-    const encodedQuery = encodeURIComponent(query);
-    // Force English language (hl=en) and UK region (gl=uk)
-    const searchPath = `/search?q=${encodedQuery}&hl=en&gl=uk&ie=UTF-8`;
+function performGoogleSearch(query, maxRedirects = 5) {
+  const initialHost = 'www.google.com';
+  const initialPath = `/search?q=${encodeURIComponent(query)}&hl=en&gl=uk&ie=UTF-8`;
 
-    const options = {
-      hostname: 'www.google.com',
-      path: searchPath,
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-GB,en;q=0.5',
-        // 'Accept-Encoding': 'gzip, deflate', // Let Netlify/Node handle this
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
+  const makeRequestRecursive = (currentUrl, redirectCount, currentHost, currentPath) => {
+    return new Promise((resolve, reject) => {
+      if (redirectCount > maxRedirects) {
+        reject(new Error(`[GoogleSearch] Too many redirects (${redirectCount}). Last URL: ${currentHost}${currentPath}`));
+        return;
       }
-    };
 
-    console.log(`[GoogleSearch] Requesting: https://${options.hostname}${options.path}`);
-
-    const req = https.request(options, (res) => {
-      let data = '';
-      // let stream = res; // Simpler handling without explicit gzip if Node's http handles it
-
-      // if (res.headers['content-encoding'] === 'gzip') {
-      //   console.log('[GoogleSearch] Response is gzipped. Inflating...');
-      //   stream = require('zlib').createGunzip();
-      //   res.pipe(stream);
-      // }
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        console.log(`[GoogleSearch] Response ended. Status: ${res.statusCode}, Length: ${data.length}`);
-        if (res.statusCode === 200) {
-          // Log the beginning of the HTML content for debugging
-          console.log("--- START OF GOOGLE HTML LOG ---");
-          console.log(data.substring(0, 15000)); // Log the first 15000 characters
-          console.log("--- END OF GOOGLE HTML LOG ---");
-          resolve(data);
-        } else {
-          // Also log partial data on error if any was received
-          if (data && data.length > 0) {
-            console.log("--- START OF GOOGLE HTML LOG (ERROR RESPONSE) ---");
-            console.log(data.substring(0, 15000));
-            console.log("--- END OF GOOGLE HTML LOG (ERROR RESPONSE) ---");
-          }
-          reject(new Error(`Google search failed with status: ${res.statusCode}`));
+      const requestOptions = {
+        hostname: currentHost,
+        path: currentPath,
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-GB,en;q=0.5',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
+          // Cookies are not explicitly handled here for simplicity in this iteration
         }
+      };
+
+      console.log(`[GoogleSearch] Requesting (Redirect #${redirectCount}): https://${requestOptions.hostname}${requestOptions.path}`);
+
+      const req = https.request(requestOptions, (res) => {
+        let data = '';
+
+        // Handle potential gzip encoding if not automatically handled by Node's https module in all envs
+        // For Netlify, it's usually handled, but good to be aware.
+        // const contentEncoding = res.headers['content-encoding'];
+        // let responseStream = res;
+        // if (contentEncoding === 'gzip') {
+        //   console.log('[GoogleSearch] Response is gzipped. Inflating...');
+        //   responseStream = res.pipe(require('zlib').createGunzip());
+        // } else if (contentEncoding === 'deflate') {
+        //   responseStream = res.pipe(require('zlib').createInflate());
+        // }
+
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        res.on('end', () => {
+          console.log(`[GoogleSearch] Response ended. Status: ${res.statusCode}, Length: ${data.length} for ${requestOptions.hostname}${requestOptions.path}`);
+
+          if (res.statusCode >= 300 && res.statusCode < 400 && (res.headers.location || res.headers.Location)) {
+            const locationHeader = res.headers.location || res.headers.Location;
+            console.log(`[GoogleSearch] Redirect response ${res.statusCode}. Location: ${locationHeader}`);
+
+            let nextHost, nextPath;
+            if (locationHeader.startsWith('http://') || locationHeader.startsWith('https://')) {
+                const url = new URL(locationHeader);
+                nextHost = url.hostname;
+                nextPath = url.pathname + url.search;
+            } else if (locationHeader.startsWith('/')) { // Relative path on the same host
+                nextHost = currentHost;
+                nextPath = locationHeader;
+            } else { // Unclear relative path, or different format - attempt with current host
+                nextHost = currentHost;
+                nextPath = require('path').posix.resolve(require('path').posix.dirname(currentPath), locationHeader);
+                 console.warn(`[GoogleSearch] Redirect location is relative but not starting with '/': "${locationHeader}". Resolved to: ${nextPath} on host ${nextHost}`);
+            }
+
+            makeRequestRecursive(locationHeader, redirectCount + 1, nextHost, nextPath)
+              .then(resolve)
+              .catch(reject);
+
+          } else if (res.statusCode === 200) {
+            console.log("--- START OF GOOGLE HTML LOG ---");
+            console.log(data.substring(0, 15000));
+            console.log("--- END OF GOOGLE HTML LOG ---");
+            resolve(data);
+          } else {
+            if (data && data.length > 0) {
+              console.log("--- START OF GOOGLE HTML LOG (ERROR RESPONSE) ---");
+              console.log(data.substring(0, 15000));
+              console.log("--- END OF GOOGLE HTML LOG (ERROR RESPONSE) ---");
+            }
+            reject(new Error(`[GoogleSearch] Failed with status: ${res.statusCode} at ${requestOptions.hostname}${requestOptions.path}`));
+          }
+        });
       });
-    });
 
-    req.on('error', (error) => {
-      console.error(`[GoogleSearch] Request error: ${error.message}`, error);
-      reject(new Error(`Google request error: ${error.message}`));
-    });
+      req.on('error', (error) => {
+        console.error(`[GoogleSearch] Request error for ${requestOptions.hostname}${requestOptions.path}: ${error.message}`, error);
+        reject(new Error(`[GoogleSearch] Request error: ${error.message}`));
+      });
 
-    req.setTimeout(15000, () => { // 15 seconds timeout
-      req.destroy();
-      console.error('[GoogleSearch] Request timed out.');
-      reject(new Error('Google search timeout'));
-    });
+      req.setTimeout(15000, () => {
+        req.destroy();
+        console.error(`[GoogleSearch] Request timed out for ${requestOptions.hostname}${requestOptions.path}`);
+        reject(new Error('[GoogleSearch] Request timeout'));
+      });
 
-    req.end();
-  });
+      req.end();
+    });
+  };
+
+  return makeRequestRecursive(`https://${initialHost}${initialPath}`, 0, initialHost, initialPath);
 }
 
 /**

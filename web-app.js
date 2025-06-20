@@ -1918,12 +1918,17 @@ console.log('📺 Web Sports App script loaded successfully!');
 
 
 // --- START: Added for UFC Google Debug Info Button ---
-try {
-  document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    console.log('[UFC Debug Button] DOMContentLoaded fired. Attempting to find button...');
     const copyUfcDebugButton = document.getElementById('copyUfcDebugInfoButton');
+    console.log('[UFC Debug Button] Button element:', copyUfcDebugButton);
+
     if (copyUfcDebugButton) {
+      console.log('[UFC Debug Button] Button found. Adding click listener...');
       copyUfcDebugButton.addEventListener('click', async () => {
-        console.log('Copying UFC Google Debug Info button clicked...');
+        console.log('[UFC Debug Button] Click listener triggered.');
+        console.log('Copying UFC Google Debug Info button clicked...'); // Kept original log too
         let debugDataText = '=== UFC Google Debug Info ===\n\n';
         const ufcFunctionUrl = '/.netlify/functions/fetch-ufc?debug_google_html=true';
 
@@ -1960,32 +1965,37 @@ try {
             }
           }
 
-          if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(debugDataText);
-            console.log('UFC Google Debug Info copied to clipboard!');
-            alert('UFC Google Debug Info copied to clipboard!');
-          } else {
-            console.warn('Clipboard API not available or insecure context. Manually copy from console.');
-            console.log('---BEGIN UFC GOOGLE DEBUG INFO---\n' + debugDataText + '\n---END UFC GOOGLE DEBUG INFO---');
-            alert('UFC Google Debug Info logged to console. Please copy it from there.');
+          // Enhanced Clipboard Error Handling
+          try {
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(debugDataText);
+              console.log('UFC Google Debug Info copied to clipboard!');
+              alert('UFC Google Debug Info copied to clipboard!');
+            } else {
+              throw new Error('Clipboard API not available/insecure.'); // Force fallback
+            }
+          } catch (copyError) {
+            console.warn('[UFC Debug Button] Clipboard copy failed or not available:', copyError.message);
+            console.log('---BEGIN UFC GOOGLE DEBUG INFO (MANUAL COPY REQUIRED)---\n' + debugDataText + '\n---END UFC GOOGLE DEBUG INFO (MANUAL COPY REQUIRED)---');
+            alert('Failed to copy to clipboard. UFC Google Debug Info logged to console. Please copy it from there.');
           }
 
         } catch (error) {
-          console.error('Error fetching/processing UFC debug info:', error);
+          console.error('[UFC Debug Button] Error fetching/processing UFC debug info:', error);
           debugDataText += `CLIENT-SIDE Fetch Error: ${error.name} - ${error.message}\n`;
           if (error.stack) {
             debugDataText += `Client-side Stack: ${error.stack}\n`;
           }
           alert('Client-side error fetching UFC debug info. Check console.');
-          // Log to console as well if clipboard fails
           console.log('---BEGIN UFC GOOGLE DEBUG INFO (WITH CLIENT ERROR)---\n' + debugDataText + '\n---END UFC GOOGLE DEBUG INFO (WITH CLIENT ERROR)---');
         }
       });
     } else {
-      console.warn('copyUfcDebugInfoButton not found. Ensure it exists in your HTML.');
+      console.error('[UFC Debug Button] CRITICAL: copyUfcDebugInfoButton element not found in DOM.');
     }
-  });
-} catch (e) {
-  console.error("Error setting up UFC Debug button listener: ", e);
-}
+  } catch (setupError) {
+    console.error('[UFC Debug Button] CRITICAL ERROR setting up listener:', setupError);
+    alert('CRITICAL ERROR setting up UFC Debug Button. Check console.');
+  }
+});
 // --- END: Added for UFC Google Debug Info Button ---

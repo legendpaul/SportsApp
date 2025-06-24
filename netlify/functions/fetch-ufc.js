@@ -251,6 +251,16 @@ exports.handler = async (event, context) => {
         // For now, the responsePayload.debugInfo will hold a snippet of the JSON.
     }
 
+    // Add detailed logging for the raw items array
+    console.log('[Handler] Raw Google API Response Items for query - START:');
+    if (apiResponseJson.items && apiResponseJson.items.length > 0) {
+      const itemsToLog = apiResponseJson.items.slice(0, 5); // Log up to 5 items
+      console.log(JSON.stringify(itemsToLog, null, 2));
+    } else {
+      console.log('[Handler] No items found in Google API Response.');
+    }
+    console.log('[Handler] Raw Google API Response Items for query - END:');
+
     ufcEvents = parseEventsFromGoogleAPI(apiResponseJson);
 
     responsePayload = {

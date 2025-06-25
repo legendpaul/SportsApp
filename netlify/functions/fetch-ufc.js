@@ -93,15 +93,16 @@ function parseEventsFromGoogleAPI(apiResponseJson) {
           eventTitle = item.pagemap.metatags[0]['og:title'];
         }
 
-        const sportEvent = item.pagemap.sportsEvent || item.pagemap.event;
+        // Corrected to use item.pagemap.SportsEvent (capital S) first
+        const sportEvent = item.pagemap.SportsEvent || item.pagemap.event;
         if (sportEvent && sportEvent[0]) {
           if (sportEvent[0].startDate || sportEvent[0].startdate) { // Google uses both casings
             eventStartDateISO = sportEvent[0].startDate || sportEvent[0].startdate;
-            console.log(`[API Parse] Found structured start date: ${eventStartDateISO}`);
+            console.log(`[API Parse] Found structured start date from SportsEvent/event: ${eventStartDateISO}`);
           }
           if (sportEvent[0].location) {
             venue = typeof sportEvent[0].location === 'string' ? sportEvent[0].location : (sportEvent[0].location.name || "Venue TBD");
-             console.log(`[API Parse] Found structured venue: ${venue}`);
+             console.log(`[API Parse] Found structured venue from SportsEvent/event: ${venue}`);
           }
         }
       }

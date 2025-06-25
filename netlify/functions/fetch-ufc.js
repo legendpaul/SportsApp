@@ -110,38 +110,108 @@ function parseEventsFromGoogleAPI(apiResponseJson) {
       // Clean up title (remove " - UFC" or similar)
       eventTitle = eventTitle.replace(/\s-\sUFC$/i, '').replace(/UFC\s*:\s*/i, '');
 
+      let mainCardUTCDate = null;
+      let needsSnippetTimeSearch = true;
+      let structuredDateSource = null; // To store YYYY-MM-DD if date comes from structure but time from snippet
 
-      if (!eventStartDateISO) {
-        // TODO: Attempt to parse date/time from item.snippet or item.title as a fallback
-        // This would require more complex regex and potentially use getUKTimezoneOffset
-        console.log(`[API Parse] No structured start date for "${eventTitle}". Skipping for now.`);
-        return; // Continue to next item
+      if (eventStartDateISO) {
+        const tempStructuredUTCDate = new Date(eventStartDateISO);
+        if (!isNaN(tempStructuredUTCDate.getTime())) {
+          // Check if structured time is "too early" (e.g. before 3 PM UK for an evening card)
+          const ukHour = parseInt(tempStructuredUTCDate.toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', hour12: false }), 10);
+          const TOO_EARLY_UK_HOUR = 15; // 3 PM
+
+          if (ukHour < TOO_EARLY_UK_HOUR) {
+            console.log(`[API Parse] Structured date ${eventStartDateISO} (UK Hour: ${ukHour}) is considered too early. Will search snippets for main card time.`);
+            structuredDateSource = tempStructuredUTCDate; // Keep date part if snippet provides time
+          } else {
+            mainCardUTCDate = tempStructuredUTCDate;
+            needsSnippetTimeSearch = false;
+            console.log(`[API Parse] Using structured date for main card: ${mainCardUTCDate.toISOString()}`);
+          }
+        } else {
+          console.log(`[API Parse] Invalid date from structured data: ${eventStartDateISO}`);
+        }
       }
 
-      const mainCardUTCDate = new Date(eventStartDateISO);
-      if (isNaN(mainCardUTCDate.getTime())) {
-        console.log(`[API Parse] Invalid date parsed from structured data for "${eventTitle}": ${eventStartDateISO}`);
+      if (needsSnippetTimeSearch) {
+        console.log(`[API Parse] Needs snippet time search for "${eventTitle}". Title: "${item.title}", Snippet: "${item.snippet}"`);
+        const combinedText = `${item.title}. ${item.snippet}`; // Search in both title and snippet
+
+        // Regex for "main card/event X PM/AM UK/GMT/BST" or "X PM/AM main card/event"
+        const mainCardTimeRegex = /(?:(main\s*(?:card|event))\s*at\s*)?(\d{1,2}(?::\d{2})?\s*(?:AM|PM))\s*(UK|GMT|BST)?|(?:(\d{1,2}(?::\d{2})?\s*(?:AM|PM))\s*(UK|GMT|BST)?\s*(main\s*(?:card|event)))/i;
+        const mainCardMatch = combinedText.match(mainCardTimeRegex);
+        let parsedTimeFromSnippet = null;
+
+        if (mainCardMatch) {
+          const timeStr = mainCardMatch[2] || mainCardMatch[4];
+          const zone = mainCardMatch[3] || mainCardMatch[5];
+          console.log(`[API Parse] Snippet Main Card Time Match: Time="${timeStr}", Zone="${zone}"`);
+          parsedTimeFromSnippet = parseTimeString(timeStr);
+
+          if (parsedTimeFromSnippet) {
+            let year, month, day;
+            if (structuredDateSource) { // Use date from potentially "too early" structured data
+              year = structuredDateSource.getUTCFullYear();
+              month = structuredDateSource.getUTCMonth(); // 0-indexed
+              day = structuredDateSource.getUTCDate();
+              console.log(`[API Parse] Using date components from structured data: Y=${year}, M=${month}, D=${day} for snippet time.`);
+            } else {
+              // TODO: More robust date extraction from snippet if no structured date at all
+              // For now, if no structured date, this path might fail to set a reliable mainCardUTCDate
+              console.warn(`[API Parse] Snippet time found ("${timeStr}") but no reliable date source (structured or snippet-parsed). This event might be inaccurate or skipped.`);
+              // Attempt to get a date from snippet - very basic for now
+              const dateMatchSnippet = combinedText.match(/([A-Za-z]+)\s+(\d{1,2})/i); // e.g. "June 22"
+              if(dateMatchSnippet && monthMap[dateMatchSnippet[1].toLowerCase()] !== undefined) {
+                year = new Date().getFullYear(); // Assume current year
+                month = monthMap[dateMatchSnippet[1].toLowerCase()];
+                day = parseInt(dateMatchSnippet[2], 10);
+                console.log(`[API Parse] Extracted date from snippet: Y=${year}, M=${month}, D=${day}`);
+              } else {
+                 return; // Skip if no date can be found for snippet time
+              }
+            }
+
+            const ukOffset = (zone && zone.toUpperCase() === 'BST') ? 1 : getUKTimezoneOffset(year, month, day);
+            console.log(`[API Parse] Determined UK offset for snippet time: ${ukOffset} (BST if 1, GMT if 0)`);
+
+            mainCardUTCDate = new Date(Date.UTC(year, month, day, parsedTimeFromSnippet.hours, parsedTimeFromSnippet.minutes, 0));
+            mainCardUTCDate.setUTCHours(mainCardUTCDate.getUTCHours() - ukOffset); // Convert local UK time to UTC
+            console.log(`[API Parse] Main card UTC from snippet: ${mainCardUTCDate.toISOString()}`);
+          } else {
+            console.log(`[API Parse] Could not parse time from snippet match: "${timeStr}"`);
+          }
+        } else {
+          console.log(`[API Parse] No specific main card time found in snippet for "${eventTitle}".`);
+        }
+      }
+
+      if (!mainCardUTCDate) {
+        console.log(`[API Parse] No definitive main card UTC time established for "${eventTitle}". Skipping.`);
         return;
       }
 
       const displayTimeOpts = { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London', weekday: 'short' };
       mainCardTimeStr = mainCardUTCDate.toLocaleTimeString('en-GB', displayTimeOpts);
 
-      const prelimUTCDate = new Date(mainCardUTCDate.getTime() - (2 * 60 * 60 * 1000)); // Assume 2 hours before
+      // Prelim time calculation (can be refined with snippet parsing for "prelims" keyword too)
+      const prelimUTCDate = new Date(mainCardUTCDate.getTime() - (2 * 60 * 60 * 1000));
       prelimTimeStr = prelimUTCDate.toLocaleTimeString('en-GB', displayTimeOpts);
 
-      const parsedDate = mainCardUTCDate.toISOString().split('T')[0];
-      const originalTime = `${String(mainCardUTCDate.getUTCHours()).padStart(2,'0')}:${String(mainCardUTCDate.getUTCMinutes()).padStart(2,'0')}`;
+      // Ensure `parsedDate` reflects the UK local date of the main card
+      const localMainCardDate = new Date(mainCardUTCDate.toLocaleString("en-US", {timeZone: "Europe/London"}));
+      const parsedDate = `${localMainCardDate.getFullYear()}-${String(localMainCardDate.getMonth() + 1).padStart(2, '0')}-${String(localMainCardDate.getDate()).padStart(2, '0')}`;
 
+      const originalTime = `${String(mainCardUTCDate.getUTCHours()).padStart(2,'0')}:${String(mainCardUTCDate.getUTCMinutes()).padStart(2,'0')}`;
 
       const eventObject = {
         id: `gcse_${item.cacheId || new Date().getTime() + index}`,
         title: eventTitle,
-        date: parsedDate, // YYYY-MM-DD from UTC date
-        time: originalTime, // Original UTC time HH:MM
-        ukDateTime: mainCardUTCDate.toISOString(), // Full ISO string in UTC
-        ukMainCardTime: mainCardTimeStr, // Formatted UK display time e.g. "Sat 02:00"
-        ukPrelimTime: prelimTimeStr,     // Formatted UK display time e.g. "Sat 00:00"
+        date: parsedDate,
+        time: originalTime,
+        ukDateTime: mainCardUTCDate.toISOString(),
+        ukMainCardTime: mainCardTimeStr,
+        ukPrelimTime: prelimTimeStr,
         location: venue,
         venue: venue,
         status: 'upcoming',
@@ -149,18 +219,18 @@ function parseEventsFromGoogleAPI(apiResponseJson) {
         poster: item.pagemap?.cse_image?.[0]?.src || item.pagemap?.cse_thumbnail?.[0]?.src || null,
         createdAt: new Date().toISOString(),
         apiSource: 'google_custom_search_api',
-        mainCard: [], // API might not provide detailed fight cards for general searches
+        mainCard: [],
         prelimCard: [],
         earlyPrelimCard: [],
-        ufcNumber: eventTitle.match(/UFC\s*(\d+)/i) ? eventTitle.match(/UFC\s*(\d+)/i)[1] : null,
-        broadcast: "TNT Sports", // Default, or could try to parse from snippet
+        ufcNumber: eventTitle.match(/UFC\s*(\d+)/i)?.[1] || null,
+        broadcast: "TNT Sports",
         ticketInfo: `Tickets for ${eventTitle}`
       };
       events.push(eventObject);
-      console.log(`[API Parse] Successfully parsed event: "${eventTitle}" for ${parsedDate} at ${mainCardTimeStr} (UK)`);
+      console.log(`[API Parse] Successfully processed event: "${eventTitle}" for UK date ${parsedDate} at ${mainCardTimeStr} (UK time)`);
 
     } catch (e) {
-      console.error(`[API Parse] Error processing item ${index}: ${e.message}`, item);
+      console.error(`[API Parse] Error processing item ${index} ("${item.title}"): ${e.message}`, item, e.stack);
     }
   });
 

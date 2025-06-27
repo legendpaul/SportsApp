@@ -828,7 +828,8 @@ class WebSportsApp {
     const debugPatterns = [
       'debugInfo', 'googleHtml', 'apiResponse', 'null,null',
       'Schedule\u003c', 'ESPN', 'google.com', 'AsBtn',
-      'origin\u003', '\u003c/b\u003e', 'related_questions'
+      // Removed 'origin\u003' as it was causing a SyntaxError and is an unlikely debug pattern.
+      '\u003c/b\u003e', 'related_questions'
     ];
     
     if (debugPatterns.some(pattern => trimmed.includes(pattern))) {

@@ -224,6 +224,40 @@
       50% { transform: translateX(-10px) scale(1.05); opacity: 0.9; }
       100% { transform: translateX(0) scale(1); opacity: 1; }
     }
+    .ufc-error-state {
+      text-align: center;
+      padding: 40px 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      margin: 20px 0;
+    }
+    .ufc-error-state .error-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .ufc-error-state .error-message {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 16px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+    .ufc-error-state .error-suggestion {
+      margin-top: 16px;
+    }
+    .ufc-error-state .fetch-btn {
+      background: linear-gradient(135deg, #FF6B35, #F5512F);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ufc-error-state .fetch-btn:hover {
+      background: linear-gradient(135deg, #F5512F, #E63946);
+      transform: translateY(-1px);
+    }
   </style>
 </body>
 </html>

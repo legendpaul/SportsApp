@@ -573,10 +573,36 @@ class WebSportsApp {
   }
 
   renderUFCFights() {
-    this.renderMainCard();
-    this.renderPrelimCard();
-    this.renderEarlyPrelimCard();
-    this.updateUFCTitle();
+    try {
+      // Ensure we have valid UFC data before rendering
+      if (!this.ufcMainCard || !Array.isArray(this.ufcMainCard)) {
+        this.ufcMainCard = [];
+      }
+      if (!this.ufcPrelimCard || !Array.isArray(this.ufcPrelimCard)) {
+        this.ufcPrelimCard = [];
+      }
+      if (!this.ufcEarlyPrelimCard || !Array.isArray(this.ufcEarlyPrelimCard)) {
+        this.ufcEarlyPrelimCard = [];
+      }
+      
+      this.renderMainCard();
+      this.renderPrelimCard();
+      this.renderEarlyPrelimCard();
+      this.updateUFCTitle();
+      
+      this.debugLog('display', 'UFC fights rendered successfully', {
+        mainCard: this.ufcMainCard.length,
+        prelims: this.ufcPrelimCard.length,
+        earlyPrelims: this.ufcEarlyPrelimCard.length
+      });
+    } catch (error) {
+      this.debugLog('display', `Error rendering UFC fights: ${error.message}`);
+      console.error('Error rendering UFC fights:', error);
+      
+      // Clear any potentially corrupted display and show fallback
+      this.clearUFCSection();
+      this.showUFCErrorState();
+    }
   }
 
   updateUFCTitle() {
@@ -687,6 +713,86 @@ class WebSportsApp {
 
       container.appendChild(fightCard);
     });
+  }
+
+  clearUFCSection() {
+    try {
+      // Clear all UFC display containers
+      const containers = [
+        'main-card-fights',
+        'prelim-card-fights', 
+        'early-prelim-card-fights'
+      ];
+      
+      containers.forEach(containerId => {
+        const container = document.getElementById(containerId);
+        if (container) {
+          container.innerHTML = '';
+        }
+      });
+      
+      this.debugLog('display', 'UFC section cleared');
+    } catch (error) {
+      console.error('Error clearing UFC section:', error);
+    }
+  }
+
+  showUFCErrorState() {
+    try {
+      const mainCardContainer = document.getElementById('main-card-fights');
+      if (mainCardContainer) {
+        mainCardContainer.innerHTML = `
+          <div class="ufc-error-state">
+            <div class="error-icon">⚠️</div>
+            <div class="error-message">Unable to load UFC event data</div>
+            <div class="error-suggestion">
+              <button onclick="window.sportsApp.fetchNewSportsData()" class="fetch-btn">🔄 Try Refresh</button>
+            </div>
+          </div>
+        `;
+      }
+      
+      this.debugLog('display', 'UFC error state displayed');
+    } catch (error) {
+      console.error('Error showing UFC error state:', error);
+    }
+  }
+
+  // Prevent raw JSON or debug data from being accidentally displayed
+  sanitizeForDisplay(data) {
+    if (typeof data === 'string') {
+      // Check if it looks like JSON and prevent display
+      if (data.trim().startsWith('{') && data.trim().endsWith('}')) {
+        this.debugLog('display', 'Prevented raw JSON from being displayed in UI');
+        return 'Data loading...';
+      }
+      // Check for other debug patterns
+      if (data.includes('debugInfo') || data.includes('googleHtml') || data.includes('apiResponse')) {
+        this.debugLog('display', 'Prevented debug data from being displayed in UI');
+        return 'Loading event data...';
+      }
+    }
+    return data;
+  }
+
+  // Enhanced error boundary for UFC section
+  safeRenderUFC() {
+    try {
+      // Clear any existing content that might be corrupted
+      this.clearUFCSection();
+      
+      // Validate data before rendering
+      if (!this.ufcEvents || this.ufcEvents.length === 0) {
+        this.loadFallbackUFCData();
+      }
+      
+      // Render with error protection
+      this.renderUFCFights();
+      
+    } catch (error) {
+      this.debugLog('display', `Safe UFC render failed: ${error.message}`);
+      this.showUFCErrorState();
+    }
   }
 
   async updateMatchStatuses() {
@@ -1206,6 +1312,50 @@ class WebSportsApp {
     });
     
     console.log('🧹 Debug logs cleared');
+  }
+
+  generateComprehensiveDebugReport() {
+    const report = [];
+    report.push('=== UK Sports TV Guide - Debug Report ===');
+    report.push(`Generated: ${new Date().toISOString()}`);
+    report.push(`App Version: ${this.version}`);
+    report.push(`Environment: ${this.isLocal ? 'Local Development' : 'Production (Netlify)'}`);
+    report.push('');
+
+    // Football data section
+    report.push('=== FOOTBALL MATCHES ===');
+    report.push(`Total matches: ${this.footballMatches.length}`);
+    report.push(`Last fetch: ${this.lastFetchTime || 'Never'}`);
+    report.push(`Available channels: ${this.availableChannels.length}`);
+    report.push(`Selected channels: ${this.selectedChannels.size}`);
+    report.push('');
+
+    // UFC data section
+    report.push('=== UFC EVENTS ===');
+    report.push(`Total UFC events: ${this.ufcEvents.length}`);
+    report.push(`Last UFC fetch: ${this.lastUFCFetch || 'Never'}`);
+    report.push(`Main card fights: ${this.ufcMainCard.length}`);
+    report.push(`Prelim fights: ${this.ufcPrelimCard.length}`);
+    report.push('');
+
+    // Debug logs section
+    Object.keys(this.debugLogs).forEach(category => {
+      report.push(`=== ${category.toUpperCase()} LOGS ===`);
+      const logs = this.debugLogs[category] || [];
+      if (logs.length === 0) {
+        report.push('No logs available');
+      } else {
+        logs.slice(-10).forEach(log => {
+          report.push(`[${log.timestamp}] ${log.message}`);
+          if (log.data) {
+            report.push(`Data: ${log.data}`);
+          }
+        });
+      }
+      report.push('');
+    });
+
+    return report.join('\n');
   }
 
   copyDebugToClipboard() {

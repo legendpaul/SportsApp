@@ -289,7 +289,13 @@ class WebSportsApp {
     
     this.updateClock();
     this.renderFootballMatches();
-    this.renderUFCFights();
+    
+    // Ensure UFC data is properly initialized before rendering
+    if (!this.ufcMainCard || this.ufcMainCard.length === 0) {
+      this.loadFallbackUFCData();
+    }
+    this.safeRenderUFC();
+    
     this.renderChannelFilter();
     this.addFetchButton();
     this.initDebugWindow();
@@ -641,27 +647,50 @@ class WebSportsApp {
     const container = document.getElementById('main-card-fights');
     if (!container) return;
 
+    // Completely clear any existing content, including potential debug data
     container.innerHTML = '';
+    
+    // Validate we have actual fight data
+    if (!this.ufcMainCard || !Array.isArray(this.ufcMainCard) || this.ufcMainCard.length === 0) {
+      container.innerHTML = '<div class="no-fights">No main card fights available</div>';
+      return;
+    }
 
-    this.ufcMainCard.forEach(fight => {
-      const fightCard = document.createElement('div');
-      fightCard.className = 'fight-main';
-      
-      fightCard.innerHTML = `
-        <div class="fight-header">
-          <div class="fighters">
-            <div class="fighter fighter-1">${fight.fighter1}</div>
-            <div class="vs-separator">vs</div>
-            <div class="fighter fighter-2">${fight.fighter2}</div>
+    this.ufcMainCard.forEach((fight, index) => {
+      try {
+        // Validate individual fight data
+        if (!fight || !fight.fighter1 || !fight.fighter2) {
+          this.debugLog('display', `Skipping invalid fight at index ${index}`, fight);
+          return;
+        }
+        
+        const fightCard = document.createElement('div');
+        fightCard.className = 'fight-main';
+        
+        // Sanitize fighter names to prevent any injection
+        const fighter1 = this.sanitizeForDisplay(fight.fighter1).toString();
+        const fighter2 = this.sanitizeForDisplay(fight.fighter2).toString();
+        const weightClass = this.sanitizeForDisplay(fight.weightClass || 'Unknown').toString();
+        const title = fight.title ? this.sanitizeForDisplay(fight.title).toString() : '';
+        
+        fightCard.innerHTML = `
+          <div class="fight-header">
+            <div class="fighters">
+              <div class="fighter fighter-1">${fighter1}</div>
+              <div class="vs-separator">vs</div>
+              <div class="fighter fighter-2">${fighter2}</div>
+            </div>
+            ${title ? `<div class="title-fight">${title}</div>` : ''}
           </div>
-          ${fight.title ? `<div class="title-fight">${fight.title}</div>` : ''}
-        </div>
-        <div class="weight-class">
-          <span class="weight-badge">${fight.weightClass}</span>
-        </div>
-      `;
+          <div class="weight-class">
+            <span class="weight-badge">${weightClass}</span>
+          </div>
+        `;
 
-      container.appendChild(fightCard);
+        container.appendChild(fightCard);
+      } catch (error) {
+        this.debugLog('display', `Error rendering main card fight: ${error.message}`);
+      }
     });
   }
 
@@ -669,22 +698,44 @@ class WebSportsApp {
     const container = document.getElementById('prelim-card-fights');
     if (!container) return;
 
+    // Completely clear any existing content, including potential debug data
     container.innerHTML = '';
+    
+    // Validate we have actual fight data
+    if (!this.ufcPrelimCard || !Array.isArray(this.ufcPrelimCard) || this.ufcPrelimCard.length === 0) {
+      container.innerHTML = '<div class="no-fights">No preliminary fights available</div>';
+      return;
+    }
 
-    this.ufcPrelimCard.forEach(fight => {
-      const fightCard = document.createElement('div');
-      fightCard.className = 'fight-prelim';
-      
-      fightCard.innerHTML = `
-        <div class="prelim-fighters">
-          <div class="prelim-fighter fighter-1">${fight.fighter1}</div>
-          <div class="vs-separator">vs</div>
-          <div class="prelim-fighter fighter-2">${fight.fighter2}</div>
-        </div>
-        <div class="prelim-weight">${fight.weightClass}</div>
-      `;
+    this.ufcPrelimCard.forEach((fight, index) => {
+      try {
+        // Validate individual fight data
+        if (!fight || !fight.fighter1 || !fight.fighter2) {
+          this.debugLog('display', `Skipping invalid prelim fight at index ${index}`, fight);
+          return;
+        }
+        
+        const fightCard = document.createElement('div');
+        fightCard.className = 'fight-prelim';
+        
+        // Sanitize fighter names to prevent any injection
+        const fighter1 = this.sanitizeForDisplay(fight.fighter1).toString();
+        const fighter2 = this.sanitizeForDisplay(fight.fighter2).toString();
+        const weightClass = this.sanitizeForDisplay(fight.weightClass || 'Unknown').toString();
+        
+        fightCard.innerHTML = `
+          <div class="prelim-fighters">
+            <div class="prelim-fighter fighter-1">${fighter1}</div>
+            <div class="vs-separator">vs</div>
+            <div class="prelim-fighter fighter-2">${fighter2}</div>
+          </div>
+          <div class="prelim-weight">${weightClass}</div>
+        `;
 
-      container.appendChild(fightCard);
+        container.appendChild(fightCard);
+      } catch (error) {
+        this.debugLog('display', `Error rendering prelim fight: ${error.message}`);
+      }
     });
   }
   
@@ -760,19 +811,44 @@ class WebSportsApp {
 
   // Prevent raw JSON or debug data from being accidentally displayed
   sanitizeForDisplay(data) {
-    if (typeof data === 'string') {
-      // Check if it looks like JSON and prevent display
-      if (data.trim().startsWith('{') && data.trim().endsWith('}')) {
-        this.debugLog('display', 'Prevented raw JSON from being displayed in UI');
-        return 'Data loading...';
-      }
-      // Check for other debug patterns
-      if (data.includes('debugInfo') || data.includes('googleHtml') || data.includes('apiResponse')) {
-        this.debugLog('display', 'Prevented debug data from being displayed in UI');
-        return 'Loading event data...';
-      }
+    if (typeof data !== 'string') {
+      return String(data || 'Unknown');
     }
-    return data;
+    
+    const trimmed = data.trim();
+    
+    // Check if it looks like JSON and prevent display
+    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+        (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+      this.debugLog('display', 'Prevented raw JSON from being displayed in UI');
+      return 'Loading...';
+    }
+    
+    // Check for debug patterns
+    const debugPatterns = [
+      'debugInfo', 'googleHtml', 'apiResponse', 'null,null',
+      'Schedule\u003c', 'ESPN', 'google.com', 'AsBtn',
+      'origin\u003', '\u003c/b\u003e', 'related_questions'
+    ];
+    
+    if (debugPatterns.some(pattern => trimmed.includes(pattern))) {
+      this.debugLog('display', 'Prevented debug data from being displayed in UI');
+      return 'Loading...';
+    }
+    
+    // Check for excessively long strings (likely debug data)
+    if (trimmed.length > 200) {
+      this.debugLog('display', 'Prevented overly long string from being displayed');
+      return 'Event data';
+    }
+    
+    // Check for multiple underscores (common in debug data)
+    if (trimmed.includes('___') || trimmed.match(/_{3,}/)) {
+      this.debugLog('display', 'Prevented debug underscore data from being displayed');
+      return 'Loading...';
+    }
+    
+    return trimmed;
   }
 
   // Enhanced error boundary for UFC section
@@ -798,7 +874,7 @@ class WebSportsApp {
   async updateMatchStatuses() {
     await this.loadMatchData();
     this.renderFootballMatches();
-    this.renderUFCFights();
+    this.safeRenderUFC();
     this.renderChannelFilter();
     this.updateStorageInfo();
     this.debugLog('display', 'Sports data statuses updated');
@@ -825,7 +901,7 @@ class WebSportsApp {
         
         await this.loadMatchData();
         this.renderFootballMatches();
-        this.renderUFCFights();
+        this.safeRenderUFC();
         this.renderChannelFilter();
         this.updateStorageInfo();
         
@@ -893,7 +969,7 @@ class WebSportsApp {
         
         await this.loadMatchData();
         this.renderFootballMatches();
-        this.renderUFCFights();
+        this.safeRenderUFC();
         this.renderChannelFilter();
         this.updateStorageInfo();
       } else {
@@ -942,7 +1018,7 @@ class WebSportsApp {
         // Reload and re-render everything
         await this.loadMatchData();
         this.renderFootballMatches();
-        this.renderUFCFights();
+        this.safeRenderUFC();
         this.renderChannelFilter();
         this.updateStorageInfo();
       } else {
@@ -979,7 +1055,7 @@ class WebSportsApp {
           // Load fallback data and re-render
           this.loadFallbackData();
           this.renderFootballMatches();
-          this.renderUFCFights();
+          this.safeRenderUFC();
           this.renderChannelFilter();
           this.updateStorageInfo();
         } else {

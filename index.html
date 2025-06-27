@@ -83,7 +83,7 @@
           Main Card
         </h4>
         <div class="fights-container" id="main-card-fights">
-          <!-- Main card fights will be populated by JavaScript -->
+          <div class="loading-ufc">Loading UFC events...</div>
         </div>
       </div>
 
@@ -91,7 +91,7 @@
       <div class="fight-card">
         <h4 class="card-title">Preliminary Card (TNT Sports)</h4>
         <div class="prelim-fights-grid" id="prelim-card-fights">
-          <!-- Preliminary fights will be populated by JavaScript -->
+          <div class="loading-ufc">Loading preliminary fights...</div>
         </div>
       </div>
     </div>
@@ -257,6 +257,22 @@
     .ufc-error-state .fetch-btn:hover {
       background: linear-gradient(135deg, #F5512F, #E63946);
       transform: translateY(-1px);
+    }
+    .loading-ufc, .no-fights {
+      text-align: center;
+      padding: 20px;
+      color: rgba(255, 255, 255, 0.6);
+      font-style: italic;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    .loading-ufc {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
     }
   </style>
 </body>

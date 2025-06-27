@@ -97,7 +97,7 @@
       "venue": ""
     },
     {
-      "id": "web_1751026357798_ly6zjoouk",
+      "id": "web_1751026864629_qjl6efgtl",
       "time": "02:00",
       "teamA": "Al-Hilal",
       "teamB": "Pachuca",
@@ -107,13 +107,13 @@
         "DAZN"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-27T12:12:37.798Z",
+      "createdAt": "2025-06-27T12:21:04.629Z",
       "matchDate": "2025-06-27",
       "apiSource": "live-footballontv.com",
       "venue": ""
     },
     {
-      "id": "web_1751026357798_a1mrd1lna",
+      "id": "web_1751026864629_5de1xv0mg",
       "time": "02:00",
       "teamA": "RB Salzburg",
       "teamB": "Real Madrid",
@@ -123,7 +123,7 @@
         "DAZN"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-27T12:12:37.798Z",
+      "createdAt": "2025-06-27T12:21:04.629Z",
       "matchDate": "2025-06-27",
       "apiSource": "live-footballontv.com",
       "venue": ""
@@ -965,7 +965,7 @@
       "googleData": true
     }
   ],
-  "lastCleanup": "2025-06-27T12:12:36.314Z",
+  "lastCleanup": "2025-06-27T12:21:03.254Z",
   "lastFetch": null,
   "lastUFCFetch": "2025-06-16T21:57:15.269Z"
 }

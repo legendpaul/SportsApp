@@ -1,142 +1,5 @@
 const https = require('https');
 
-// --- Reliable Fallback UFC Data ---
-function getReliableFallbackUFCEvents() {
-  return [
-    {
-      id: 'ufc_317_topuria_vs_oliveira_2025',
-      title: 'UFC 317: Topuria vs Oliveira',
-      date: '2025-06-29',
-      time: '22:00:00',
-      ukDateTime: '2025-06-30T03:00:00.000Z',
-      ukMainCardTime: '03:00 (Sun)',
-      ukPrelimTime: '01:00 (Sun)',
-      location: 'UFC APEX, Las Vegas, Nevada, United States',
-      venue: 'UFC APEX',
-      status: 'upcoming',
-      description: 'UFC 317 featuring Ilia Topuria vs Charles Oliveira in the main event',
-      poster: null,
-      createdAt: new Date().toISOString(),
-      apiSource: 'reliable_fallback_data',
-      apiEventId: 'ufc_317_2025',
-      
-      mainCard: [
-        { 
-          fighter1: 'Ilia Topuria', 
-          fighter2: 'Charles Oliveira', 
-          weightClass: 'Featherweight', 
-          title: 'Main Event - Title Fight' 
-        },
-        { 
-          fighter1: 'Jamahal Hill', 
-          fighter2: 'Khalil Rountree Jr.', 
-          weightClass: 'Light Heavyweight', 
-          title: '' 
-        },
-        { 
-          fighter1: 'Alexandre Pantoja', 
-          fighter2: 'Kai Kara-France', 
-          weightClass: 'Flyweight', 
-          title: 'Co-Main Event' 
-        },
-        { 
-          fighter1: 'Brandon Royval', 
-          fighter2: 'Joshua Van', 
-          weightClass: 'Flyweight', 
-          title: '' 
-        }
-      ],
-      
-      prelimCard: [
-        { 
-          fighter1: 'Chris Weidman', 
-          fighter2: 'Eryk Anders', 
-          weightClass: 'Middleweight' 
-        },
-        { 
-          fighter1: 'Diego Lopes', 
-          fighter2: 'Brian Ortega', 
-          weightClass: 'Featherweight' 
-        },
-        { 
-          fighter1: 'Roman Kopylov', 
-          fighter2: 'Chris Curtis', 
-          weightClass: 'Middleweight' 
-        },
-        { 
-          fighter1: 'Tabatha Ricci', 
-          fighter2: 'Tecia Pennington', 
-          weightClass: "Women's Strawweight" 
-        }
-      ],
-      
-      earlyPrelimCard: [],
-      
-      ufcNumber: '317',
-      broadcast: 'TNT Sports',
-      ticketInfo: 'UFC 317 Topuria vs Oliveira June 29 2025'
-    },
-    
-    {
-      id: 'ufc_fight_night_blanchfield_vs_barber_2025',
-      title: 'UFC Fight Night: Blanchfield vs Barber',
-      date: '2025-07-05',
-      time: '22:00:00',
-      ukDateTime: '2025-07-06T03:00:00.000Z',
-      ukMainCardTime: '03:00 (Sun)',
-      ukPrelimTime: '01:00 (Sun)',
-      location: 'UFC APEX, Las Vegas, Nevada, United States',
-      venue: 'UFC APEX',
-      status: 'upcoming',
-      description: 'UFC Fight Night featuring Erin Blanchfield vs Maycee Barber in the main event',
-      poster: null,
-      createdAt: new Date().toISOString(),
-      apiSource: 'reliable_fallback_data',
-      apiEventId: 'ufc_fight_night_july_2025',
-      
-      mainCard: [
-        { 
-          fighter1: 'Erin Blanchfield', 
-          fighter2: 'Maycee Barber', 
-          weightClass: "Women's Flyweight", 
-          title: 'Main Event' 
-        },
-        { 
-          fighter1: 'Mateusz Gamrot', 
-          fighter2: 'Ludovit Klein', 
-          weightClass: 'Lightweight', 
-          title: '' 
-        },
-        { 
-          fighter1: 'Dustin Jacoby', 
-          fighter2: 'Bruno Lopes', 
-          weightClass: 'Light Heavyweight', 
-          title: '' 
-        }
-      ],
-      
-      prelimCard: [
-        { 
-          fighter1: 'Allan Nascimento', 
-          fighter2: 'Jafel Filho', 
-          weightClass: 'Flyweight' 
-        },
-        { 
-          fighter1: 'Andreas Gustafsson', 
-          fighter2: 'Jeremiah Wells', 
-          weightClass: 'Welterweight' 
-        }
-      ],
-      
-      earlyPrelimCard: [],
-      
-      ufcNumber: null,
-      broadcast: 'TNT Sports',
-      ticketInfo: 'UFC Fight Night Blanchfield vs Barber July 5 2025'
-    }
-  ];
-}
-
 // --- Helper Functions ---
 
 /**
@@ -178,6 +41,205 @@ const monthMap = {
   january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
   july: 6, august: 7, september: 8, october: 9, november: 10, december: 11
 };
+
+/**
+ * Gets the UTC offset for a given timezone abbreviation.
+ * Note: This is a simplified version and doesn't fully account for DST changes for all zones.
+ * It prioritizes common US timezones often seen in UFC broadcasts.
+ * @param {string} tzAbbreviation - e.g., "PDT", "EST", "GMT"
+ * @param {Date} eventDate - The date of the event, to potentially help with DST context (currently basic).
+ * @returns {number|null} UTC offset in hours (e.g., -7 for PDT, 1 for BST), or null if unknown.
+ */
+function getTimezoneOffsetUTC(tzAbbreviation, eventDate) {
+  if (!tzAbbreviation) return null;
+  const tz = tzAbbreviation.toUpperCase();
+
+  // Rough check for DST period (March to November) - very simplified
+  // A more robust solution would use a library or more detailed date checks.
+  const month = eventDate ? eventDate.getUTCMonth() : new Date().getUTCMonth(); // 0-11
+  const isLikelyDST = month >= 2 && month <= 9; // Approx March to October
+
+  switch (tz) {
+    // US Timezones
+    case 'PDT': return -7; // Pacific Daylight Time
+    case 'PST': return isLikelyDST ? -7 : -8; // Pacific Standard Time (assume PDT during DST months)
+    case 'EDT': return -4; // Eastern Daylight Time
+    case 'EST': return isLikelyDST ? -4 : -5; // Eastern Standard Time
+    case 'CDT': return -5; // Central Daylight Time
+    case 'CST': return isLikelyDST ? -5 : -6; // Central Standard Time
+    case 'MDT': return -6; // Mountain Daylight Time
+    case 'MST': return isLikelyDST ? -6 : -7; // Mountain Standard Time (some areas don't observe DST)
+
+    // UK Timezones
+    case 'GMT': return 0;  // Greenwich Mean Time
+    case 'BST': return 1;  // British Summer Time
+
+    // Explicit UTC/Zulu
+    case 'Z':
+    case 'UTC': return 0;
+
+    // Add more as needed
+    default:
+      console.warn(`[Timezone] Unknown timezone abbreviation: ${tzAbbreviation}`);
+      return null;
+  }
+}
+
+
+// --- Detailed Snippet Parsing ---
+
+/**
+ * Parses detailed card info (fighters, specific times for main, prelims, early prelims) from snippet.
+ * Modifies the eventObject in place.
+ */
+function parseDetailedInfoFromSnippet(snippet, eventObject, eventYear, eventMonth, eventDay) {
+  console.log(`[DetailedParse] Attempting to parse snippet for event: ${eventObject.title}`);
+
+  const lines = snippet.split(/\n|<br\/?>|\|/); // Split by newlines, <br>, or pipes
+
+  let currentCardType = null; // 'main', 'prelims', 'early'
+  let cardTimeFound = { main: false, prelims: false, early: false };
+
+  const fighterVsPattern = /([A-Za-zÀ-ÿ\s\.'-]+)\s*(?:vs\.?|v)\s*([A-Za-zÀ-ÿ\s\.'-]+)(?:\s*\(([^)]+)\))?/i; // Fighter vs Fighter (Weightclass)
+  // Updated timePattern to capture more generic timezone abbreviations
+  const timePattern = /(\d{1,2}(?::\d{2})?(?:\s*(?:AM|PM))?)\s*([A-Z]{2,4})?/i;
+
+  lines.forEach(line => {
+    line = line.replace(/&nbsp;/g, ' ').trim();
+    if (!line) return;
+
+    console.log(`[DetailedParse] Processing line: "${line}"`);
+
+    // Check for card type headers
+    if (/main card/i.test(line)) currentCardType = 'main';
+    else if (/preliminary card|prelims/i.test(line) && !/early/i.test(line)) currentCardType = 'prelims';
+    else if (/early prelims|early preliminary/i.test(line)) currentCardType = 'early';
+
+    // Try to extract time for the current card type
+    const timeMatch = line.match(timePattern);
+    if (timeMatch) {
+      const timeStr = timeMatch[1];
+      const zone = timeMatch[2]; // UK, GMT, BST or undefined
+      const parsedTime = parseTimeString(timeStr); // { hours, minutes, formatted_24h }
+
+      if (parsedTime) {
+        let eventSpecificUTCOffset = null;
+        const eventDateForTZ = new Date(Date.UTC(eventYear, eventMonth, eventDay));
+
+        if (zone) {
+          eventSpecificUTCOffset = getTimezoneOffsetUTC(zone, eventDateForTZ);
+        }
+
+        // If zone is explicitly UK, or if zone is unrecognized/null but context implies UK (default behavior)
+        if (eventSpecificUTCOffset === null && (zone === 'UK' || !zone)) {
+           // Fallback to UK timezone logic if specific zone not found or it's 'UK'
+           eventSpecificUTCOffset = getUKTimezoneOffset(eventYear, eventMonth, eventDay);
+           console.log(`[DetailedParse] Timezone for "${timeStr}" is UK-contextual or undefined, using UK offset: ${eventSpecificUTCOffset}`);
+        } else if (eventSpecificUTCOffset === null && zone) {
+            console.warn(`[DetailedParse] Timezone "${zone}" for time "${timeStr}" is not recognized by getTimezoneOffsetUTC and not UK. UTC conversion might be incorrect if not already UTC.`);
+            // Assuming time might be UTC already if zone is present but unknown, or local to event (hard to determine)
+            // For safety, let's assume 0 offset if zone was present but not processed.
+            eventSpecificUTCOffset = 0;
+        }
+
+        const cardUTCDate = new Date(Date.UTC(eventYear, eventMonth, eventDay, parsedTime.hours, parsedTime.minutes, 0));
+        // The offset from getTimezoneOffsetUTC is such that LocalTime - Offset = UTC.
+        // So, to get UTC from a known local time, we subtract the offset.
+        // e.g. PDT is -7. 3 PM PDT is 15:00. UTC is 15:00 - (-7) = 22:00Z.
+        cardUTCDate.setUTCHours(cardUTCDate.getUTCHours() - eventSpecificUTCOffset);
+
+        const formattedUKTime = cardUTCDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London', weekday: 'short' });
+        console.log(`[DetailedParse] Parsed time: ${timeStr}, Zone: ${zone}, Offset: ${eventSpecificUTCOffset}, UTC: ${cardUTCDate.toISOString()}, UKDisp: ${formattedUKTime}`);
+
+        if (currentCardType === 'main' && !cardTimeFound.main) {
+          eventObject.mainCardUTCDate = cardUTCDate;
+          eventObject.ukMainCardTimeStr = formattedUKTime;
+          if (!eventObject.ukDateTime || cardUTCDate < new Date(eventObject.ukDateTime)) { // Update primary event time if this is earlier
+             eventObject.ukDateTime = cardUTCDate.toISOString();
+             eventObject.time = `${String(cardUTCDate.getUTCHours()).padStart(2,'0')}:${String(cardUTCDate.getUTCMinutes()).padStart(2,'0')}`;
+          }
+          cardTimeFound.main = true;
+          console.log(`[DetailedParse] Found Main Card time: ${formattedUKTime} (UTC: ${cardUTCDate.toISOString()})`);
+        } else if (currentCardType === 'prelims' && !cardTimeFound.prelims) {
+          eventObject.prelimUTCDate = cardUTCDate;
+          eventObject.ukPrelimTimeStr = formattedUKTime;
+          cardTimeFound.prelims = true;
+          console.log(`[DetailedParse] Found Prelims time: ${formattedUKTime} (UTC: ${cardUTCDate.toISOString()})`);
+        } else if (currentCardType === 'early' && !cardTimeFound.early) {
+          eventObject.earlyPrelimUTCDate = cardUTCDate;
+          eventObject.ukEarlyPrelimTimeStr = formattedUKTime;
+          cardTimeFound.early = true;
+          console.log(`[DetailedParse] Found Early Prelims time: ${formattedUKTime} (UTC: ${cardUTCDate.toISOString()})`);
+        }
+      }
+    }
+
+    // Try to extract fighter matchups
+    const fightMatch = line.match(fighterVsPattern);
+    if (fightMatch) {
+      const fight = {
+        fighter1: fightMatch[1].trim(),
+        fighter2: fightMatch[2].trim(),
+        weightClass: fightMatch[3] ? fightMatch[3].trim() : 'TBD',
+        title: '' // Can be enhanced if titles like "Main Event" are on the same line
+      };
+      // Basic check to avoid matching things like "Card vs Card"
+      if (fight.fighter1.length < 3 || fight.fighter2.length < 3 || fight.fighter1.toLowerCase() === "main" || fight.fighter2.toLowerCase() === "event") return;
+
+
+      if (currentCardType === 'main') {
+        // Check if it's the main event for the overall card title
+        if (eventObject.mainCard.length === 0 && /main event/i.test(line) && eventObject.title.includes(fight.fighter1) && eventObject.title.includes(fight.fighter2)) {
+            fight.title = 'Main Event';
+        }
+        eventObject.mainCard.push(fight);
+        console.log(`[DetailedParse] Added to Main Card: ${fight.fighter1} vs ${fight.fighter2}`);
+      } else if (currentCardType === 'prelims') {
+        eventObject.prelimCard.push(fight);
+        console.log(`[DetailedParse] Added to Prelims: ${fight.fighter1} vs ${fight.fighter2}`);
+      } else if (currentCardType === 'early') {
+        eventObject.earlyPrelimCard.push(fight);
+        console.log(`[DetailedParse] Added to Early Prelims: ${fight.fighter1} vs ${fight.fighter2}`);
+      } else {
+        // If no card type is set, try to guess or add to a general pool (less ideal)
+        // For now, only add if a card type is known.
+      }
+    }
+  });
+
+  // Fallback: If specific card times weren't found, but a general main card time exists, derive others
+  if (eventObject.mainCardUTCDate) {
+    if (!cardTimeFound.prelims && !eventObject.prelimUTCDate) {
+      eventObject.prelimUTCDate = new Date(eventObject.mainCardUTCDate.getTime() - (2 * 60 * 60 * 1000)); // Assume 2 hours before
+      eventObject.ukPrelimTimeStr = eventObject.prelimUTCDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London', weekday: 'short' });
+      console.log(`[DetailedParse] Derived Prelims time: ${eventObject.ukPrelimTimeStr}`);
+    }
+    if (!cardTimeFound.early && !eventObject.earlyPrelimUTCDate && eventObject.prelimUTCDate) {
+       // Assume early prelims are 1.5-2 hours before prelims, if prelims exist
+      eventObject.earlyPrelimUTCDate = new Date(eventObject.prelimUTCDate.getTime() - (90 * 60 * 1000));
+      eventObject.ukEarlyPrelimTimeStr = eventObject.earlyPrelimUTCDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London', weekday: 'short' });
+      console.log(`[DetailedParse] Derived Early Prelims time: ${eventObject.ukEarlyPrelimTimeStr}`);
+    }
+  }
+   // Ensure the primary `eventObject.date` and `eventObject.time` reflect the earliest known part of the event (usually early prelims or prelims)
+   let earliestDate = eventObject.mainCardUTCDate;
+   if (eventObject.prelimUTCDate && eventObject.prelimUTCDate < earliestDate) earliestDate = eventObject.prelimUTCDate;
+   if (eventObject.earlyPrelimUTCDate && eventObject.earlyPrelimUTCDate < earliestDate) earliestDate = eventObject.earlyPrelimUTCDate;
+
+   if (earliestDate) {
+       const localEarliestDate = new Date(earliestDate.toLocaleString("en-US", {timeZone: "Europe/London"}));
+       eventObject.date = `${localEarliestDate.getFullYear()}-${String(localEarliestDate.getMonth() + 1).padStart(2, '0')}-${String(localEarliestDate.getDate()).padStart(2, '0')}`;
+       eventObject.time = `${String(earliestDate.getUTCHours()).padStart(2,'0')}:${String(earliestDate.getUTCMinutes()).padStart(2,'0')}`; // Store original UTC time for the earliest part
+       eventObject.ukDateTime = earliestDate.toISOString(); // Update primary dateTime to earliest
+       console.log(`[DetailedParse] Updated event main date/time to earliest known part: ${eventObject.date} ${eventObject.time} UTC, UKDateTime: ${eventObject.ukDateTime}`);
+   }
+
+
+}
+
+
+// --- End Detailed Snippet Parsing ---
+
 
 /**
  * Attempts to determine if a given month (0-11) in a given year is likely BST (UTC+1) or GMT (UTC+0) for the UK.
@@ -275,45 +337,60 @@ function parseEventsFromGoogleAPI(apiResponseJson) {
         console.log(`[API Parse] Needs snippet time search for "${eventTitle}". Title: "${item.title}", Snippet: "${item.snippet}"`);
         const combinedText = `${item.title}. ${item.snippet}`; // Search in both title and snippet
 
-        // Regex for "main card/event X PM/AM UK/GMT/BST" or "X PM/AM main card/event"
-        const mainCardTimeRegex = /(?:(main\s*(?:card|event))\s*at\s*)?(\d{1,2}(?::\d{2})?\s*(?:AM|PM))\s*(UK|GMT|BST)?|(?:(\d{1,2}(?::\d{2})?\s*(?:AM|PM))\s*(UK|GMT|BST)?\s*(main\s*(?:card|event)))/i;
+        // Updated Regex for "main card/event X PM/AM ZONE" or "X PM/AM ZONE main card/event"
+        // Zone is [A-Z]{2,4}
+        const mainCardTimeRegex = /(?:main\s*(?:card|event)\s*at\s*)?(\d{1,2}(?::\d{2})?\s*(?:AM|PM))\s*([A-Z]{2,4})?|(\d{1,2}(?::\d{2})?\s*(?:AM|PM))\s*([A-Z]{2,4})?\s*(?:main\s*(?:card|event))/i;
         const mainCardMatch = combinedText.match(mainCardTimeRegex);
         let parsedTimeFromSnippet = null;
 
         if (mainCardMatch) {
-          const timeStr = mainCardMatch[2] || mainCardMatch[4];
-          const zone = mainCardMatch[3] || mainCardMatch[5];
+          const timeStr = mainCardMatch[1] || mainCardMatch[3];
+          const zone = mainCardMatch[2] || mainCardMatch[4]; // Captured zone like PDT, EST, UK, GMT
           console.log(`[API Parse] Snippet Main Card Time Match: Time="${timeStr}", Zone="${zone}"`);
           parsedTimeFromSnippet = parseTimeString(timeStr);
 
           if (parsedTimeFromSnippet) {
             let year, month, day;
+            const eventDateForTZ = structuredDateSource ? new Date(structuredDateSource) : new Date(); // Base for TZ offset
+
             if (structuredDateSource) { // Use date from potentially "too early" structured data
               year = structuredDateSource.getUTCFullYear();
               month = structuredDateSource.getUTCMonth(); // 0-indexed
               day = structuredDateSource.getUTCDate();
               console.log(`[API Parse] Using date components from structured data: Y=${year}, M=${month}, D=${day} for snippet time.`);
             } else {
-              // TODO: More robust date extraction from snippet if no structured date at all
-              // For now, if no structured date, this path might fail to set a reliable mainCardUTCDate
-              console.warn(`[API Parse] Snippet time found ("${timeStr}") but no reliable date source (structured or snippet-parsed). This event might be inaccurate or skipped.`);
-              // Attempt to get a date from snippet - very basic for now
-              const dateMatchSnippet = combinedText.match(/([A-Za-z]+)\s+(\d{1,2})/i); // e.g. "June 22"
+              console.warn(`[API Parse] Snippet time found ("${timeStr}") but no structured date source. Attempting to parse date from snippet.`);
+              const dateMatchSnippet = combinedText.match(/([A-Za-z]+)\s+(\d{1,2})(?:,\s*(\d{4}))?/i); // "Month Day" or "Month Day, Year"
               if(dateMatchSnippet && monthMap[dateMatchSnippet[1].toLowerCase()] !== undefined) {
-                year = new Date().getFullYear(); // Assume current year
+                year = dateMatchSnippet[3] ? parseInt(dateMatchSnippet[3],10) : new Date().getFullYear(); // Use parsed year or current
                 month = monthMap[dateMatchSnippet[1].toLowerCase()];
                 day = parseInt(dateMatchSnippet[2], 10);
+                eventDateForTZ.setUTCFullYear(year, month, day); // Update eventDateForTZ if date parsed from snippet
                 console.log(`[API Parse] Extracted date from snippet: Y=${year}, M=${month}, D=${day}`);
               } else {
-                 return; // Skip if no date can be found for snippet time
+                 console.log(`[API Parse] No reliable date found in snippet for time "${timeStr}". Skipping this time match.`);
+                 parsedTimeFromSnippet = null; // Invalidate this time parse
               }
             }
 
-            const ukOffset = (zone && zone.toUpperCase() === 'BST') ? 1 : getUKTimezoneOffset(year, month, day);
-            console.log(`[API Parse] Determined UK offset for snippet time: ${ukOffset} (BST if 1, GMT if 0)`);
+            if (parsedTimeFromSnippet) { // Re-check as date parsing might invalidate it
+              let actualUTCOffset = null;
+              if (zone) {
+                actualUTCOffset = getTimezoneOffsetUTC(zone, eventDateForTZ);
+              }
 
-            mainCardUTCDate = new Date(Date.UTC(year, month, day, parsedTimeFromSnippet.hours, parsedTimeFromSnippet.minutes, 0));
-            mainCardUTCDate.setUTCHours(mainCardUTCDate.getUTCHours() - ukOffset); // Convert local UK time to UTC
+              if (actualUTCOffset === null && (zone === 'UK' || !zone)) {
+                actualUTCOffset = getUKTimezoneOffset(year, month, day); // Defaults to UK context
+                console.log(`[API Parse] Main card time is UK-contextual or zone undefined. UK offset: ${actualUTCOffset}`);
+              } else if (actualUTCOffset === null && zone) {
+                console.warn(`[API Parse] Main card timezone "${zone}" unrecognized and not UK. Assuming UTC or local to event (0 offset).`);
+                actualUTCOffset = 0;
+              }
+              console.log(`[API Parse] Determined UTC offset for main card time: ${actualUTCOffset}`);
+
+              mainCardUTCDate = new Date(Date.UTC(year, month, day, parsedTimeFromSnippet.hours, parsedTimeFromSnippet.minutes, 0));
+              mainCardUTCDate.setUTCHours(mainCardUTCDate.getUTCHours() - actualUTCOffset);
+            }
             console.log(`[API Parse] Main card UTC from snippet: ${mainCardUTCDate.toISOString()}`);
           } else {
             console.log(`[API Parse] Could not parse time from snippet match: "${timeStr}"`);
@@ -323,32 +400,68 @@ function parseEventsFromGoogleAPI(apiResponseJson) {
         }
       }
 
-      if (!mainCardUTCDate) {
-        console.log(`[API Parse] No definitive main card UTC time established for "${eventTitle}". Skipping.`);
-        return;
+      // Combined text for detailed parsing
+      const combinedText = `${item.title}. ${item.snippet}`;
+
+      // Determine the base date (year, month, day) for parseDetailedInfoFromSnippet
+      let baseDateForDetails;
+      if (mainCardUTCDate) { // Time was found from snippet or a good structured date
+          baseDateForDetails = mainCardUTCDate;
+      } else if (structuredDateSource) { // Only date part was found from structure (time was too early or missing)
+          baseDateForDetails = structuredDateSource;
+          console.log(`[API Parse] Using structuredDateSource (${baseDateForDetails.toISOString()}) as date base for details. Time to be found from snippet.`);
+      } else {
+          console.log(`[API Parse] No reliable base date (structured or snippet-derived main time) for "${eventTitle}". Attempting to find date in snippet for detailed parsing.`);
+          // Try to find a date like "Jun 29" or "June 29, 2025" in the snippet if no other date source.
+          const dateMatchSnippetForBase = combinedText.match(/([A-Za-z]+)\s+(\d{1,2})(?:,\s*(\d{4}))?/i);
+          if (dateMatchSnippetForBase && monthMap[dateMatchSnippetForBase[1].toLowerCase()] !== undefined) {
+              const currentYear = new Date().getFullYear(); // Default year
+              const yearToUse = dateMatchSnippetForBase[3] ? parseInt(dateMatchSnippetForBase[3],10) : currentYear;
+              const monthIdx = monthMap[dateMatchSnippetForBase[1].toLowerCase()];
+              const dayNum = parseInt(dateMatchSnippetForBase[2], 10);
+              baseDateForDetails = new Date(Date.UTC(yearToUse, monthIdx, dayNum, 0, 0, 0));
+              console.log(`[API Parse] Extracted base date from snippet for detailed parsing: ${baseDateForDetails.toISOString()}`);
+          } else if (item.link && item.link.includes("ufc.com/events") && item.pagemap && item.pagemap.cse_image && item.pagemap.cse_image[0] && item.pagemap.cse_image[0].src) {
+              // Heuristic: Try to get date from cse_image URL for ufc.com/events main page
+              const imgUrl = item.pagemap.cse_image[0].src;
+              const dateFromImgMatch = imgUrl.match(/(\d{4}-\d{2}[-\/]\d{2})|(\d{2}-\d{2})(?=[^\d])/); // YYYY-MM-DD or MM-DD
+              if (dateFromImgMatch) {
+                  let parsedDateFromImg;
+                  if (dateFromImgMatch[1]) { // YYYY-MM-DD
+                      parsedDateFromImg = new Date(dateFromImgMatch[1] + "T00:00:00Z"); // Assume UTC midnight
+                  } else if (dateFromImgMatch[2]) { // MM-DD
+                      const [monthStr, dayStr] = dateFromImgMatch[2].split('-');
+                      const currentYear = new Date().getFullYear(); // Assume current year
+                      // Create date carefully to avoid timezone issues during parsing, treat as UTC
+                      parsedDateFromImg = new Date(Date.UTC(currentYear, parseInt(monthStr,10)-1, parseInt(dayStr,10), 0,0,0));
+                  }
+                  if (parsedDateFromImg && !isNaN(parsedDateFromImg)) {
+                    baseDateForDetails = parsedDateFromImg;
+                    console.log(`[API Parse] HEURISTIC: Extracted base date from cse_image URL (${imgUrl}): ${baseDateForDetails.toISOString()}`);
+                  }
+              }
+          }
+
+          if (!baseDateForDetails) {
+             console.log(`[API Parse] CRITICAL: No base date could be determined for "${eventTitle}" after all fallbacks. Skipping.`);
+             return; // Skip this item
+          }
       }
 
-      const displayTimeOpts = { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London', weekday: 'short' };
-      mainCardTimeStr = mainCardUTCDate.toLocaleTimeString('en-GB', displayTimeOpts);
+      const eventYear = baseDateForDetails.getUTCFullYear();
+      const eventMonth = baseDateForDetails.getUTCMonth(); // 0-indexed
+      const eventDay = baseDateForDetails.getUTCDate();
 
-      // Prelim time calculation (can be refined with snippet parsing for "prelims" keyword too)
-      const prelimUTCDate = new Date(mainCardUTCDate.getTime() - (2 * 60 * 60 * 1000));
-      prelimTimeStr = prelimUTCDate.toLocaleTimeString('en-GB', displayTimeOpts);
-
-      // Ensure `parsedDate` reflects the UK local date of the main card
-      const localMainCardDate = new Date(mainCardUTCDate.toLocaleString("en-US", {timeZone: "Europe/London"}));
-      const parsedDate = `${localMainCardDate.getFullYear()}-${String(localMainCardDate.getMonth() + 1).padStart(2, '0')}-${String(localMainCardDate.getDate()).padStart(2, '0')}`;
-
-      const originalTime = `${String(mainCardUTCDate.getUTCHours()).padStart(2,'0')}:${String(mainCardUTCDate.getUTCMinutes()).padStart(2,'0')}`;
-
+      // Initial eventObject setup
       const eventObject = {
         id: `gcse_${item.cacheId || new Date().getTime() + index}`,
         title: eventTitle,
-        date: parsedDate,
-        time: originalTime,
-        ukDateTime: mainCardUTCDate.toISOString(),
-        ukMainCardTime: mainCardTimeStr,
-        ukPrelimTime: prelimTimeStr,
+        date: null, // Will be set by parseDetailedInfoFromSnippet or fallback
+        time: null, // Will be set by parseDetailedInfoFromSnippet or fallback
+        ukDateTime: null, // Will be set by parseDetailedInfoFromSnippet
+        ukMainCardTimeStr: null,
+        ukPrelimTimeStr: null,
+        ukEarlyPrelimTimeStr: null,
         location: venue,
         venue: venue,
         status: 'upcoming',
@@ -359,12 +472,61 @@ function parseEventsFromGoogleAPI(apiResponseJson) {
         mainCard: [],
         prelimCard: [],
         earlyPrelimCard: [],
-        ufcNumber: eventTitle.match(/UFC\s*(\d+)/i)?.[1] || null,
-        broadcast: "TNT Sports",
-        ticketInfo: `Tickets for ${eventTitle}`
+        ufcNumber: eventTitle.match(/UFC\s*(\d+[A-Z]?)/i)?.[1] || (eventTitle.toLowerCase().includes("ufc fight night") ? eventTitle : null) || eventTitle.match(/UFC\s*on\s*(ESPN|ABC)/i)?.[0] || null,
+        broadcast: "TNT Sports", // Default, can be refined
+        ticketInfo: `Tickets for ${eventTitle}`,
+        mainCardUTCDate: mainCardUTCDate, // This might be null if only structuredDateSource was found and snippet time failed
+        prelimUTCDate: null,
+        earlyPrelimUTCDate: null,
       };
+
+      // If mainCardUTCDate was determined from initial parsing, set initial prelimUTCDate (can be overridden)
+      if (mainCardUTCDate) {
+          eventObject.prelimUTCDate = new Date(mainCardUTCDate.getTime() - (2 * 60 * 60 * 1000)); // Default 2hr before
+          // Set initial formatted times (can be overridden by detailed parser)
+          const displayTimeOpts = { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London', weekday: 'short' };
+          eventObject.ukMainCardTimeStr = mainCardUTCDate.toLocaleTimeString('en-GB', displayTimeOpts);
+          if(eventObject.prelimUTCDate) {
+              eventObject.ukPrelimTimeStr = eventObject.prelimUTCDate.toLocaleTimeString('en-GB', displayTimeOpts);
+          }
+      }
+
+      // Call the detailed parser - this modifies eventObject in place
+      parseDetailedInfoFromSnippet(combinedText, eventObject, eventYear, eventMonth, eventDay);
+
+      // After detailed parsing, if ukDateTime is still null (no times found in snippet and no initial mainCardUTCDate)
+      // and we had a baseDateForDetails (which should always be true if we reached here), use that as a last resort for the date.
+      if (!eventObject.ukDateTime && baseDateForDetails) {
+          eventObject.ukDateTime = baseDateForDetails.toISOString(); // Base date at its original time (could be midnight UTC)
+          eventObject.time = `${String(baseDateForDetails.getUTCHours()).padStart(2,'0')}:${String(baseDateForDetails.getUTCMinutes()).padStart(2,'0')}`;
+          console.log(`[API Parse] Fallback: No specific times found by detailed parser, using base date ${eventObject.ukDateTime} for event time.`);
+      }
+
+      // Ensure eventObject.date is set based on the final eventObject.ukDateTime (which should be the earliest card time)
+      if (eventObject.ukDateTime) {
+          const finalEventDate = new Date(eventObject.ukDateTime);
+          const localFinalEventDate = new Date(finalEventDate.toLocaleString("en-US", {timeZone: "Europe/London"})); // Get date in UK timezone
+          eventObject.date = `${localFinalEventDate.getFullYear()}-${String(localFinalEventDate.getMonth() + 1).padStart(2, '0')}-${String(localFinalEventDate.getDate()).padStart(2, '0')}`;
+      } else {
+          // If after everything, ukDateTime is still null, then we couldn't determine a date/time. Skip.
+          console.log(`[API Parse] CRITICAL: Could not determine a valid ukDateTime for "${eventTitle}" after all parsing attempts. Skipping.`);
+          return; // Skip this item
+      }
+
+      // Final check on display time strings if they weren't set by detailed parser but the UTC dates exist
+      const finalDisplayOpts = { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London', weekday: 'short' };
+      if (eventObject.mainCardUTCDate && !eventObject.ukMainCardTimeStr) {
+          eventObject.ukMainCardTimeStr = eventObject.mainCardUTCDate.toLocaleTimeString('en-GB', finalDisplayOpts);
+      }
+      if (eventObject.prelimUTCDate && !eventObject.ukPrelimTimeStr) {
+          eventObject.ukPrelimTimeStr = eventObject.prelimUTCDate.toLocaleTimeString('en-GB', finalDisplayOpts);
+      }
+      if (eventObject.earlyPrelimUTCDate && !eventObject.ukEarlyPrelimTimeStr) {
+          eventObject.ukEarlyPrelimTimeStr = eventObject.earlyPrelimUTCDate.toLocaleTimeString('en-GB', finalDisplayOpts);
+      }
+
       events.push(eventObject);
-      console.log(`[API Parse] Successfully processed event: "${eventTitle}" for UK date ${parsedDate} at ${mainCardTimeStr} (UK time)`);
+      console.log(`[API Parse] Successfully processed event: "${eventObject.title}" for UK date ${eventObject.date}. Main: ${eventObject.ukMainCardTimeStr || 'N/A'}, Prelim: ${eventObject.ukPrelimTimeStr || 'N/A'}, Early: ${eventObject.ukEarlyPrelimTimeStr || 'N/A'}`);
 
     } catch (e) {
       console.error(`[API Parse] Error processing item ${index} ("${item.title}"): ${e.message}`, item, e.stack);
@@ -397,26 +559,24 @@ exports.handler = async (event, context) => {
   const apiKey = process.env.GOOGLE_API_KEY;
   const searchEngineId = process.env.SEARCH_ENGINE_ID;
 
-  // For now, return reliable fallback data instead of potentially broken API responses
-  const shouldUseFallback = true; // Set to false when API is fully working
-
-  if (shouldUseFallback || !apiKey || !searchEngineId) {
-    console.log('[Handler] Using reliable fallback UFC data instead of potentially broken API');
+  // If API keys are missing, return a server error, as live data cannot be fetched.
+  if (!apiKey || !searchEngineId) {
+    console.error('[Handler] CRITICAL ERROR: Missing GOOGLE_API_KEY or SEARCH_ENGINE_ID. Cannot fetch live data.');
     return {
-      statusCode: 200,
+      statusCode: 500, // Internal Server Error
       headers,
       body: JSON.stringify({
-        success: true,
-        events: getReliableFallbackUFCEvents(),
-        totalFound: 2,
-        fetchTime: new Date().toISOString(),
-        source: 'reliable_fallback_data',
-        note: 'Using reliable UFC event data with correct UK times'
+        success: false,
+        events: [],
+        error: "Server configuration error: API key or Search Engine ID missing.",
+        note: "Unable to fetch live UFC data."
       })
     };
   }
 
-  const query = "upcoming UFC events UK time"; // Main query
+  // API keys are present, proceed to fetch live data.
+  console.log('[Handler] API keys found. Proceeding to fetch live data.');
+  const query = "next UFC event main card prelims early prelims UK time"; // Refined query
   const numResults = 5; // Fetch a few results to find relevant events
   const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=${numResults}`;
 

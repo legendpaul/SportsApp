@@ -131,96 +131,63 @@
   ],
   "ufcEvents": [
     {
-      "id": "ufc_2218691",
-      "title": "UFC 317 Topuria vs Oliveira",
-      "date": "2025-06-29",
-      "time": "05:99:00",
-      "ukDateTime": "2025-06-29T05:39:00.000Z",
-      "location": "T-Mobile Arena, Paradise, Nevada, United States",
-      "venue": "T-Mobile Arena",
+      "id": "ufc_317_corrected",
+      "title": "UFC 317",
+      "date": "2025-06-28",
+      "time": "22:30",
+      "ukDateTime": "2025-06-28T22:30:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "23:30 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
       "status": "upcoming",
-      "description": "",
+      "description": "UFC 317 featuring Ilia Topuria vs Charles Oliveira.",
       "poster": null,
-      "createdAt": "2025-06-16T21:57:13.487Z",
-      "apiSource": "google_enhanced",
-      "apiEventId": "2218691",
+      "createdAt": "2024-07-15T10:00:00.000Z",
+      "apiSource": "manual_update",
+      "mainCardUTCDate": "2025-06-29T02:00:00.000Z",
+      "prelimUTCDate": "2025-06-29T00:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-06-28T22:30:00.000Z",
       "mainCard": [
         {
-          "fighter1": "Jamahal Hill",
-          "fighter2": "Khalil Rountree Jr.",
-          "weightClass": "Light Heavyweight",
+          "fighter1": "Ilia Topuria",
+          "fighter2": "Charles Oliveira",
+          "weightClass": "Lightweight",
           "title": "Main Event"
         },
         {
-          "fighter1": "Chris Weidman",
-          "fighter2": "Eryk Anders",
-          "weightClass": "Middleweight",
+          "fighter1": "Alexandre Pantoja",
+          "fighter2": "Kai Kara-France",
+          "weightClass": "Flyweight",
           "title": ""
         },
         {
-          "fighter1": "Diego Lopes",
-          "fighter2": "Brian Ortega",
-          "weightClass": "Featherweight",
-          "title": ""
-        },
-        {
-          "fighter1": "Punahele Soriano",
-          "fighter2": "Uros Medic",
-          "weightClass": "Welterweight",
-          "title": ""
-        },
-        {
-          "fighter1": "Payton Talbott",
-          "fighter2": "Yanis Ghemmouri",
-          "weightClass": "Bantamweight",
+          "fighter1": "Brandon Royval",
+          "fighter2": "Joshua Van",
+          "weightClass": "Flyweight",
           "title": ""
         }
       ],
       "prelimCard": [
         {
-          "fighter1": "Roman Kopylov",
-          "fighter2": "Chris Curtis",
-          "weightClass": "Middleweight"
-        },
-        {
-          "fighter1": "Tabatha Ricci",
-          "fighter2": "Tecia Pennington",
-          "weightClass": "Women's Strawweight"
-        },
-        {
-          "fighter1": "Azamat Murzakanov",
-          "fighter2": "Alonzo Menifield",
-          "weightClass": "Light Heavyweight"
-        },
-        {
-          "fighter1": "Chris Padilla",
-          "fighter2": "Joanderson Brito",
-          "weightClass": "Featherweight"
+          "fighter1": "Jack Hermansson",
+          "fighter2": "Gregory Rodrigues",
+          "weightClass": "Middleweight",
+          "title": ""
         }
       ],
       "earlyPrelimCard": [
         {
-          "fighter1": "Karine Silva",
-          "fighter2": "Ketlen Souza",
-          "weightClass": "Women's Flyweight"
-        },
-        {
-          "fighter1": "Manuel Torres",
-          "fighter2": "Kollin Pucek",
-          "weightClass": "Lightweight"
-        },
-        {
-          "fighter1": "Journey Newson",
-          "fighter2": "Sean Woodson",
-          "weightClass": "Featherweight"
+          "fighter1": "Niko Price",
+          "fighter2": "Jacobe Smith",
+          "weightClass": "Welterweight",
+          "title": ""
         }
       ],
       "ufcNumber": "317",
-      "broadcast": "TNT Sports 2",
-      "ticketInfo": "UFC 2025-06-28 UFC 317 Topuria vs Oliveira",
-      "mainCardTime": "05:99:00",
-      "mainCardUkTime": "2025-06-29T05:39:00.000Z",
-      "googleData": true
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC 317"
     },
     {
       "id": "ufc_2246794",

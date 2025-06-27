@@ -458,26 +458,24 @@ exports.handler = async (event, context) => {
   const apiKey = process.env.GOOGLE_API_KEY;
   const searchEngineId = process.env.SEARCH_ENGINE_ID;
 
-  // For now, return reliable fallback data instead of potentially broken API responses
-  const shouldUseFallback = true; // Set to false when API is fully working
-
-  if (shouldUseFallback || !apiKey || !searchEngineId) {
-    console.log('[Handler] Using reliable fallback UFC data instead of potentially broken API');
+  // If API keys are missing, return a server error, as live data cannot be fetched.
+  if (!apiKey || !searchEngineId) {
+    console.error('[Handler] CRITICAL ERROR: Missing GOOGLE_API_KEY or SEARCH_ENGINE_ID. Cannot fetch live data.');
     return {
-      statusCode: 200,
+      statusCode: 500, // Internal Server Error
       headers,
       body: JSON.stringify({
-        success: true,
-        events: getReliableFallbackUFCEvents(),
-        totalFound: 2,
-        fetchTime: new Date().toISOString(),
-        source: 'reliable_fallback_data',
-        note: 'Using reliable UFC event data with correct UK times'
+        success: false,
+        events: [],
+        error: "Server configuration error: API key or Search Engine ID missing.",
+        note: "Unable to fetch live UFC data."
       })
     };
   }
 
-  const query = "upcoming UFC events UK time"; // Main query
+  // API keys are present, proceed to fetch live data.
+  console.log('[Handler] API keys found. Proceeding to fetch live data.');
+  const query = "next UFC event main card prelims early prelims UK time"; // Refined query
   const numResults = 5; // Fetch a few results to find relevant events
   const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=${numResults}`;
 

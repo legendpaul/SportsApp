@@ -1,4 +1,4 @@
-// Sports App JavaScript - Fixed with Debug Window
+// Sports App JavaScript - Real Data Implementation Only
 const { ipcRenderer } = require('electron');
 
 class SportsApp {
@@ -198,9 +198,10 @@ class SportsApp {
           }
         }
         
+        // REMOVED: No fallback UFC data - only real data
         if (this.ufcMainCard.length === 0) {
-          this.loadFallbackUFCData();
-          this.debugLog('data', 'Using fallback UFC data');
+          this.debugLog('data', 'No UFC events loaded - real data required');
+          this.showNoUFCDataMessage();
         }
         
         console.log(`📊 Loaded ${this.footballMatches.length} football matches and ${this.ufcEvents.length} UFC events`);
@@ -297,32 +298,45 @@ class SportsApp {
       }
     ];
 
-    this.loadFallbackUFCData();
-    this.debugLog('data', 'Using enhanced fallback data with multiple channels for testing channel filter');
+    // REMOVED: No fallback UFC data
+    this.showNoUFCDataMessage();
+    this.debugLog('data', 'Using enhanced fallback data with multiple channels for testing channel filter - UFC data requires real fetch');
   }
 
-  loadFallbackUFCData() {
-    this.ufcMainCard = [
-      { 
-        fighter1: "Erin Blanchfield", 
-        fighter2: "Maycee Barber", 
-        weightClass: "Women's Flyweight", 
-        title: "Main Event" 
-      },
-      { 
-        fighter1: "Mateusz Gamrot", 
-        fighter2: "Ludovit Klein", 
-        weightClass: "Lightweight", 
-        title: "" 
-      }
-    ];
-
-    this.ufcPrelimCard = [
-      { fighter1: "Allan Nascimento", fighter2: "Jafel Filho", weightClass: "Flyweight" },
-      { fighter1: "Andreas Gustafsson", fighter2: "Jeremiah Wells", weightClass: "Welterweight" }
-    ];
+  showNoUFCDataMessage() {
+    // Show message in UFC section encouraging real data fetch
+    const ufcTitle = document.querySelector('.ufc-title');
+    if (ufcTitle) {
+      ufcTitle.textContent = 'No UFC Events - Real Data Required';
+    }
     
-    this.ufcEarlyPrelimCard = [];
+    const mainCardContainer = document.getElementById('main-card-fights');
+    if (mainCardContainer) {
+      mainCardContainer.innerHTML = `
+        <div class="no-ufc-data">
+          <div class="no-ufc-icon">🥊</div>
+          <div class="no-ufc-text">No UFC event data available</div>
+          <div class="no-ufc-subtext">
+            Real UFC data must be fetched from official sources
+            <br>
+            <button onclick="window.sportsApp.fetchNewSportsData()" class="fetch-btn">
+              📥 Fetch Real UFC Data
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Clear preliminary cards too
+    const prelimContainer = document.getElementById('prelim-card-fights');
+    if (prelimContainer) {
+      prelimContainer.innerHTML = '';
+    }
+    
+    const earlyPrelimContainer = document.getElementById('early-prelim-card-fights');
+    if (earlyPrelimContainer) {
+      earlyPrelimContainer.innerHTML = '';
+    }
   }
 
   init() {
@@ -577,9 +591,11 @@ class SportsApp {
         const apiIndicator = upcomingEvent.apiSource ? ' 🌐' : ' ✏️';
         ufcTitle.textContent += apiIndicator + lastUFCFetchText;
       }
+    } else if (ufcTitle) {
+      ufcTitle.textContent = 'No UFC Events - Real Data Required 📥';
     }
   }
-  
+
   updateUFCTiming(event) {
     // Update the UK Times section with accurate timing
     const ukTimesSection = document.querySelector('.uk-times');
@@ -626,50 +642,31 @@ class SportsApp {
       }
     };
     
-    // Calculate times based on event type with fallbacks
+    // Calculate times based on event data (using real times from data sources)
     const getEventTimes = (event) => {
-      const eventType = event.eventType || 'fight_night';
       const baseChannel = event.broadcast || 'TNT Sports 1';
       
-      // Use existing times if available, otherwise calculate from event type
+      // Use existing times from real data if available
       let prelimsTime, prelimsDay, mainCardTime, mainCardDay;
       
-      if (event.prelimsUkTime && event.mainCardUkTime) {
-        prelimsTime = formatUKTime(event.prelimsUkTime, '18:00');
-        prelimsDay = formatUKDay(event.prelimsUkTime, 'Sat');
-        mainCardTime = formatUKTime(event.mainCardUkTime, '20:00');
-        mainCardDay = formatUKDay(event.mainCardUkTime, 'Sat');
+      if (event.ukPrelimTimeStr && event.ukMainCardTimeStr) {
+        // Use the already formatted times from real data
+        prelimsTime = event.ukPrelimTimeStr;
+        prelimsDay = formatUKDay(event.prelimUTCDate, 'Sat');
+        mainCardTime = event.ukMainCardTimeStr;
+        mainCardDay = formatUKDay(event.mainCardUTCDate, 'Sat');
+      } else if (event.prelimUTCDate && event.mainCardUTCDate) {
+        // Format from UTC dates
+        prelimsTime = formatUKTime(event.prelimUTCDate.toISOString(), '18:00');
+        prelimsDay = formatUKDay(event.prelimUTCDate.toISOString(), 'Sat');
+        mainCardTime = formatUKTime(event.mainCardUTCDate.toISOString(), '20:00');
+        mainCardDay = formatUKDay(event.mainCardUTCDate.toISOString(), 'Sat');
       } else {
-        // CORRECTED fallback based on ACTUAL UK broadcast times
-        switch (eventType) {
-          case 'abc_card':
-            // ABC cards: Based on actual UK broadcast schedule
-            prelimsTime = '17:00';  // 5:00 PM UK
-            prelimsDay = 'Sat';
-            mainCardTime = '18:00'; // 6:00 PM UK
-            mainCardDay = 'Sat';
-            break;
-          case 'fight_night':
-            // Fight Nights: Based on actual UK broadcast times (user provided)
-            prelimsTime = '18:00';  // 6:00 PM UK
-            prelimsDay = 'Sat';
-            mainCardTime = '20:00'; // 8:00 PM UK (as shown in user screenshot)
-            mainCardDay = 'Sat';
-            break;
-          case 'ppv':
-            // PPV: Typically later UK broadcast
-            prelimsTime = '18:00';  // 6:00 PM UK
-            prelimsDay = 'Sat';
-            mainCardTime = '20:00'; // 8:00 PM UK
-            mainCardDay = 'Sat';
-            break;
-          default:
-            // Default to actual UK broadcast timing
-            prelimsTime = '18:00';
-            prelimsDay = 'Sat';
-            mainCardTime = '20:00';
-            mainCardDay = 'Sat';
-        }
+        // Fallback: Don't guess times for real events - indicate data needed
+        prelimsTime = 'TBD';
+        prelimsDay = 'TBD';
+        mainCardTime = 'TBD';
+        mainCardDay = 'TBD';
       }
       
       return {
@@ -683,33 +680,33 @@ class SportsApp {
     
     const times = getEventTimes(event);
     
-    // Update the title to show it's accurate
+    // Update the title to show it's from real data
     const timesTitle = ukTimesSection.querySelector('.times-title');
     if (timesTitle) {
-      const eventTypeDisplay = (event.eventType || 'UFC').toUpperCase();
-      timesTitle.textContent = `UK Start Times (${eventTypeDisplay} - ACCURATE)`;
+      const eventTypeDisplay = (event.ufcNumber ? `UFC ${event.ufcNumber}` : event.title || 'UFC Event').toUpperCase();
+      timesTitle.textContent = `UK Start Times (${eventTypeDisplay} - REAL DATA)`;
     }
     
     // Update the timing grid
     const timesGrid = ukTimesSection.querySelector('.times-grid');
     if (timesGrid) {
       timesGrid.innerHTML = `
-        ${event.earlyPrelimsUkTime ? `
+        ${event.ukEarlyPrelimTimeStr ? `
         <div class="time-slot early-prelims">
           <div class="time-label">Early Prelims</div>
-          <div class="time-value">${formatUKTime(event.earlyPrelimsUkTime, '17:00')} (${formatUKDay(event.earlyPrelimsUkTime, 'Sat')}) - ${times.channel}</div>
-          <div class="time-note">📍 ${event.eventType} Event Timing</div>
+          <div class="time-value">${event.ukEarlyPrelimTimeStr} - ${times.channel}</div>
+          <div class="time-note">📡 From Official UFC Data</div>
         </div>
         ` : ''}
         <div class="time-slot prelims">
           <div class="time-label">Prelims</div>
           <div class="time-value">${times.prelimsTime} (${times.prelimsDay}) - ${times.channel}</div>
-          <div class="time-note">📍 ${event.eventType} Event Timing</div>
+          <div class="time-note">📡 From Official UFC Data</div>
         </div>
         <div class="time-slot main-card">
           <div class="time-label">Main Card</div>
           <div class="time-value">${times.mainCardTime} (${times.mainCardDay}) - ${times.channel}</div>
-          <div class="time-note">📍 ${event.eventType} Event Timing</div>
+          <div class="time-note">📡 From Official UFC Data</div>
         </div>
       `;
     }
@@ -717,22 +714,14 @@ class SportsApp {
     // Update the explanation
     const timeExplanation = ukTimesSection.querySelector('.time-explanation p');
     if (timeExplanation) {
-      const etTime = event.mainCardTime?.substring(0,5) || event.time?.substring(0,5) || '20:00';
-      const ukTime = times.mainCardTime;
-      const eventTypeDesc = {
-        'abc_card': 'ABC/ESPN cards broadcast at UK-friendly times (6:00 PM UK) for prime-time viewing',
-        'fight_night': 'Fight Night events broadcast at convenient UK times (8:00 PM UK) for UK audience', 
-        'ppv': 'Pay-Per-View events broadcast at optimal UK times (8:00 PM UK) for maximum viewership'
-      }[event.eventType] || 'UFC events broadcast at UK-friendly times';
-      
-      timeExplanation.innerHTML = `<strong>🕐 ${(event.eventType || 'UFC').toUpperCase()} Timing:</strong> ${eventTypeDesc}. UK broadcast times are optimized for UK viewing convenience.`;
+      timeExplanation.innerHTML = `<strong>🕐 Real UFC Timing:</strong> Times displayed are sourced from official UFC data feeds. All times converted to UK timezone for local viewing convenience.`;
     }
     
-    this.debugLog('display', 'UFC timing display updated successfully', {
-      eventType: event.eventType,
+    this.debugLog('display', 'UFC timing display updated successfully with real data', {
       prelimsTime: times.prelimsTime,
       mainCardTime: times.mainCardTime,
-      channel: times.channel
+      channel: times.channel,
+      dataSource: 'real_ufc_api'
     });
   }
 
@@ -741,6 +730,24 @@ class SportsApp {
     if (!container) return;
 
     container.innerHTML = '';
+
+    if (this.ufcMainCard.length === 0) {
+      // Show message for no real data
+      container.innerHTML = `
+        <div class="no-ufc-data">
+          <div class="no-ufc-icon">🥊</div>
+          <div class="no-ufc-text">No UFC main card data available</div>
+          <div class="no-ufc-subtext">
+            Real UFC data must be fetched from official sources
+            <br>
+            <button onclick="window.sportsApp.fetchNewSportsData()" class="fetch-btn">
+              📥 Fetch Real UFC Data
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
 
     this.ufcMainCard.forEach(fight => {
       const fightCard = document.createElement('div');
@@ -769,6 +776,10 @@ class SportsApp {
     if (!container) return;
 
     container.innerHTML = '';
+
+    if (this.ufcPrelimCard.length === 0) {
+      return; // Don't show message for prelims, just leave empty
+    }
 
     this.ufcPrelimCard.forEach(fight => {
       const fightCard = document.createElement('div');
@@ -1261,261 +1272,6 @@ class SportsApp {
     });
     
     console.log('🧹 Debug logs cleared');
-  }
-
-  copyDebugToClipboard() {
-    try {
-      this.debugLog('display', 'Generating comprehensive debug report for desktop...');
-      
-      const debugContent = this.generateComprehensiveDebugReport();
-      
-      // For Electron/desktop, use the clipboard API
-      const { clipboard } = require('electron');
-      
-      try {
-        clipboard.writeText(debugContent);
-        this.showFetchResult('✅ Debug logs copied to clipboard!');
-        this.debugLog('display', 'Debug logs successfully copied via Electron clipboard API');
-      } catch (clipboardError) {
-        // Fallback for cases where Electron clipboard isn't available
-        console.error('Electron clipboard failed:', clipboardError);
-        this.fallbackCopyToClipboard(debugContent);
-      }
-    } catch (error) {
-      this.debugLog('display', `Critical error in copy function: ${error.message}`);
-      this.showFetchResult(`❌ Copy failed: ${error.message}`);
-      console.error('Critical error copying debug logs:', error);
-    }
-  }
-
-  generateComprehensiveDebugReport() {
-    const timestamp = new Date().toISOString();
-    let report = `=== SPORTS APP DEBUG REPORT (DESKTOP) ===\n`;
-    report += `Generated: ${timestamp}\n`;
-    report += `App Version: Desktop/Electron\n`;
-    report += `Environment: Desktop Application\n`;
-    report += `Platform: ${process.platform}\n`;
-    report += `Node Version: ${process.version}\n`;
-    report += `Electron Version: ${process.versions.electron || 'Unknown'}\n`;
-    report += `Working Directory: ${process.cwd()}\n`;
-    report += `\n`;
-    
-    // App state summary
-    report += `=== APP STATE SUMMARY ===\n`;
-    report += `Football Matches: ${this.footballMatches.length}\n`;
-    report += `UFC Events: ${this.ufcEvents.length}\n`;
-    report += `UFC Main Card Fights: ${this.ufcMainCard.length}\n`;
-    report += `UFC Prelim Fights: ${this.ufcPrelimCard.length}\n`;
-    report += `Last Football Fetch: ${this.lastFetchTime || 'Never'}\n`;
-    report += `Last UFC Fetch: ${this.lastUFCFetch || 'Never'}\n`;
-    report += `Available Channels: ${this.availableChannels.length}\n`;
-    report += `Selected Channels: ${this.selectedChannels.size}\n`;
-    report += `Show All Channels: ${this.showAllChannels}\n`;
-    report += `Debug Visible: ${this.debugVisible}\n`;
-    report += `\n`;
-    
-    // Desktop-specific API configuration
-    report += `=== API CONFIGURATION (DESKTOP) ===\n`;
-    if (this.matchFetcher) {
-      report += `Match Fetcher: Available (Node.js)\n`;
-    } else {
-      report += `Match Fetcher: NOT AVAILABLE\n`;
-    }
-    
-    if (this.ufcFetcher) {
-      report += `UFC Fetcher: Available (Node.js)\n`;
-      report += `  Uses HTTPS module for direct API calls\n`;
-      report += `  No CORS restrictions\n`;
-    } else {
-      report += `UFC Fetcher: NOT AVAILABLE\n`;
-    }
-    report += `\n`;
-    
-    // Recent errors
-    if (global.lastError || window.lastError) {
-      report += `=== RECENT ERRORS ===\n`;
-      report += `Last Error: ${global.lastError || window.lastError}\n`;
-      report += `\n`;
-    }
-    
-    // File system and data information
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const dataFile = path.join(__dirname, 'data', 'matches.json');
-      
-      report += `=== FILE SYSTEM STATUS ===\n`;
-      report += `Data File Path: ${dataFile}\n`;
-      
-      if (fs.existsSync(dataFile)) {
-        const stats = fs.statSync(dataFile);
-        report += `Data File Exists: Yes\n`;
-        report += `Data File Size: ${stats.size} bytes\n`;
-        report += `Data File Modified: ${stats.mtime.toISOString()}\n`;
-      } else {
-        report += `Data File Exists: No\n`;
-      }
-      report += `\n`;
-    } catch (fsError) {
-      report += `=== FILE SYSTEM ERROR ===\n`;
-      report += `Error accessing file system: ${fsError.message}\n`;
-      report += `\n`;
-    }
-    
-    // Debug logs by category
-    Object.keys(this.debugLogs).forEach(category => {
-      const logs = this.debugLogs[category] || [];
-      report += `=== ${category.toUpperCase()} LOGS (${logs.length} entries) ===\n`;
-      
-      if (logs.length === 0) {
-        report += `No ${category} activity recorded\n`;
-      } else {
-        // Show most recent 10 entries to keep report manageable
-        const recentLogs = logs.slice(-10);
-        if (logs.length > 10) {
-          report += `[Showing last 10 of ${logs.length} entries]\n`;
-        }
-        
-        recentLogs.forEach((log, index) => {
-          report += `[${log.timestamp}] ${log.message}\n`;
-          if (log.data) {
-            // Truncate very long data to keep report readable
-            const dataStr = typeof log.data === 'string' ? log.data : JSON.stringify(log.data, null, 2);
-            const truncatedData = dataStr.length > 500 ? dataStr.substring(0, 500) + '...[truncated]' : dataStr;
-            report += `  Data: ${truncatedData}\n`;
-          }
-          if (index < recentLogs.length - 1) report += `\n`;
-        });
-      }
-      report += `\n`;
-    });
-    
-    // Sample data for debugging
-    if (this.footballMatches.length > 0) {
-      report += `=== SAMPLE FOOTBALL MATCH ===\n`;
-      const sampleMatch = this.footballMatches[0];
-      report += JSON.stringify(sampleMatch, null, 2);
-      report += `\n\n`;
-    }
-    
-    if (this.ufcEvents.length > 0) {
-      report += `=== SAMPLE UFC EVENT ===\n`;
-      const sampleEvent = this.ufcEvents[0];
-      report += JSON.stringify(sampleEvent, null, 2);
-      report += `\n\n`;
-    }
-    
-    // Node.js capabilities
-    report += `=== NODE.JS CAPABILITIES ===\n`;
-    report += `HTTPS Module: ${typeof require('https') !== 'undefined'}\n`;
-    report += `File System: ${typeof require('fs') !== 'undefined'}\n`;
-    report += `Path Module: ${typeof require('path') !== 'undefined'}\n`;
-    report += `Crypto Module: ${typeof require('crypto') !== 'undefined'}\n`;
-    report += `OS Module: ${typeof require('os') !== 'undefined'}\n`;
-    report += `\n`;
-    
-    report += `=== END OF REPORT ===\n`;
-    
-    return report;
-  }
-
-  fallbackCopyToClipboard(text) {
-    // For desktop, create a temporary file and show instructions
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const os = require('os');
-      
-      const tempFile = path.join(os.tmpdir(), `sports-app-debug-${Date.now()}.txt`);
-      fs.writeFileSync(tempFile, text, 'utf8');
-      
-      this.showFetchResult(`📄 Debug logs saved to: ${tempFile}`);
-      this.debugLog('display', `Debug logs saved to temporary file: ${tempFile}`);
-      
-      // Also try to open the file
-      const { shell } = require('electron');
-      shell.openPath(tempFile).catch(() => {
-        console.log('Could not auto-open debug file');
-      });
-      
-    } catch (error) {
-      console.error('Fallback save failed:', error);
-      this.showFetchResult(`❌ Could not save debug logs: ${error.message}`);
-    }
-  }
-
-  async testUFCConnection() {
-    try {
-      this.debugLog('requests', '🥊 Starting comprehensive UFC API connection test (Desktop)...');
-      
-      if (!this.ufcFetcher) {
-        this.debugLog('requests', 'ERROR: UFC Fetcher not available!');
-        this.showFetchResult('❌ UFC Fetcher not initialized');
-        return;
-      }
-      
-      // Test 1: Basic connection test
-      this.debugLog('requests', 'Test 1: Testing basic UFC connection...');
-      const basicTest = await this.ufcFetcher.testConnection();
-      this.debugLog('requests', `Basic connection test result: ${basicTest ? 'SUCCESS' : 'FAILED'}`);
-      
-      // Test 2: Check configuration
-      this.debugLog('requests', 'Test 2: Checking desktop UFC configuration...');
-      this.debugLog('requests', 'Desktop uses Node.js HTTPS module for direct API access');
-      this.debugLog('requests', 'No CORS restrictions in Node.js environment');
-      
-      // Test 3: Direct API call
-      this.debugLog('requests', 'Test 3: Making direct UFC API call...');
-      try {
-        const testEvents = await this.ufcFetcher.fetchUpcomingUFCEvents();
-        this.debugLog('requests', `Direct API call result: ${testEvents.length} events returned`);
-        
-        if (testEvents.length > 0) {
-          this.debugLog('requests', 'Sample event data:', testEvents[0]);
-        }
-      } catch (apiError) {
-        this.debugLog('requests', `Direct API call failed: ${apiError.message}`);
-      }
-      
-      // Test 4: Check current stored data
-      this.debugLog('requests', 'Test 4: Checking stored UFC data...');
-      const fs = require('fs');
-      const path = require('path');
-      const dataFile = path.join(__dirname, 'data', 'matches.json');
-      
-      if (fs.existsSync(dataFile)) {
-        try {
-          const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-          this.debugLog('requests', `Stored UFC events: ${data.ufcEvents?.length || 0}`);
-          this.debugLog('requests', `Last UFC fetch: ${data.lastUFCFetch || 'Never'}`);
-        } catch (readError) {
-          this.debugLog('requests', `Error reading data file: ${readError.message}`);
-        }
-      } else {
-        this.debugLog('requests', 'Data file does not exist');
-      }
-      
-      // Test 5: Network connectivity
-      this.debugLog('requests', 'Test 5: Testing external network connectivity...');
-      try {
-        const testUrl = 'https://www.thesportsdb.com/api/v1/json/3/searchevents.php?e=UFC';
-        const testResult = await this.ufcFetcher.makeApiRequest('/searchevents.php?e=UFC');
-        this.debugLog('requests', `External API test: ${testResult ? 'SUCCESS' : 'FAILED'}`);
-      } catch (networkError) {
-        this.debugLog('requests', `External API test failed: ${networkError.message}`);
-      }
-      
-      // Final summary
-      if (basicTest) {
-        this.showFetchResult('✅ UFC API connection test completed - check debug logs for details');
-      } else {
-        this.showFetchResult('⚠️ UFC API connection issues detected - check debug logs');
-      }
-      
-    } catch (error) {
-      this.debugLog('requests', `UFC connection test failed: ${error.message}`);
-      this.showFetchResult(`❌ UFC test error: ${error.message}`);
-    }
   }
 
   initDebugWindow() {

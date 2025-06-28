@@ -1,130 +1,354 @@
 {
   "footballMatches": [
     {
-      "id": "web_1751026331950_ejlm97kcn",
-      "time": "19:00",
-      "teamA": "France Women U19",
-      "teamB": "Spain Women U19",
-      "competition": "UEFA Women's Under-19 Championship Final",
-      "channel": "UEFA.tv",
+      "id": "web_1751064098557_e1g9zfvfl",
+      "time": "23:00",
+      "teamA": "Columbus Crew",
+      "teamB": "Philadelphia Union",
+      "competition": "MLS",
+      "channel": "Apple TV",
       "channels": [
-        "UEFA.tv"
+        "Apple TV"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-27T12:12:11.950Z",
+      "createdAt": "2025-06-27T22:41:38.557Z",
       "matchDate": "2025-06-27",
       "apiSource": "live-footballontv.com",
       "venue": ""
     },
     {
-      "id": "web_1751026331950_18e41m8tw",
-      "time": "19:45",
-      "teamA": "Bohemians",
-      "teamB": "Sligo Rovers",
-      "competition": "League of Ireland Premier Division",
-      "channel": "LOITV",
+      "id": "web_1751064098586_9brqr9214",
+      "time": "23:30",
+      "teamA": "West Ham United",
+      "teamB": "Everton",
+      "competition": "Premier League Summer Series",
+      "channel": "TBC",
       "channels": [
-        "LOITV"
+        "TBC"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-27T12:12:11.950Z",
+      "createdAt": "2025-06-27T22:41:38.586Z",
       "matchDate": "2025-06-27",
       "apiSource": "live-footballontv.com",
       "venue": ""
     },
     {
-      "id": "web_1751026331950_ezh3kiop8",
-      "time": "19:45",
-      "teamA": "Cork City",
-      "teamB": "St Patrick's Athletic",
-      "competition": "League of Ireland Premier Division",
-      "channel": "LOITV",
+      "id": "web_1751064098589_v63psyrlp",
+      "time": "23:00",
+      "teamA": "New York City FC",
+      "teamB": "Leon",
+      "competition": "Leagues Cup Group Stage",
+      "channel": "Apple TV",
       "channels": [
-        "LOITV"
+        "Apple TV"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-27T12:12:11.950Z",
+      "createdAt": "2025-06-27T22:41:38.589Z",
       "matchDate": "2025-06-27",
       "apiSource": "live-footballontv.com",
       "venue": ""
     },
     {
-      "id": "web_1751026331950_cpw0jxklm",
-      "time": "19:45",
-      "teamA": "Derry City",
-      "teamB": "Drogheda United",
-      "competition": "League of Ireland Premier Division",
-      "channel": "LOITV",
+      "id": "web_1751064098593_ptp9d41hp",
+      "time": "23:00",
+      "teamA": "Orlando City",
+      "teamB": "Atlas",
+      "competition": "Leagues Cup Group Stage",
+      "channel": "Apple TV",
       "channels": [
-        "LOITV"
+        "Apple TV"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-27T12:12:11.950Z",
+      "createdAt": "2025-06-27T22:41:38.593Z",
       "matchDate": "2025-06-27",
       "apiSource": "live-footballontv.com",
       "venue": ""
     },
     {
-      "id": "web_1751026331950_pn7uzzp9q",
-      "time": "19:45",
-      "teamA": "Galway United",
-      "teamB": "Shelbourne",
-      "competition": "League of Ireland Premier Division",
-      "channel": "LOITV",
+      "id": "web_1751064098595_89egy8awa",
+      "time": "23:00",
+      "teamA": "Orlando Pride",
+      "teamB": "Utah Royals",
+      "competition": "NWSL",
+      "channel": "NWSL+",
       "channels": [
-        "LOITV"
+        "NWSL+"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-27T12:12:11.950Z",
+      "createdAt": "2025-06-27T22:41:38.595Z",
       "matchDate": "2025-06-27",
       "apiSource": "live-footballontv.com",
       "venue": ""
     },
     {
-      "id": "web_1751026331950_8n07dan47",
+      "id": "web_1751064098605_8ppkatj5f",
+      "time": "23:00",
+      "teamA": "FC Cincinnati",
+      "teamB": "Charlotte FC",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.605Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098605_bqusx8aj1",
+      "time": "23:00",
+      "teamA": "Minnesota United FC",
+      "teamB": "Colorado Rapids",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.605Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098605_u9qguap9a",
+      "time": "23:00",
+      "teamA": "New York Red Bulls",
+      "teamB": "Real Salt Lake",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.605Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098625_qhqqm88wb",
+      "time": "23:00",
+      "teamA": "Utah Royals",
+      "teamB": "Houston Dash",
+      "competition": "NWSL",
+      "channel": "NWSL+",
+      "channels": [
+        "NWSL+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.625Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098644_tr78prjhb",
+      "time": "23:00",
+      "teamA": "Atlanta United",
+      "teamB": "D.C. United",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.644Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098644_9kz9mfxzl",
+      "time": "23:00",
+      "teamA": "Charlotte FC",
+      "teamB": "Philadelphia Union",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.644Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098644_3p8jgtxnu",
+      "time": "23:00",
+      "teamA": "Columbus Crew",
+      "teamB": "New York Red Bulls",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.644Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098644_x3jh919gt",
+      "time": "23:00",
+      "teamA": "FC Cincinnati",
+      "teamB": "CF Montreal",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.644Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098644_t4njhujks",
+      "time": "23:00",
+      "teamA": "Nashville SC",
+      "teamB": "Inter Miami CF",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.644Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098645_3lehedoh8",
+      "time": "23:00",
+      "teamA": "New England Revolution",
+      "teamB": "Chicago Fire FC",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.645Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098645_pk28cw6r4",
+      "time": "23:00",
+      "teamA": "New York City FC",
+      "teamB": "Seattle Sounders FC",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.645Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751064098645_1r895dgpi",
+      "time": "23:00",
+      "teamA": "Toronto FC",
+      "teamB": "Orlando City",
+      "competition": "MLS",
+      "channel": "Apple TV",
+      "channels": [
+        "Apple TV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-27T22:41:38.645Z",
+      "matchDate": "2025-06-27",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751072273917_39z3cdokp",
+      "time": "10:30",
+      "teamA": "Shimizu S-Pulse",
+      "teamB": "Kashiwa Reysol",
+      "competition": "J League",
+      "channel": "J League International YouTube",
+      "channels": [
+        "J League International YouTube"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-28T00:57:53.917Z",
+      "matchDate": "2025-06-28",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751072273917_wm90e82n2",
+      "time": "11:00",
+      "teamA": "Sanfrecce Hiroshima",
+      "teamB": "Grampus Eight",
+      "competition": "J League",
+      "channel": "J League International YouTube",
+      "channels": [
+        "J League International YouTube"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-28T00:57:53.917Z",
+      "matchDate": "2025-06-28",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751072273917_gwha50gpz",
+      "time": "17:00",
+      "teamA": "Palmeiras",
+      "teamB": "Botafogo",
+      "competition": "FIFA Club World Cup 2025 Round of 16",
+      "channel": "DAZN",
+      "channels": [
+        "DAZN"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-06-28T00:57:53.917Z",
+      "matchDate": "2025-06-28",
+      "apiSource": "live-footballontv.com",
+      "venue": ""
+    },
+    {
+      "id": "web_1751072273917_h9m57m0i4",
       "time": "20:00",
-      "teamA": "Shamrock Rovers",
-      "teamB": "Waterford",
-      "competition": "League of Ireland Premier Division",
-      "channel": "LOITV",
+      "teamA": "England U21",
+      "teamB": "Germany U21",
+      "competition": "UEFA Under-21 Championship Final",
+      "channel": "Channel 4",
       "channels": [
-        "LOITV"
+        "Channel 4"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-27T12:12:11.950Z",
-      "matchDate": "2025-06-27",
+      "createdAt": "2025-06-28T00:57:53.917Z",
+      "matchDate": "2025-06-28",
       "apiSource": "live-footballontv.com",
       "venue": ""
     },
     {
-      "id": "web_1751026864629_qjl6efgtl",
-      "time": "02:00",
-      "teamA": "Al-Hilal",
-      "teamB": "Pachuca",
-      "competition": "FIFA Club World Cup 2025 Group H",
+      "id": "web_1751072273917_vz0u257ab",
+      "time": "21:00",
+      "teamA": "Benfica",
+      "teamB": "Chelsea",
+      "competition": "FIFA Club World Cup 2025 Round of 16",
       "channel": "DAZN",
       "channels": [
         "DAZN"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-27T12:21:04.629Z",
-      "matchDate": "2025-06-27",
-      "apiSource": "live-footballontv.com",
-      "venue": ""
-    },
-    {
-      "id": "web_1751026864629_5de1xv0mg",
-      "time": "02:00",
-      "teamA": "RB Salzburg",
-      "teamB": "Real Madrid",
-      "competition": "FIFA Club World Cup 2025 Group H",
-      "channel": "DAZN",
-      "channels": [
-        "DAZN"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-06-27T12:21:04.629Z",
-      "matchDate": "2025-06-27",
+      "createdAt": "2025-06-28T00:57:53.917Z",
+      "matchDate": "2025-06-28",
       "apiSource": "live-footballontv.com",
       "venue": ""
     }
@@ -932,7 +1156,7 @@
       "googleData": true
     }
   ],
-  "lastCleanup": "2025-06-27T12:21:03.254Z",
+  "lastCleanup": "2025-06-28T00:57:54.001Z",
   "lastFetch": null,
   "lastUFCFetch": "2025-06-16T21:57:15.269Z"
 }

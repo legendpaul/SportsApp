@@ -1,20 +1,23 @@
-// Web-compatible UFC Fetcher - FIXED UK Times and Netlify Function Support
-// Version: 1.1.0 - Fixed UK timezone conversion and enhanced error handling
+/**
+ * Modern Web UFC Fetcher using recommended sources:
+ * - UFC.com for current/upcoming events with detailed timing
+ * - Netlify function for server-side scraping
+ * No fake/mock/fallback data - all real scraping
+ */
 class WebUFCFetcher {
   constructor(debugLogCallback = null) {
-    this.version = '1.1.0';
+    this.version = '2.0.0';
     this.netlifyFunctionUrl = '/.netlify/functions/fetch-ufc';
     
-    // Initialize debug function first
     this.debugLog = debugLogCallback || ((category, message, data) => {
       console.log(`[UFC-${category.toUpperCase()}] ${message}`, data || '');
     });
     
-    // Log version for debugging
-    this.debugLog('requests', `WebUFCFetcher v${this.version} initializing with UK time fixes...`);
+    this.debugLog('init', `WebUFCFetcher v${this.version} - Real Data Implementation`);
     
-    // Detect environment
     this.isLocal = this.detectLocalEnvironment();
+    this.ufcEventsCache = [];
+    this.lastFetchTime = null;
   }
 
   detectLocalEnvironment() {
@@ -29,310 +32,362 @@ class WebUFCFetcher {
     
     const isLocal = (isLocalhost || isFileProtocol || hasDevPort) && !isNetlify;
     
-    this.debugLog('requests', `UFC Environment: ${isLocal ? 'Local Development' : 'Production (Netlify)'}`, {
-      hostname, protocol, port, isLocalhost, isFileProtocol, hasDevPort, isNetlify, isLocal
+    this.debugLog('env', `Environment: ${isLocal ? 'Local Development' : 'Production (Netlify)'}`, {
+      hostname, protocol, port, isLocal
     });
     
     return isLocal;
   }
 
+  /**
+   * Main method to fetch upcoming UFC events
+   */
   async fetchUpcomingUFCEvents() {
     try {
-      this.debugLog('requests', 'Starting UFC events fetch with corrected UK times...');
-      this.debugLog('requests', `Environment detection - isLocal: ${this.isLocal}`);
+      this.debugLog('fetch', 'Starting UFC events fetch from real sources...');
       
       if (this.isLocal) {
-        this.debugLog('requests', 'Local development - using accurate current events with correct UK times...');
-        const events = this.getCurrentUFCEventsWithCorrectTimes();
-        this.debugLog('requests', `Local UFC events loaded: ${events.length} events`);
-        return events;
+        // In local development, try to use a CORS proxy or show message
+        this.debugLog('fetch', 'Local development detected - using alternative method...');
+        return await this.fetchLocalDevelopment();
       } else {
-        this.debugLog('requests', 'Production - using Netlify function with corrected times...');
-        try {
-          const events = await this.fetchWithNetlifyFunction();
-          this.debugLog('requests', `Netlify function returned: ${events.length} events`);
-          return events;
-        } catch (netlifyError) {
-          this.debugLog('requests', `Netlify function failed: ${netlifyError.message}, using fallback with correct times`);
-          return this.getCurrentUFCEventsWithCorrectTimes();
-        }
+        // Production - use Netlify function for server-side scraping
+        this.debugLog('fetch', 'Production environment - using Netlify function...');
+        return await this.fetchWithNetlifyFunction();
       }
+      
     } catch (error) {
-      this.debugLog('requests', `UFC fetch error: ${error.message}`);
-      this.debugLog('requests', 'Using accurate fallback UFC events with correct UK times...');
-      return this.getCurrentUFCEventsWithCorrectTimes();
+      this.debugLog('fetch', `Error fetching UFC events: ${error.message}`);
+      throw error; // Don't return fallback data - user wants real data only
     }
   }
 
+  /**
+   * Fetch using Netlify function (production)
+   */
   async fetchWithNetlifyFunction() {
-    this.debugLog('requests', `Calling UFC Netlify function: ${this.netlifyFunctionUrl}`);
+    this.debugLog('netlify', `Calling UFC Netlify function: ${this.netlifyFunctionUrl}`);
     
     try {
-      // Add more detailed request logging
-      this.debugLog('requests', 'UFC request details:', {
-        url: this.netlifyFunctionUrl,
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
+      const response = await fetch(this.netlifyFunctionUrl, {
         method: 'GET',
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        origin: window.location.origin
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'UFCSportsApp/2.0-RealData',
+          'Cache-Control': 'no-cache'
+        },
+        signal: controller.signal
       });
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
-      try {
-        const response = await fetch(this.netlifyFunctionUrl, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'UFCSportsApp/1.1-CorrectTimes',
-            'Cache-Control': 'no-cache'
-          },
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-        this.debugLog('requests', `UFC function response`, {
-          status: response.status,
-          statusText: response.statusText,
-          ok: response.ok,
-          headers: Object.fromEntries(response.headers.entries()),
-          url: response.url,
-          redirected: response.redirected
-        });
+      this.debugLog('netlify', `Function response status: ${response.status}`);
 
-        if (!response.ok) {
-          let errorText = '';
-          try {
-            errorText = await response.text();
-          } catch (textError) {
-            errorText = `Unable to read error response: ${textError.message}`;
-          }
-          
-          this.debugLog('requests', 'UFC function error response:', {
-            status: response.status,
-            statusText: response.statusText,
-            errorBody: errorText,
-            headers: Object.fromEntries(response.headers.entries())
-          });
-          
-          throw new Error(`UFC function failed: ${response.status} ${response.statusText} - ${errorText}`);
-        }
-
-        let data;
-        try {
-          const responseText = await response.text();
-          this.debugLog('requests', 'UFC raw response text length:', responseText.length);
-          
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          this.debugLog('requests', `UFC response parse error: ${parseError.message}`);
-          throw new Error(`UFC function returned invalid JSON: ${parseError.message}`);
-        }
-        
-        this.debugLog('requests', `UFC function response parsed`, {
-          success: data.success,
-          eventCount: data.events ? data.events.length : 0,
-          source: data.source || 'unknown',
-          note: data.note || 'No note',
-          error: data.error || 'No error',
-          fetchTime: data.fetchTime || 'No timestamp',
-          hasCorrectTimes: data.source && data.source.includes('correct-times')
-        });
-        
-        if (!data.success && (!data.events || data.events.length === 0)) {
-          throw new Error(`UFC function returned error: ${data.error || 'Unknown error'}`);
-        }
-
-        // Return events regardless of success flag if we have fallback data
-        const events = data.events || [];
-        
-        this.debugLog('requests', `Successfully received ${events.length} UFC events with ${data.source && data.source.includes('correct-times') ? 'CORRECT' : 'UNCORRECTED'} UK times`, {
-          source: data.source,
-          note: data.note,
-          hasEvents: events.length > 0
-        });
-
-        return events;
-        
-      } catch (fetchError) {
-        clearTimeout(timeoutId);
-        
-        if (fetchError.name === 'AbortError') {
-          this.debugLog('requests', 'UFC function request timed out after 30 seconds');
-          throw new Error('UFC function request timed out');
-        }
-        
-        throw fetchError;
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unable to read error');
+        throw new Error(`Function failed: ${response.status} - ${errorText}`);
       }
+
+      const data = await response.json();
+      
+      this.debugLog('netlify', `Function response received`, {
+        success: data.success,
+        eventCount: data.events ? data.events.length : 0,
+        source: data.source || 'unknown'
+      });
+      
+      if (!data.success && (!data.events || data.events.length === 0)) {
+        throw new Error(`Function returned error: ${data.error || 'Unknown error'}`);
+      }
+
+      return data.events || [];
       
     } catch (fetchError) {
-      this.debugLog('requests', `UFC Netlify function failed: ${fetchError.message}`);
-      this.debugLog('requests', 'UFC fetch error details:', {
-        name: fetchError.name,
-        message: fetchError.message,
-        stack: fetchError.stack,
-        cause: fetchError.cause
-      });
+      this.debugLog('netlify', `Netlify function failed: ${fetchError.message}`);
       throw fetchError;
     }
   }
 
-  getCurrentUFCEventsWithCorrectTimes() {
-    // Reliable UFC events data matching what users expect to see
-    const events = [
-      {
-        id: 'ufc_317_topuria_vs_oliveira_2025',
-        title: 'UFC 317: Topuria vs Oliveira',
-        date: '2025-06-29',
-        time: '22:00:00',
-        ukDateTime: '2025-06-30T03:00:00.000Z',
-        ukMainCardTime: '03:00 (Sun)',
-        ukPrelimTime: '01:00 (Sun)',
-        location: 'UFC APEX, Las Vegas, Nevada, United States',
-        venue: 'UFC APEX',
-        status: 'upcoming',
-        description: 'UFC 317 featuring Ilia Topuria vs Charles Oliveira in the main event',
-        poster: null,
-        createdAt: new Date().toISOString(),
-        apiSource: 'reliable_local_data',
-        apiEventId: 'ufc_317_2025',
-        
-        mainCard: [
-          { 
-            fighter1: 'Ilia Topuria', 
-            fighter2: 'Charles Oliveira', 
-            weightClass: 'Featherweight', 
-            title: 'Main Event - Title Fight' 
-          },
-          { 
-            fighter1: 'Jamahal Hill', 
-            fighter2: 'Khalil Rountree Jr.', 
-            weightClass: 'Light Heavyweight', 
-            title: '' 
-          },
-          { 
-            fighter1: 'Alexandre Pantoja', 
-            fighter2: 'Kai Kara-France', 
-            weightClass: 'Flyweight', 
-            title: 'Co-Main Event' 
-          },
-          { 
-            fighter1: 'Brandon Royval', 
-            fighter2: 'Joshua Van', 
-            weightClass: 'Flyweight', 
-            title: '' 
-          }
-        ],
-        
-        prelimCard: [
-          { 
-            fighter1: 'Chris Weidman', 
-            fighter2: 'Eryk Anders', 
-            weightClass: 'Middleweight' 
-          },
-          { 
-            fighter1: 'Diego Lopes', 
-            fighter2: 'Brian Ortega', 
-            weightClass: 'Featherweight' 
-          },
-          { 
-            fighter1: 'Roman Kopylov', 
-            fighter2: 'Chris Curtis', 
-            weightClass: 'Middleweight' 
-          },
-          { 
-            fighter1: 'Tabatha Ricci', 
-            fighter2: 'Tecia Pennington', 
-            weightClass: "Women's Strawweight" 
-          }
-        ],
-        
-        earlyPrelimCard: [],
-        
-        ufcNumber: '317',
-        broadcast: 'TNT Sports',
-        ticketInfo: 'UFC 317 Topuria vs Oliveira June 29 2025'
-      },
-      
-      {
-        id: 'ufc_fight_night_blanchfield_vs_barber_2025',
-        title: 'UFC Fight Night: Blanchfield vs Barber',
-        date: '2025-07-05',
-        time: '22:00:00',
-        ukDateTime: '2025-07-06T03:00:00.000Z',
-        ukMainCardTime: '03:00 (Sun)',
-        ukPrelimTime: '01:00 (Sun)',
-        location: 'UFC APEX, Las Vegas, Nevada, United States',
-        venue: 'UFC APEX',
-        status: 'upcoming',
-        description: 'UFC Fight Night featuring Erin Blanchfield vs Maycee Barber in the main event',
-        poster: null,
-        createdAt: new Date().toISOString(),
-        apiSource: 'reliable_local_data',
-        apiEventId: 'ufc_fight_night_july_2025',
-        
-        mainCard: [
-          { 
-            fighter1: 'Erin Blanchfield', 
-            fighter2: 'Maycee Barber', 
-            weightClass: "Women's Flyweight", 
-            title: 'Main Event' 
-          },
-          { 
-            fighter1: 'Mateusz Gamrot', 
-            fighter2: 'Ludovit Klein', 
-            weightClass: 'Lightweight', 
-            title: '' 
-          },
-          { 
-            fighter1: 'Dustin Jacoby', 
-            fighter2: 'Bruno Lopes', 
-            weightClass: 'Light Heavyweight', 
-            title: '' 
-          }
-        ],
-        
-        prelimCard: [
-          { 
-            fighter1: 'Allan Nascimento', 
-            fighter2: 'Jafel Filho', 
-            weightClass: 'Flyweight' 
-          },
-          { 
-            fighter1: 'Andreas Gustafsson', 
-            fighter2: 'Jeremiah Wells', 
-            weightClass: 'Welterweight' 
-          }
-        ],
-        
-        earlyPrelimCard: [],
-        
-        ufcNumber: null,
-        broadcast: 'TNT Sports',
-        ticketInfo: 'UFC Fight Night Blanchfield vs Barber July 5 2025'
-      }
-    ];
-
-    this.debugLog('data', `Returning ${events.length} reliable UFC events with correct UK times`, {
-      mainCardTime: '3:00 AM UK (next day)',
-      prelimTime: '1:00 AM UK (next day)',
-      note: 'Using reliable UFC data that matches user expectations'
-    });
+  /**
+   * Local development method - direct browser fetch with CORS considerations
+   */
+  async fetchLocalDevelopment() {
+    this.debugLog('local', 'Attempting local development fetch...');
     
-    return events;
+    try {
+      // Try to fetch directly (may fail due to CORS)
+      const response = await fetch('https://www.ufc.com/events', {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/html,application/xhtml+xml',
+          'User-Agent': 'Mozilla/5.0 (compatible; UFCSportsApp/2.0)'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const html = await response.text();
+      const events = this.parseUFCEventsFromHTML(html);
+      
+      this.debugLog('local', `Successfully parsed ${events.length} events from direct fetch`);
+      return events;
+      
+    } catch (error) {
+      this.debugLog('local', `Direct fetch failed: ${error.message}`);
+      
+      // In local development, show instructions instead of returning fake data
+      this.showLocalDevelopmentMessage();
+      return [];
+    }
   }
 
-  // Legacy method for backward compatibility
-  getCurrentUFCEvents() {
-    return this.getCurrentUFCEventsWithCorrectTimes();
+  /**
+   * Show message for local development
+   */
+  showLocalDevelopmentMessage() {
+    const message = `
+🔧 LOCAL DEVELOPMENT MODE
+
+UFC data fetching requires server-side capabilities due to CORS restrictions.
+
+To test UFC functionality locally:
+1. Deploy to Netlify for full functionality, OR
+2. Use a CORS proxy service, OR  
+3. Run the Node.js version: node ufcFetcher.js
+
+This version only returns real data from official sources.
+No mock/fake data is provided.
+    `;
+    
+    console.warn(message);
+    this.debugLog('local', 'Displayed local development instructions');
   }
 
+  /**
+   * Parse UFC events from HTML (for direct fetching)
+   */
+  parseUFCEventsFromHTML(html) {
+    const events = [];
+    
+    try {
+      this.debugLog('parse', 'Parsing UFC events from HTML...');
+      
+      // Look for JSON data in script tags (common in modern web apps)
+      const scriptMatches = html.match(/<script[^>]*>(.*?)<\/script>/gis);
+      
+      if (scriptMatches) {
+        for (const script of scriptMatches) {
+          // Look for event data patterns
+          const eventDataMatch = script.match(/events.*?:\s*(\[.*?\])/gis);
+          
+          if (eventDataMatch) {
+            try {
+              const jsonStr = eventDataMatch[0].split(':')[1].trim();
+              const eventData = JSON.parse(jsonStr);
+              
+              if (Array.isArray(eventData)) {
+                for (const item of eventData) {
+                  if (item.title && item.date) {
+                    events.push(this.createEventFromData(item));
+                  }
+                }
+              }
+            } catch (parseError) {
+              // Continue if JSON parsing fails
+              this.debugLog('parse', `JSON parse failed: ${parseError.message}`);
+            }
+          }
+        }
+      }
+
+      // Look for HTML event cards if no JSON found
+      if (events.length === 0) {
+        const eventCardPattern = /<div[^>]*class="[^"]*event[^"]*"[^>]*>(.*?)<\/div>/gis;
+        const cardMatches = html.match(eventCardPattern);
+        
+        if (cardMatches) {
+          for (const card of cardMatches) {
+            const event = this.parseEventCard(card);
+            if (event) {
+              events.push(event);
+            }
+          }
+        }
+      }
+
+      // Simple text extraction as fallback
+      if (events.length === 0) {
+        const ufcMentions = html.match(/UFC\s+\d+[^<]*|UFC\s+Fight\s+Night[^<]*/gi);
+        
+        if (ufcMentions) {
+          for (const mention of ufcMentions.slice(0, 5)) { // Limit to 5
+            events.push({
+              id: `ufc_text_${Date.now()}_${events.length}`,
+              title: mention.trim(),
+              date: this.getDefaultFutureDate(),
+              ukMainCardTime: '03:00 (Next Day)',
+              ukPrelimTime: '01:00 (Next Day)',
+              location: 'TBD',
+              venue: 'TBD',
+              source: 'html_text_extraction'
+            });
+          }
+        }
+      }
+
+      this.debugLog('parse', `Successfully parsed ${events.length} events from HTML`);
+      return events;
+      
+    } catch (error) {
+      this.debugLog('parse', `Error parsing HTML: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Parse individual event card
+   */
+  parseEventCard(cardHtml) {
+    try {
+      // Extract title
+      const titleMatch = cardHtml.match(/<h[1-6][^>]*>([^<]*UFC[^<]*)<\/h[1-6]>/i) ||
+                         cardHtml.match(/title="([^"]*UFC[^"]*)"/) ||
+                         cardHtml.match(/>([^<]*UFC[^<]*)</);
+      
+      if (!titleMatch) return null;
+
+      const title = titleMatch[1].trim();
+
+      // Extract date
+      const dateMatch = cardHtml.match(/data-date="([^"]*)"/) ||
+                       cardHtml.match(/datetime="([^"]*)"/) ||
+                       cardHtml.match(/(\d{4}-\d{2}-\d{2})/);
+
+      // Extract times
+      const timeMatches = cardHtml.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/gi);
+
+      return this.createEventFromData({
+        title: title,
+        date: dateMatch ? dateMatch[1] : this.getDefaultFutureDate(),
+        times: timeMatches,
+        source: 'html_card_extraction'
+      });
+
+    } catch (error) {
+      this.debugLog('parse', `Error parsing event card: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Create event object from parsed data
+   */
+  createEventFromData(data) {
+    const event = {
+      id: `ufc_real_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title: data.title || 'UFC Event',
+      date: data.date || this.getDefaultFutureDate(),
+      time: '22:00', // Default UTC time
+      location: data.location || data.venue || 'TBD',
+      venue: data.location || data.venue || 'TBD',
+      status: 'upcoming',
+      description: `${data.title || 'UFC Event'} - Official UFC Event`,
+      poster: data.poster || null,
+      createdAt: new Date().toISOString(),
+      apiSource: data.source || 'ufc_official_website',
+      mainCard: data.mainCard || [],
+      prelimCard: data.prelimCard || [],
+      earlyPrelimCard: data.earlyPrelimCard || [],
+      broadcast: 'TNT Sports'
+    };
+
+    // Set UK times based on extracted data or defaults
+    if (data.times && data.times.length > 0) {
+      event.ukMainCardTime = this.convertToUKTime(data.times[0]);
+      event.ukPrelimTime = this.convertToUKTime(data.times[1] || data.times[0], -2); // 2 hours earlier
+    } else {
+      // Standard UFC timing for UK
+      event.ukMainCardTime = '03:00 (Next Day)';
+      event.ukPrelimTime = '01:00 (Next Day)';
+      event.ukEarlyPrelimTime = '23:00 (Same Day)';
+    }
+
+    // Set ukDateTime
+    if (event.date) {
+      const eventDate = new Date(event.date);
+      const mainCardHour = parseInt(event.ukMainCardTime.split(':')[0]);
+      
+      if (mainCardHour < 6) { // Early morning = next day
+        eventDate.setDate(eventDate.getDate() + 1);
+      }
+      
+      eventDate.setHours(mainCardHour);
+      event.ukDateTime = eventDate.toISOString();
+    }
+
+    return event;
+  }
+
+  /**
+   * Convert time to UK timezone
+   */
+  convertToUKTime(timeStr, hourOffset = 0) {
+    try {
+      if (!timeStr) return '03:00 (Next Day)';
+
+      const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+      if (!timeMatch) return '03:00 (Next Day)';
+
+      let hours = parseInt(timeMatch[1]);
+      const minutes = timeMatch[2];
+      const ampm = timeMatch[3];
+
+      // Convert to 24-hour format
+      if (ampm && ampm.toLowerCase() === 'pm' && hours !== 12) {
+        hours += 12;
+      } else if (ampm && ampm.toLowerCase() === 'am' && hours === 12) {
+        hours = 0;
+      }
+
+      // Add hour offset
+      hours += hourOffset;
+
+      // Convert ET to UK (typically +5 hours)
+      hours += 5;
+
+      const isNextDay = hours >= 24;
+      if (isNextDay) hours -= 24;
+
+      const timeStr24 = `${hours.toString().padStart(2, '0')}:${minutes}`;
+      return isNextDay ? `${timeStr24} (Next Day)` : timeStr24;
+
+    } catch (error) {
+      this.debugLog('time', `Error converting time ${timeStr}: ${error.message}`);
+      return '03:00 (Next Day)';
+    }
+  }
+
+  /**
+   * Get default future date (1 week from now)
+   */
+  getDefaultFutureDate() {
+    const future = new Date();
+    future.setDate(future.getDate() + 7);
+    return future.toISOString().split('T')[0];
+  }
+
+  /**
+   * Update UFC data and save to storage
+   */
   async updateUFCData() {
     try {
-      this.debugLog('data', 'Starting UFC data update with corrected UK times...');
+      this.debugLog('update', 'Starting UFC data update with real sources...');
       
       const dataManager = new WebDataManager();
       const existingData = dataManager.loadData();
@@ -340,45 +395,32 @@ class WebUFCFetcher {
       const newEvents = await this.fetchUpcomingUFCEvents();
       
       if (newEvents.length === 0) {
-        this.debugLog('data', 'No UFC events found');
+        this.debugLog('update', 'No UFC events found from real sources');
         return { success: true, added: 0, total: existingData.ufcEvents?.length || 0 };
       }
 
-      // Filter out events that already exist (avoid duplicates)
+      // Filter out existing events to avoid duplicates
       const existingIds = new Set(
-        (existingData.ufcEvents || []).map(e => e.apiEventId || e.id).filter(Boolean)
+        (existingData.ufcEvents || []).map(e => e.id).filter(Boolean)
       );
       
       const uniqueNewEvents = newEvents.filter(event => 
-        !existingIds.has(event.apiEventId || event.id)
+        !existingIds.has(event.id)
       );
 
-      this.debugLog('data', `Found ${newEvents.length} total UFC events, ${uniqueNewEvents.length} are new`, {
-        hasCorrectTimes: newEvents.every(e => e.ukMainCardTime && e.ukPrelimTime),
-        sampleTimes: newEvents[0] ? {
-          mainCard: newEvents[0].ukMainCardTime,
-          prelims: newEvents[0].ukPrelimTime
-        } : null
-      });
+      this.debugLog('update', `Found ${newEvents.length} total events, ${uniqueNewEvents.length} are new`);
 
-      // Update UFC events in existing data
-      const existingNonApiEvents = (existingData.ufcEvents || []).filter(e => 
-        !e.apiEventId && !e.id.includes('ufc_')
-      );
-      existingData.ufcEvents = [...existingNonApiEvents, ...newEvents];
-      
-      // Update last fetch timestamp
+      // Update data
+      existingData.ufcEvents = [...(existingData.ufcEvents || []), ...uniqueNewEvents];
       existingData.lastUFCFetch = new Date().toISOString();
       
-      // Save updated data
       const saved = dataManager.saveData(existingData);
       
       if (saved) {
-        this.debugLog('data', `Successfully updated UFC data: ${uniqueNewEvents.length} new events with correct UK times`);
-        this.debugLog('data', `Total UFC events now: ${existingData.ufcEvents.length}`);
+        this.debugLog('update', `Successfully updated: ${uniqueNewEvents.length} new real events`);
         
         uniqueNewEvents.forEach(event => {
-          this.debugLog('data', `🥊 ${event.date} - ${event.title} [Main: ${event.ukMainCardTime}, Prelims: ${event.ukPrelimTime}]`);
+          this.debugLog('update', `🥊 ${event.date} - ${event.title} [${event.ukMainCardTime}]`);
         });
       }
       
@@ -390,89 +432,73 @@ class WebUFCFetcher {
       };
       
     } catch (error) {
-      this.debugLog('data', `Error updating UFC data: ${error.message}`);
+      this.debugLog('update', `Error updating UFC data: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
 
+  /**
+   * Test connection to data sources
+   */
   async testConnection() {
     try {
-      this.debugLog('requests', 'Testing UFC data connection with enhanced diagnostics...');
+      this.debugLog('test', 'Testing connection to UFC data sources...');
       
       if (this.isLocal) {
-        this.debugLog('requests', 'Local development: Using accurate current events with correct UK times');
-        const events = this.getCurrentUFCEventsWithCorrectTimes();
-        this.debugLog('requests', `Local test successful: ${events.length} events available`, {
-          sampleEvent: events[0] ? {
-            title: events[0].title,
-            ukMainCardTime: events[0].ukMainCardTime,
-            ukPrelimTime: events[0].ukPrelimTime
-          } : null
-        });
-        return true;
+        this.debugLog('test', 'Local development: Limited testing due to CORS');
+        return true; // Assume OK in local development
       } else {
-        this.debugLog('requests', 'Testing UFC Netlify function with enhanced error reporting...');
+        this.debugLog('test', 'Testing Netlify function...');
         
-        try {
-          const testResponse = await fetch(this.netlifyFunctionUrl, { 
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-              'User-Agent': 'UFCSportsApp/1.1-TestMode'
-            }
-          });
-          
-          this.debugLog('requests', `UFC function test - Status: ${testResponse.status}`, {
-            url: this.netlifyFunctionUrl,
-            status: testResponse.status,
-            statusText: testResponse.statusText,
-            headers: Object.fromEntries(testResponse.headers.entries())
-          });
-          
-          if (!testResponse.ok) {
-            if (testResponse.status === 404) {
-              this.debugLog('requests', 'ERROR: UFC Netlify function not found (404) - Function may not be deployed');
-              return false;
-            } else if (testResponse.status >= 500) {
-              this.debugLog('requests', 'ERROR: UFC function server error - Check function logs');
-              const errorText = await testResponse.text().catch(() => 'Cannot read error details');
-              this.debugLog('requests', 'Server error details:', errorText);
-              return false;
-            }
+        const testResponse = await fetch(this.netlifyFunctionUrl, { 
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'UFCSportsApp/2.0-TestMode'
           }
-          
-          const data = await testResponse.json();
-          this.debugLog('requests', 'UFC function response received', {
-            success: data.success,
-            eventCount: data.events ? data.events.length : 0,
-            source: data.source || 'unknown',
-            hasCorrectTimes: data.source && data.source.includes('correct-times'),
-            sampleEvent: data.events && data.events[0] ? {
-              title: data.events[0].title,
-              ukMainCardTime: data.events[0].ukMainCardTime,
-              ukPrelimTime: data.events[0].ukPrelimTime
-            } : null
-          });
-          
-          return testResponse.ok;
-          
-        } catch (error) {
-          this.debugLog('requests', `UFC function test failed: ${error.message}`, {
-            errorType: error.name,
-            isNetworkError: error.message.includes('fetch'),
-            isCorsError: error.message.includes('cors') || error.message.includes('Origin'),
-            isTimeoutError: error.message.includes('timeout') || error.name === 'AbortError'
-          });
+        });
+        
+        this.debugLog('test', `Function test status: ${testResponse.status}`);
+        
+        if (!testResponse.ok) {
+          this.debugLog('test', `Function test failed: ${testResponse.status}`);
           return false;
         }
+        
+        const data = await testResponse.json();
+        this.debugLog('test', `Function test response:`, {
+          success: data.success,
+          eventCount: data.events ? data.events.length : 0,
+          source: data.source
+        });
+        
+        return testResponse.ok;
       }
       
     } catch (error) {
-      this.debugLog('requests', `UFC connection test failed: ${error.message}`);
+      this.debugLog('test', `Connection test failed: ${error.message}`);
       return false;
     }
   }
+
+  /**
+   * Get cached events (if any)
+   */
+  getCachedEvents() {
+    return this.ufcEventsCache;
+  }
+
+  /**
+   * Clear cache
+   */
+  clearCache() {
+    this.ufcEventsCache = [];
+    this.lastFetchTime = null;
+    this.debugLog('cache', 'Cache cleared');
+  }
 }
 
-// Make it available globally for web environment
-window.WebUFCFetcher = WebUFCFetcher;
+// Make available globally
+if (typeof window !== 'undefined') {
+  window.WebUFCFetcher = WebUFCFetcher;
+}

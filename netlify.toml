@@ -1,6 +1,5 @@
 # Netlify Configuration for UK Sports TV Guide - Real Data Edition
 [build]
-  # No build command needed for static site deployment
   publish = "."
   functions = "netlify/functions"
   
@@ -10,20 +9,15 @@
 
 # Function timeouts and settings
 [functions]
-  # UFC data fetching can take longer due to scraping
   timeout = 30
-  # Enable experimental features for better performance
-  experimental_functions_config = true
 
 # Default redirect to index.html for SPA behavior
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  # Don't apply to function endpoints
-  conditions = {Role = ["anonymous"], Country = ["!US", "!GB", "!CA", "!AU"]}
 
-# Function-specific redirects (ensure functions work properly)
+# Function-specific redirects
 [[redirects]]
   from = "/.netlify/functions/*"
   to = "/.netlify/functions/:splat"
@@ -36,15 +30,10 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    # Relaxed CSP for sports data sources
     Content-Security-Policy = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; connect-src 'self' https: wss: *.ufc.com *.football-data.org *.api-football.com; frame-ancestors *;"
-    # CORS for real data sources
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With, User-Agent"
-    # Performance headers
-    X-DNS-Prefetch-Control = "on"
-    Vary = "Accept-Encoding"
 
 # Netlify Functions headers with extended timeouts
 [[headers]]
@@ -53,7 +42,6 @@
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With, User-Agent"
-    # Prevent caching of function responses for real-time data
     Cache-Control = "no-cache, no-store, must-revalidate"
     Pragma = "no-cache"
     Expires = "0"
@@ -62,26 +50,22 @@
 [[headers]]
   for = "*.js"
   [headers.values]
-    Cache-Control = "public, max-age=86400" # 1 day for JS files
-    Vary = "Accept-Encoding"
+    Cache-Control = "public, max-age=86400"
 
 [[headers]]
   for = "*.css"
   [headers.values]
-    Cache-Control = "public, max-age=86400" # 1 day for CSS files
-    Vary = "Accept-Encoding"
+    Cache-Control = "public, max-age=86400"
 
 [[headers]]
   for = "*.html"
   [headers.values]
-    Cache-Control = "public, max-age=3600" # 1 hour for HTML files
-    Vary = "Accept-Encoding"
+    Cache-Control = "public, max-age=3600"
 
-# Longer cache for assets
 [[headers]]
   for = "*.png"
   [headers.values]
-    Cache-Control = "public, max-age=31536000" # 1 year for images
+    Cache-Control = "public, max-age=31536000"
 
 [[headers]]
   for = "*.jpg"
@@ -98,20 +82,11 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000"
 
-# Special headers for data files
 [[headers]]
   for = "*.json"
   [headers.values]
-    Cache-Control = "public, max-age=300" # 5 minutes for JSON data files
+    Cache-Control = "public, max-age=300"
     Content-Type = "application/json"
-
-# Test page specific headers
-[[headers]]
-  for = "/test-real-data.html"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-    Pragma = "no-cache"
-    Expires = "0"
 
 # Environment-specific configurations
 [context.production]
@@ -131,15 +106,3 @@
     NODE_ENV = "development"
     APP_ENV = "development"
     REAL_DATA_ONLY = "true"
-
-# Edge functions for future optimization
-[edge_functions]
-  # Could be used for sports data caching in the future
-  
-# Form handling (if needed for feedback)
-[forms]
-  # No forms currently, but available for future use
-
-# Analytics and monitoring
-[plugins]
-  # Available for future performance monitoring plugins

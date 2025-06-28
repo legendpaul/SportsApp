@@ -567,6 +567,7 @@ class SportsApp {
       );
       
       if (upcomingEvent) {
+        // Show event title with data source indicator
         ufcTitle.textContent = upcomingEvent.title;
         
         const ufcDetails = document.querySelector('.ufc-details');
@@ -587,9 +588,18 @@ class SportsApp {
         this.updateUFCTiming(upcomingEvent);
         
         const lastUFCFetchText = this.lastUFCFetch ? 
-          ` (UFC Updated: ${new Date(this.lastUFCFetch).toLocaleTimeString('en-GB')})` : '';
-        const apiIndicator = upcomingEvent.apiSource ? ' 🌐' : ' ✏️';
-        ufcTitle.textContent += apiIndicator + lastUFCFetchText;
+          ` (Updated: ${new Date(this.lastUFCFetch).toLocaleTimeString('en-GB')})` : '';
+        
+        // Show data source status
+        let statusIndicator = '';
+        if (upcomingEvent.apiSource === 'ufc_official_website_direct') {
+          const hasData = (upcomingEvent.mainCard && upcomingEvent.mainCard.length > 0);
+          statusIndicator = hasData ? ' 🌐✅' : ' 🌐⏳';
+        } else {
+          statusIndicator = ' ✏️';
+        }
+        
+        ufcTitle.textContent += statusIndicator + lastUFCFetchText;
       }
     } else if (ufcTitle) {
       ufcTitle.textContent = 'No UFC Events - Real Data Required 📥';
@@ -732,11 +742,34 @@ class SportsApp {
     container.innerHTML = '';
 
     if (this.ufcMainCard.length === 0) {
-      // Show message for no real data
+      // Check if we have a UFC event but no fight data
+      if (this.ufcEvents && this.ufcEvents.length > 0) {
+        const upcomingEvent = this.ufcEvents.find(event => 
+          new Date(event.ukDateTime || event.date) > new Date()
+        );
+        
+        if (upcomingEvent && upcomingEvent.apiSource === 'ufc_official_website_direct') {
+          // We have a real UFC event but no fight card details yet
+          container.innerHTML = `
+            <div class="ufc-event-confirmed">
+              <div class="ufc-confirmed-icon">✅</div>
+              <div class="ufc-confirmed-text">UFC Event Confirmed</div>
+              <div class="ufc-confirmed-details">
+                <strong>${upcomingEvent.title}</strong><br>
+                ${upcomingEvent.venue || 'Venue TBD'}<br>
+                Fight card details will be added closer to event date
+              </div>
+            </div>
+          `;
+          return;
+        }
+      }
+      
+      // No UFC events at all - show fetch message
       container.innerHTML = `
         <div class="no-ufc-data">
           <div class="no-ufc-icon">🥊</div>
-          <div class="no-ufc-text">No UFC main card data available</div>
+          <div class="no-ufc-text">No UFC events found</div>
           <div class="no-ufc-subtext">
             Real UFC data must be fetched from official sources
             <br>

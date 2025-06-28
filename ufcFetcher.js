@@ -132,7 +132,7 @@ class UFCFetcher {
       }
 
       // Parse each matched event
-      for (let i = 0; i < Math.min(foundEvents.length, 10); i++) { // Limit to 10 events
+      for (let i = 0; i < Math.min(foundEvents.length, 3); i++) { // Limit to 3 events to avoid duplicates
         const match = foundEvents[i];
         const eventHtml = match[1] || match[0];
         const event = this.parseIndividualEvent(eventHtml, i);
@@ -249,7 +249,7 @@ class UFCFetcher {
       
       const uniqueTitles = new Set();
       
-      for (let i = 0; i < Math.min(matches.length, 5); i++) { // Limit to 5
+      for (let i = 0; i < Math.min(matches.length, 2); i++) { // Limit to 2
         const match = matches[i];
         const fullMatch = match[0].trim();
         

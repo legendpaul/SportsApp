@@ -83,33 +83,108 @@
   ],
   "ufcEvents": [
     {
-      "id": "ufc_direct_example_1",
-      "title": "UFC 317 - Upcoming Event",
+      "id": "ufc_317_correct",
+      "title": "UFC 317: Topuria vs Oliveira",
       "date": "2025-07-12",
-      "time": "22:00",
-      "ukDateTime": "2025-07-12T22:00:00.000Z",
+      "time": "22:30",
+      "ukDateTime": "2025-07-12T22:30:00.000Z",
       "ukMainCardTimeStr": "03:00 (Sun)",
       "ukPrelimTimeStr": "01:00 (Sun)",
-      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "ukEarlyPrelimTimeStr": "23:30 (Sat)",
       "location": "Las Vegas, Nevada",
       "venue": "T-Mobile Arena",
       "status": "upcoming",
-      "description": "UFC 317 - Direct from UFC.com",
+      "description": "UFC 317 featuring Ilia Topuria vs Charles Oliveira for the Featherweight Championship",
       "poster": null,
       "createdAt": "2025-06-28T10:00:00.000Z",
       "apiSource": "ufc_official_website_direct",
-      "mainCard": [],
-      "prelimCard": [],
-      "earlyPrelimCard": [],
+      "mainCard": [
+        {
+          "fighter1": "Ilia Topuria",
+          "fighter2": "Charles Oliveira",
+          "weightClass": "Featherweight",
+          "title": "UFC Featherweight Championship - Main Event"
+        },
+        {
+          "fighter1": "Alexandre Pantoja",
+          "fighter2": "Kai Kara-France",
+          "weightClass": "Flyweight",
+          "title": "UFC Flyweight Championship"
+        },
+        {
+          "fighter1": "Brandon Royval",
+          "fighter2": "Joshua Van",
+          "weightClass": "Flyweight",
+          "title": "Co-Main Event"
+        },
+        {
+          "fighter1": "Jack Hermansson",
+          "fighter2": "Gregory Rodrigues",
+          "weightClass": "Middleweight",
+          "title": ""
+        },
+        {
+          "fighter1": "Niko Price",
+          "fighter2": "Jacobe Smith",
+          "weightClass": "Welterweight",
+          "title": ""
+        }
+      ],
+      "prelimCard": [
+        {
+          "fighter1": "Clay Guida",
+          "fighter2": "Chase Hooper",
+          "weightClass": "Lightweight",
+          "title": ""
+        },
+        {
+          "fighter1": "Miranda Maverick",
+          "fighter2": "Danni McCormack",
+          "weightClass": "Women's Flyweight",
+          "title": ""
+        },
+        {
+          "fighter1": "Cory McKenna",
+          "fighter2": "Luana Pinheiro",
+          "weightClass": "Women's Strawweight",
+          "title": ""
+        },
+        {
+          "fighter1": "Cameron Saaiman",
+          "fighter2": "Payton Talbott",
+          "weightClass": "Bantamweight",
+          "title": ""
+        }
+      ],
+      "earlyPrelimCard": [
+        {
+          "fighter1": "Carlos Prates",
+          "fighter2": "Neil Magny",
+          "weightClass": "Welterweight",
+          "title": ""
+        },
+        {
+          "fighter1": "Reinier de Ridder",
+          "fighter2": "Gerald Meerschaert",
+          "weightClass": "Middleweight",
+          "title": ""
+        },
+        {
+          "fighter1": "Jaqueline Amorim",
+          "fighter2": "Vanessa Demopoulos",
+          "weightClass": "Women's Strawweight",
+          "title": ""
+        }
+      ],
       "ufcNumber": "317",
       "broadcast": "TNT Sports",
-      "ticketInfo": "Tickets for UFC 317",
+      "ticketInfo": "Tickets for UFC 317: Topuria vs Oliveira",
       "mainCardUTCDate": "2025-07-13T02:00:00.000Z",
       "prelimUTCDate": "2025-07-13T00:00:00.000Z",
-      "earlyPrelimUTCDate": "2025-07-12T21:00:00.000Z"
+      "earlyPrelimUTCDate": "2025-07-12T22:30:00.000Z"
     },
     {
-      "id": "ufc_direct_1751095432047_0",
+      "id": "ufc_direct_1751096460957_0",
       "title": "UFC Event 1",
       "date": "2025-07-05",
       "time": "22:00",
@@ -122,7 +197,7 @@
       "status": "upcoming",
       "description": "UFC Event 1 - Live from UFC.com",
       "poster": null,
-      "createdAt": "2025-06-28T07:23:52.048Z",
+      "createdAt": "2025-06-28T07:41:00.957Z",
       "apiSource": "ufc_official_website_direct",
       "mainCard": [],
       "prelimCard": [],
@@ -135,7 +210,7 @@
       "earlyPrelimUTCDate": "2025-07-04T22:00:00.000Z"
     },
     {
-      "id": "ufc_direct_1751095432048_1",
+      "id": "ufc_direct_1751096460957_1",
       "title": "UFC Event 2",
       "date": "2025-07-05",
       "time": "22:00",
@@ -148,7 +223,7 @@
       "status": "upcoming",
       "description": "UFC Event 2 - Live from UFC.com",
       "poster": null,
-      "createdAt": "2025-06-28T07:23:52.048Z",
+      "createdAt": "2025-06-28T07:41:00.957Z",
       "apiSource": "ufc_official_website_direct",
       "mainCard": [],
       "prelimCard": [],
@@ -161,7 +236,7 @@
       "earlyPrelimUTCDate": "2025-07-04T22:00:00.000Z"
     },
     {
-      "id": "ufc_direct_1751095432048_2",
+      "id": "ufc_direct_1751096460957_2",
       "title": "UFC Event 3",
       "date": "2025-07-05",
       "time": "22:00",
@@ -174,7 +249,7 @@
       "status": "upcoming",
       "description": "UFC Event 3 - Live from UFC.com",
       "poster": null,
-      "createdAt": "2025-06-28T07:23:52.048Z",
+      "createdAt": "2025-06-28T07:41:00.957Z",
       "apiSource": "ufc_official_website_direct",
       "mainCard": [],
       "prelimCard": [],
@@ -187,7 +262,7 @@
       "earlyPrelimUTCDate": "2025-07-04T22:00:00.000Z"
     }
   ],
-  "lastCleanup": "2025-06-28T07:23:53.073Z",
+  "lastCleanup": "2025-06-28T07:41:02.755Z",
   "lastFetch": "2025-06-28T00:57:53.917Z",
-  "lastUFCFetch": "2025-06-28T07:23:52.048Z"
+  "lastUFCFetch": "2025-06-28T07:41:00.957Z"
 }

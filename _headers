@@ -1,3 +1,4 @@
+# Global headers
 /*
   X-XSS-Protection: 1; mode=block
   X-Content-Type-Options: nosniff
@@ -7,6 +8,7 @@
   Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With
   Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; connect-src 'self' https: wss:; frame-ancestors *;
 
+# Netlify Functions headers
 /.netlify/functions/*
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS

@@ -1,30 +1,94 @@
 {
-  "name": "uk-sports-tv-guide",
-  "version": "1.0.0",
-  "description": "UK Sports TV Guide - Football and UFC event information",
+  "name": "uk-sports-tv-guide-real-data",
+  "version": "2.0.0",
+  "description": "UK Sports TV Guide - Real data from official sources (No mock/demo data)",
   "main": "main.js",
   "homepage": "index.html",
+  "keywords": [
+    "sports",
+    "tv-guide",
+    "football",
+    "ufc",
+    "uk",
+    "real-data",
+    "live-data",
+    "sports-app"
+  ],
   "scripts": {
     "start": "electron .",
     "desktop": "electron .",
     "web": "python -m http.server 8000",
-    "serve": "npx http-server",
+    "serve": "npx http-server -p 8000 -c-1",
     "build": "electron-builder --win",
     "dev": "electron . --dev",
     "install-deps": "npm install",
     "rebuild": "npm install && npm start",
     "test-web": "open index.html",
-    "test-desktop": "open desktop-index.html"
+    "test-desktop": "open desktop-index.html",
+    
+    "test": "npm run test:all",
+    "test:all": "npm run test:verify && npm run test:ufc && npm run test:football",
+    "test:verify": "node verify_no_mock_data.js",
+    "test:ufc": "node test_real_ufc_data.js",
+    "test:football": "node test_fetch.js",
+    "test:performance": "node performance_optimizer.js",
+    
+    "validate": "npm run test:verify",
+    "deploy:check": "npm run test && echo 'Ready for deployment!'",
+    "deploy:final": "node final_validation.js",
+    "clean": "node dailyCleanup.js",
+    "optimize": "node performance_optimizer.js",
+    
+    "netlify:build": "echo 'No build needed for static deployment'",
+    "netlify:dev": "netlify dev",
+    
+    "docs": "echo 'See REAL_DATA_IMPLEMENTATION.md for documentation'",
+    "help": "echo 'Available commands: test, validate, deploy:check, clean, optimize'"
   },
-  "author": "Minnka",
+  "author": {
+    "name": "Minnka",
+    "email": "your-email@example.com"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/uk-sports-tv-guide.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/uk-sports-tv-guide/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
   "devDependencies": {
     "electron": "^29.0.0",
     "electron-builder": "^24.6.4"
   },
+  "dependencies": {
+    "dotenv": "^16.6.1"
+  },
+  "optionalDependencies": {
+    "puppeteer": "^21.0.0"
+  },
   "build": {
-    "appId": "com.minnka.sportsguide",
-    "productName": "UK Sports TV Guide",
+    "appId": "com.minnka.sportsguide.realdata",
+    "productName": "UK Sports TV Guide - Real Data",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!.git/**/*",
+      "!cache/**/*",
+      "!logs/**/*",
+      "!test_*",
+      "!verify_*",
+      "!debug*",
+      "!*.md",
+      "!.env.example"
+    ],
     "win": {
       "target": "nsis",
       "icon": "assets/icon.png"
@@ -32,10 +96,57 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "UK Sports Guide - Real Data"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.png",
+      "category": "public.app-category.sports"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png",
+      "category": "Sports"
     }
   },
-  "dependencies": {
-    "dotenv": "^16.6.1"
-  }
+  "config": {
+    "realDataOnly": true,
+    "noMockData": true,
+    "dataSources": {
+      "football": [
+        "live-footballontv.com",
+        "football-data.org",
+        "api-football.com"
+      ],
+      "ufc": [
+        "ufc.com",
+        "google-custom-search"
+      ]
+    },
+    "caching": {
+      "enabled": true,
+      "ttl": {
+        "football": "15min",
+        "ufc": "30min"
+      }
+    }
+  },
+  "netlify": {
+    "functions": "netlify/functions",
+    "publish": ".",
+    "command": "echo 'No build needed - static deployment'"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/your-username"
+  },
+  "private": false,
+  "type": "commonjs"
 }

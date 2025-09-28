@@ -262,6 +262,31 @@ body {
   letter-spacing: 1px;
 }
 
+.match-actions {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ignore-btn {
+  background: rgba(165, 157, 136, 0.2);
+  color: var(--sports-gold);
+  border: 1px solid rgba(165, 157, 136, 0.4);
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ignore-btn:hover {
+  background: rgba(255, 68, 68, 0.4);
+  color: white;
+  border-color: rgba(255, 68, 68, 0.6);
+  transform: scale(1.05);
+}
+
 /* UFC Section */
 .ufc-event-header {
   background: rgba(0, 0, 0, 0.4); /* Reduced from 0.7 to 0.4 for more transparency */

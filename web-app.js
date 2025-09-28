@@ -479,7 +479,7 @@ class WebSportsApp {
     const currentMatches = this.footballMatches.filter(match => {
       const matchDateTime = this.getMatchDateTime(match);
       const threeHoursAgo = new Date(Date.now() - (3 * 60 * 60 * 1000));
-      return matchDateTime > threeHoursAgo;
+      return matchDateTime > threeHoursAgo && !match.ignored;
     });
     
     this.debugLog('filtering', `Filtered old matches: ${this.footballMatches.length} total -> ${currentMatches.length} current`);
@@ -565,9 +565,24 @@ class WebSportsApp {
           <span class="competition-badge">${match.competition}</span>
           ${match.venue ? `<span class="venue-info" title="Venue">${match.venue}</span>` : ''}
         </div>
+        <div class="match-actions">
+          <button class="ignore-btn">Ignore</button>
+        </div>
       `;
 
-      matchCard.addEventListener('click', () => this.onMatchCardClick(match.id));
+      matchCard.addEventListener('click', (e) => {
+        if (e.target.classList.contains('ignore-btn')) {
+          return;
+        }
+        this.onMatchCardClick(match.id);
+      });
+
+      const ignoreBtn = matchCard.querySelector('.ignore-btn');
+      ignoreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.onIgnoreButtonClick(match.id);
+      });
+
       container.appendChild(matchCard);
     });
 
@@ -589,6 +604,15 @@ class WebSportsApp {
     this.dataManager.updateMatchTrafficLightState(matchId, nextState);
 
     // Update the UI
+    this.renderFootballMatches();
+  }
+
+  onIgnoreButtonClick(matchId) {
+    this.dataManager.ignoreMatch(matchId);
+    const match = this.footballMatches.find(m => m.id === matchId);
+    if (match) {
+      match.ignored = true;
+    }
     this.renderFootballMatches();
   }
 

@@ -32,6 +32,7 @@ class WebDataManager {
       const footballMatches = (parsed.footballMatches || []).map(match => ({
         ...match,
         trafficLightState: match.trafficLightState || 0, // Default to 0 (no color)
+        ignored: match.ignored || false, // Default to false
       }));
 
       return {
@@ -148,6 +149,23 @@ class WebDataManager {
       return false;
     } catch (error) {
       console.error('Error updating traffic light state:', error);
+      return false;
+    }
+  }
+
+  ignoreMatch(matchId) {
+    try {
+      const data = this.loadData();
+      const matchIndex = data.footballMatches.findIndex(match => match.id === matchId);
+
+      if (matchIndex !== -1) {
+        data.footballMatches[matchIndex].ignored = true;
+        this.saveData(data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error ignoring match:', error);
       return false;
     }
   }

@@ -162,12 +162,23 @@ body {
   transition: all 0.3s ease;
   width: 350px;
   text-align: center;
+  cursor: pointer;
 }
 
 .match-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 5px 15px rgba(165, 157, 136, 0.3);
   border-color: var(--sports-gold);
+}
+
+.match-card.traffic-light-green {
+  background-color: rgba(0, 255, 0, 0.3);
+  border-color: rgba(0, 255, 0, 0.5);
+}
+
+.match-card.traffic-light-red {
+  background-color: rgba(255, 0, 0, 0.3);
+  border-color: rgba(255, 0, 0, 0.5);
 }
 
 .match-header {

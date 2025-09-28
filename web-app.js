@@ -533,6 +533,12 @@ class WebSportsApp {
       const matchCard = document.createElement('div');
       matchCard.className = 'match-card';
       matchCard.setAttribute('data-match-id', match.id);
+
+      if (match.trafficLightState === 1) {
+        matchCard.classList.add('traffic-light-green');
+      } else if (match.trafficLightState === 2) {
+        matchCard.classList.add('traffic-light-red');
+      }
       
       matchCard.innerHTML = `
         <div class="match-header">
@@ -561,10 +567,29 @@ class WebSportsApp {
         </div>
       `;
 
+      matchCard.addEventListener('click', () => this.onMatchCardClick(match.id));
       container.appendChild(matchCard);
     });
 
     this.updateMatchesCount(filteredMatches.length, currentMatches.length);
+  }
+
+  onMatchCardClick(matchId) {
+    const match = this.footballMatches.find(m => m.id === matchId);
+    if (!match) return;
+
+    // Cycle through states: 0 -> 1 -> 2 -> 0
+    const currentState = match.trafficLightState || 0;
+    const nextState = (currentState + 1) % 3;
+
+    // Update local data
+    match.trafficLightState = nextState;
+
+    // Update persisted data
+    this.dataManager.updateMatchTrafficLightState(matchId, nextState);
+
+    // Update the UI
+    this.renderFootballMatches();
   }
 
   updateMatchesCount(filteredCount, totalCount) {

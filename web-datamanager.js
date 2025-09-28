@@ -29,8 +29,13 @@ class WebDataManager {
       const parsed = JSON.parse(data);
       
       // Ensure all required fields exist
+      const footballMatches = (parsed.footballMatches || []).map(match => ({
+        ...match,
+        trafficLightState: match.trafficLightState || 0, // Default to 0 (no color)
+      }));
+
       return {
-        footballMatches: parsed.footballMatches || [],
+        footballMatches: footballMatches,
         ufcEvents: parsed.ufcEvents || [],
         lastCleanup: parsed.lastCleanup || null,
         lastFetch: parsed.lastFetch || null,
@@ -128,6 +133,23 @@ class WebDataManager {
   getUFCEvents() {
     const data = this.loadData();
     return data.ufcEvents || [];
+  }
+
+  updateMatchTrafficLightState(matchId, newState) {
+    try {
+      const data = this.loadData();
+      const matchIndex = data.footballMatches.findIndex(match => match.id === matchId);
+
+      if (matchIndex !== -1) {
+        data.footballMatches[matchIndex].trafficLightState = newState;
+        this.saveData(data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error updating traffic light state:', error);
+      return false;
+    }
   }
 
   cleanupOldMatches() {

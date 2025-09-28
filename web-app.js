@@ -479,7 +479,7 @@ class WebSportsApp {
     const currentMatches = this.footballMatches.filter(match => {
       const matchDateTime = this.getMatchDateTime(match);
       const threeHoursAgo = new Date(Date.now() - (3 * 60 * 60 * 1000));
-      return matchDateTime > threeHoursAgo;
+      return matchDateTime > threeHoursAgo && !match.ignored;
     });
     
     this.debugLog('filtering', `Filtered old matches: ${this.footballMatches.length} total -> ${currentMatches.length} current`);
@@ -533,6 +533,12 @@ class WebSportsApp {
       const matchCard = document.createElement('div');
       matchCard.className = 'match-card';
       matchCard.setAttribute('data-match-id', match.id);
+
+      if (match.trafficLightState === 1) {
+        matchCard.classList.add('traffic-light-green');
+      } else if (match.trafficLightState === 2) {
+        matchCard.classList.add('traffic-light-red');
+      }
       
       matchCard.innerHTML = `
         <div class="match-header">
@@ -559,12 +565,55 @@ class WebSportsApp {
           <span class="competition-badge">${match.competition}</span>
           ${match.venue ? `<span class="venue-info" title="Venue">${match.venue}</span>` : ''}
         </div>
+        <div class="match-actions">
+          <button class="ignore-btn">Ignore</button>
+        </div>
       `;
+
+      matchCard.addEventListener('click', (e) => {
+        if (e.target.classList.contains('ignore-btn')) {
+          return;
+        }
+        this.onMatchCardClick(match.id);
+      });
+
+      const ignoreBtn = matchCard.querySelector('.ignore-btn');
+      ignoreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.onIgnoreButtonClick(match.id);
+      });
 
       container.appendChild(matchCard);
     });
 
     this.updateMatchesCount(filteredMatches.length, currentMatches.length);
+  }
+
+  onMatchCardClick(matchId) {
+    const match = this.footballMatches.find(m => m.id === matchId);
+    if (!match) return;
+
+    // Cycle through states: 0 -> 1 -> 2 -> 0
+    const currentState = match.trafficLightState || 0;
+    const nextState = (currentState + 1) % 3;
+
+    // Update local data
+    match.trafficLightState = nextState;
+
+    // Update persisted data
+    this.dataManager.updateMatchTrafficLightState(matchId, nextState);
+
+    // Update the UI
+    this.renderFootballMatches();
+  }
+
+  onIgnoreButtonClick(matchId) {
+    this.dataManager.ignoreMatch(matchId);
+    const match = this.footballMatches.find(m => m.id === matchId);
+    if (match) {
+      match.ignored = true;
+    }
+    this.renderFootballMatches();
   }
 
   updateMatchesCount(filteredCount, totalCount) {

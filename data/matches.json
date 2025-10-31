@@ -1,268 +1,475 @@
 {
   "footballMatches": [
     {
-      "id": "web_1751072273917_39z3cdokp",
-      "time": "10:30",
-      "teamA": "Shimizu S-Pulse",
-      "teamB": "Kashiwa Reysol",
-      "competition": "J League",
-      "channel": "J League International YouTube",
+      "id": "web_1761916588914_49ionbu6z",
+      "time": "14:50",
+      "teamA": "Al-Hilal",
+      "teamB": "Al-Shabab",
+      "competition": "Saudi Pro League",
+      "channel": "Saudi Pro League YouTube",
       "channels": [
-        "J League International YouTube"
+        "Saudi Pro League YouTube"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-28T00:57:53.917Z",
-      "matchDate": "2025-06-28",
+      "createdAt": "2025-10-31T13:16:28.914Z",
+      "matchDate": "2025-10-31",
       "apiSource": "live-footballontv.com",
-      "venue": ""
+      "venue": "",
+      "ignored": true,
+      "trafficLightState": 0
     },
     {
-      "id": "web_1751072273917_wm90e82n2",
-      "time": "11:00",
-      "teamA": "Sanfrecce Hiroshima",
-      "teamB": "Grampus Eight",
-      "competition": "J League",
-      "channel": "J League International YouTube",
+      "id": "web_1761916588914_72ftmjpzx",
+      "time": "15:45",
+      "teamA": "Khor Fakkan",
+      "teamB": "Al Wasl",
+      "competition": "UAE Pro League",
+      "channel": "TrillerTV+",
       "channels": [
-        "J League International YouTube"
+        "TrillerTV+"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-28T00:57:53.917Z",
-      "matchDate": "2025-06-28",
+      "createdAt": "2025-10-31T13:16:28.914Z",
+      "matchDate": "2025-10-31",
       "apiSource": "live-footballontv.com",
-      "venue": ""
+      "venue": "",
+      "ignored": true,
+      "trafficLightState": 0
     },
     {
-      "id": "web_1751072273917_gwha50gpz",
-      "time": "17:00",
-      "teamA": "Palmeiras",
-      "teamB": "Botafogo",
-      "competition": "FIFA Club World Cup 2025 Round of 16",
+      "id": "web_1761916588914_cct8holov",
+      "time": "17:30",
+      "teamA": "Preussen Munster",
+      "teamB": "Holstein Kiel",
+      "competition": "Bundesliga 2",
+      "channel": "Bundesliga YouTube",
+      "channels": [
+        "Bundesliga YouTube"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.914Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "ignored": true,
+      "trafficLightState": 0
+    },
+    {
+      "id": "web_1761916588914_oi96rypi0",
+      "time": "17:30",
+      "teamA": "SV Elversberg",
+      "teamB": "Hannover 96",
+      "competition": "Bundesliga 2",
+      "channel": "Bundesliga YouTube",
+      "channels": [
+        "Bundesliga YouTube"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.914Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588914_vn2b0ruwf",
+      "time": "17:30",
+      "teamA": "FC Köln Women",
+      "teamB": "FC Nürnberg Women",
+      "competition": "Frauen Bundesliga",
       "channel": "DAZN",
       "channels": [
         "DAZN"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-28T00:57:53.917Z",
-      "matchDate": "2025-06-28",
+      "createdAt": "2025-10-31T13:16:28.914Z",
+      "matchDate": "2025-10-31",
       "apiSource": "live-footballontv.com",
-      "venue": ""
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
     },
     {
-      "id": "web_1751072273917_h9m57m0i4",
+      "id": "web_1761916588914_2yyzfmvgu",
+      "time": "17:30",
+      "teamA": "Al-Nassr",
+      "teamB": "Al Feiha",
+      "competition": "Saudi Pro League",
+      "channel": "Saudi Pro League YouTube",
+      "channels": [
+        "Saudi Pro League YouTube"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.914Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588915_ayezh32ra",
+      "time": "18:00",
+      "teamA": "Viktoria Köln",
+      "teamB": "Ingolstadt",
+      "competition": "3. Liga",
+      "channel": "DFB Play",
+      "channels": [
+        "DFB Play"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588915_zm44ms29f",
+      "time": "19:00",
+      "teamA": "PSV Eindhoven",
+      "teamB": "Fortuna Sittard",
+      "competition": "Eredivisie",
+      "channel": "Premier Sports 2, TrillerTV+",
+      "channels": [
+        "Premier Sports 2",
+        "TrillerTV+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588915_xmos6799r",
+      "time": "19:00",
+      "teamA": "Manchester City U21",
+      "teamB": "Leicester City U21",
+      "competition": "Premier League 2",
+      "channel": "CITY+",
+      "channels": [
+        "CITY+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588915_c47wacpmw",
+      "time": "19:30",
+      "teamA": "Augsburg",
+      "teamB": "Borussia Dortmund",
+      "competition": "Bundesliga",
+      "channel": "BBC iPlayer, Bundesliga YouTube, That's Football YouTube, The Overlap YouTube, BBC Sport Website",
+      "channels": [
+        "BBC iPlayer",
+        "Bundesliga YouTube",
+        "That's Football YouTube",
+        "The Overlap YouTube",
+        "BBC Sport Website"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588915_8wvw5ie9m",
+      "time": "19:30",
+      "teamA": "Luton Town",
+      "teamB": "Forest Green Rovers",
+      "competition": "FA Cup First Round",
+      "channel": "TNT Sports 1, discovery+",
+      "channels": [
+        "TNT Sports 1",
+        "discovery+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588915_kqthfxh5s",
+      "time": "19:30",
+      "teamA": "Racing Santander",
+      "teamB": "Real Sociedad B",
+      "competition": "La Liga 2",
+      "channel": "Premier Player",
+      "channels": [
+        "Premier Player"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588915_kza5nunt2",
+      "time": "19:45",
+      "teamA": "Standard Liege",
+      "teamB": "Sporting de Charleroi",
+      "competition": "Belgian Jupiler Pro League",
+      "channel": "DAZN",
+      "channels": [
+        "DAZN"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588915_t9btuizzr",
+      "time": "19:45",
+      "teamA": "Glentoran",
+      "teamB": "Portadown",
+      "competition": "Northern Irish Premiership",
+      "channel": "BBC iPlayer, BBC Sport Website",
+      "channels": [
+        "BBC iPlayer",
+        "BBC Sport Website"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588915_mozgdz8kn",
+      "time": "19:45",
+      "teamA": "Ayr United",
+      "teamB": "Dunfermline",
+      "competition": "Scottish Championship",
+      "channel": "BBC Scotland, BBC iPlayer, BBC Sport Website",
+      "channels": [
+        "BBC Scotland",
+        "BBC iPlayer",
+        "BBC Sport Website"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588915_249ps8ulu",
       "time": "20:00",
-      "teamA": "England U21",
-      "teamB": "Germany U21",
-      "competition": "UEFA Under-21 Championship Final",
-      "channel": "Channel 4",
+      "teamA": "Wrexham",
+      "teamB": "Coventry City",
+      "competition": "Championship",
+      "channel": "Sky Sports Main Event, Sky Sports Football, Sky Sports Ultra HDR",
       "channels": [
-        "Channel 4"
+        "Sky Sports Main Event",
+        "Sky Sports Football",
+        "Sky Sports Ultra HDR"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-28T00:57:53.917Z",
-      "matchDate": "2025-06-28",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
       "apiSource": "live-footballontv.com",
-      "venue": ""
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
     },
     {
-      "id": "web_1751072273917_vz0u257ab",
-      "time": "21:00",
-      "teamA": "Benfica",
-      "teamB": "Chelsea",
-      "competition": "FIFA Club World Cup 2025 Round of 16",
+      "id": "web_1761916588915_xzmvap7bz",
+      "time": "20:00",
+      "teamA": "Marseille Women",
+      "teamB": "Strasbourg Women",
+      "competition": "Division 1 Féminine",
       "channel": "DAZN",
       "channels": [
         "DAZN"
       ],
       "status": "upcoming",
-      "createdAt": "2025-06-28T00:57:53.917Z",
-      "matchDate": "2025-06-28",
+      "createdAt": "2025-10-31T13:16:28.915Z",
+      "matchDate": "2025-10-31",
       "apiSource": "live-footballontv.com",
-      "venue": ""
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588916_87pot1h8v",
+      "time": "20:00",
+      "teamA": "Getafe",
+      "teamB": "Girona",
+      "competition": "La Liga",
+      "channel": "Premier Sports 1",
+      "channels": [
+        "Premier Sports 1"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.916Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588916_pm0c84muz",
+      "time": "20:15",
+      "teamA": "Sporting CP",
+      "teamB": "FC Alverca",
+      "competition": "Primeira Liga",
+      "channel": "TrillerTV+",
+      "channels": [
+        "TrillerTV+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.916Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1761916588916_csrao6dp8",
+      "time": "22:00",
+      "teamA": "San Lorenzo",
+      "teamB": "Deportivo Riestra",
+      "competition": "Argentine Primeira Division",
+      "channel": "Premier Sports 2",
+      "channels": [
+        "Premier Sports 2"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-10-31T13:16:28.916Z",
+      "matchDate": "2025-10-31",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
     }
   ],
   "ufcEvents": [
     {
-      "id": "ufc_317_correct",
-      "title": "UFC 317: Topuria vs Oliveira",
-      "date": "2025-07-12",
-      "time": "22:30",
-      "ukDateTime": "2025-07-12T22:30:00.000Z",
-      "ukMainCardTimeStr": "03:00 (Sun)",
-      "ukPrelimTimeStr": "01:00 (Sun)",
-      "ukEarlyPrelimTimeStr": "23:30 (Sat)",
-      "location": "Las Vegas, Nevada",
-      "venue": "T-Mobile Arena",
-      "status": "upcoming",
-      "description": "UFC 317 featuring Ilia Topuria vs Charles Oliveira for the Featherweight Championship",
-      "poster": null,
-      "createdAt": "2025-06-28T10:00:00.000Z",
-      "apiSource": "ufc_official_website_direct",
+      "title": "UFC Fight Night: Garcia vs. Onama",
+      "date": "November  1, 2025",
+      "location": "UFC Apex, Las Vegas, Nevada",
+      "venue": "UFC Apex, Las Vegas, Nevada",
       "mainCard": [
         {
-          "fighter1": "Ilia Topuria",
-          "fighter2": "Charles Oliveira",
-          "weightClass": "Featherweight",
-          "title": "UFC Featherweight Championship - Main Event"
+          "fighter1": "Steve Garcia",
+          "fighter2": "David Onama",
+          "weightClass": "",
+          "result": null
         },
         {
-          "fighter1": "Alexandre Pantoja",
-          "fighter2": "Kai Kara-France",
-          "weightClass": "Flyweight",
-          "title": "UFC Flyweight Championship"
+          "fighter1": "Waldo Cortes-Acosta",
+          "fighter2": "Ante Delija",
+          "weightClass": "",
+          "result": null
         },
         {
-          "fighter1": "Brandon Royval",
-          "fighter2": "Joshua Van",
-          "weightClass": "Flyweight",
-          "title": "Co-Main Event"
+          "fighter1": "Jeremiah Wells",
+          "fighter2": "Themba Gorimbo",
+          "weightClass": "",
+          "result": null
         },
         {
-          "fighter1": "Jack Hermansson",
-          "fighter2": "Gregory Rodrigues",
-          "weightClass": "Middleweight",
-          "title": ""
+          "fighter1": "Isaac Dulgarian",
+          "fighter2": "Yadier del Valle",
+          "weightClass": "",
+          "result": null
         },
         {
-          "fighter1": "Niko Price",
-          "fighter2": "Jacobe Smith",
-          "weightClass": "Welterweight",
-          "title": ""
+          "fighter1": "Charles Radtke",
+          "fighter2": "Daniel Frunza",
+          "weightClass": "",
+          "result": null
+        },
+        {
+          "fighter1": "Allan Nascimento",
+          "fighter2": "Cody Durden",
+          "weightClass": "",
+          "result": null
         }
       ],
       "prelimCard": [
         {
-          "fighter1": "Clay Guida",
-          "fighter2": "Chase Hooper",
-          "weightClass": "Lightweight",
-          "title": ""
+          "fighter1": "Kevin Christian",
+          "fighter2": "Billy Elekana",
+          "weightClass": "",
+          "result": null
         },
         {
-          "fighter1": "Miranda Maverick",
-          "fighter2": "Danni McCormack",
-          "weightClass": "Women's Flyweight",
-          "title": ""
+          "fighter1": "Timmy Cuamba",
+          "fighter2": "Chang Ho Lee",
+          "weightClass": "",
+          "result": null
         },
         {
-          "fighter1": "Cory McKenna",
-          "fighter2": "Luana Pinheiro",
-          "weightClass": "Women's Strawweight",
-          "title": ""
+          "fighter1": "Donte Johnson",
+          "fighter2": "Sedriques Dumas",
+          "weightClass": "",
+          "result": null
         },
         {
-          "fighter1": "Cameron Saaiman",
-          "fighter2": "Payton Talbott",
-          "weightClass": "Bantamweight",
-          "title": ""
+          "fighter1": "Ketlen Vieira",
+          "fighter2": "Norma Dumont",
+          "weightClass": "",
+          "result": null
         }
       ],
       "earlyPrelimCard": [
         {
-          "fighter1": "Carlos Prates",
-          "fighter2": "Neil Magny",
-          "weightClass": "Welterweight",
-          "title": ""
+          "fighter1": "Montserrat Conejo Ruiz",
+          "fighter2": "Alice Ardelean",
+          "weightClass": "",
+          "result": null
         },
         {
-          "fighter1": "Reinier de Ridder",
-          "fighter2": "Gerald Meerschaert",
-          "weightClass": "Middleweight",
-          "title": ""
+          "fighter1": "Phil Rowe",
+          "fighter2": "Seok Hyeon Ko",
+          "weightClass": "",
+          "result": null
         },
         {
-          "fighter1": "Jaqueline Amorim",
-          "fighter2": "Vanessa Demopoulos",
-          "weightClass": "Women's Strawweight",
-          "title": ""
+          "fighter1": "Talita Alencar",
+          "fighter2": "Ariane Carnelossi",
+          "weightClass": "",
+          "result": null
         }
       ],
-      "ufcNumber": "317",
-      "broadcast": "TNT Sports",
-      "ticketInfo": "Tickets for UFC 317: Topuria vs Oliveira",
-      "mainCardUTCDate": "2025-07-13T02:00:00.000Z",
-      "prelimUTCDate": "2025-07-13T00:00:00.000Z",
-      "earlyPrelimUTCDate": "2025-07-12T22:30:00.000Z"
-    },
-    {
-      "id": "ufc_direct_1751096460957_0",
-      "title": "UFC Event 1",
-      "date": "2025-07-05",
-      "time": "22:00",
-      "ukDateTime": "2025-07-05T21:00:00.000Z",
-      "ukMainCardTimeStr": "03:00 (Sun)",
-      "ukPrelimTimeStr": "01:00 (Sun)",
-      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
-      "location": "TBD",
-      "venue": "TBD",
-      "status": "upcoming",
-      "description": "UFC Event 1 - Live from UFC.com",
-      "poster": null,
-      "createdAt": "2025-06-28T07:41:00.957Z",
-      "apiSource": "ufc_official_website_direct",
-      "mainCard": [],
-      "prelimCard": [],
-      "earlyPrelimCard": [],
-      "ufcNumber": null,
-      "broadcast": "TNT Sports",
-      "ticketInfo": "Tickets for UFC Event 1",
-      "mainCardUTCDate": "2025-07-05T03:00:00.000Z",
-      "prelimUTCDate": "2025-07-05T01:00:00.000Z",
-      "earlyPrelimUTCDate": "2025-07-04T22:00:00.000Z"
-    },
-    {
-      "id": "ufc_direct_1751096460957_1",
-      "title": "UFC Event 2",
-      "date": "2025-07-05",
-      "time": "22:00",
-      "ukDateTime": "2025-07-05T21:00:00.000Z",
-      "ukMainCardTimeStr": "03:00 (Sun)",
-      "ukPrelimTimeStr": "01:00 (Sun)",
-      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
-      "location": "TBD",
-      "venue": "TBD",
-      "status": "upcoming",
-      "description": "UFC Event 2 - Live from UFC.com",
-      "poster": null,
-      "createdAt": "2025-06-28T07:41:00.957Z",
-      "apiSource": "ufc_official_website_direct",
-      "mainCard": [],
-      "prelimCard": [],
-      "earlyPrelimCard": [],
-      "ufcNumber": null,
-      "broadcast": "TNT Sports",
-      "ticketInfo": "Tickets for UFC Event 2",
-      "mainCardUTCDate": "2025-07-05T03:00:00.000Z",
-      "prelimUTCDate": "2025-07-05T01:00:00.000Z",
-      "earlyPrelimUTCDate": "2025-07-04T22:00:00.000Z"
-    },
-    {
-      "id": "ufc_direct_1751096460957_2",
-      "title": "UFC Event 3",
-      "date": "2025-07-05",
-      "time": "22:00",
-      "ukDateTime": "2025-07-05T21:00:00.000Z",
-      "ukMainCardTimeStr": "03:00 (Sun)",
-      "ukPrelimTimeStr": "01:00 (Sun)",
-      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
-      "location": "TBD",
-      "venue": "TBD",
-      "status": "upcoming",
-      "description": "UFC Event 3 - Live from UFC.com",
-      "poster": null,
-      "createdAt": "2025-06-28T07:41:00.957Z",
-      "apiSource": "ufc_official_website_direct",
-      "mainCard": [],
-      "prelimCard": [],
-      "earlyPrelimCard": [],
-      "ufcNumber": null,
-      "broadcast": "TNT Sports",
-      "ticketInfo": "Tickets for UFC Event 3",
-      "mainCardUTCDate": "2025-07-05T03:00:00.000Z",
-      "prelimUTCDate": "2025-07-05T01:00:00.000Z",
-      "earlyPrelimUTCDate": "2025-07-04T22:00:00.000Z"
+      "totalFights": 13,
+      "scrapedAt": "2025-10-31T13:54:45.520Z",
+      "source": "tapology_321",
+      "sourceUrl": "https://www.tapology.com/fightcenter/events/132058-ufc-fight-night",
+      "apiSource": "tapology_321_scraper"
     }
   ],
-  "lastCleanup": "2025-06-28T07:41:02.755Z",
+  "lastCleanup": null,
   "lastFetch": "2025-06-28T00:57:53.917Z",
-  "lastUFCFetch": "2025-06-28T07:41:00.957Z"
+  "lastUFCFetch": "2025-10-31T13:54:45.521Z"
 }

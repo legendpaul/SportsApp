@@ -386,6 +386,9 @@ class WebSportsApp {
       dataControls.className = 'data-management';
       dataControls.innerHTML = `
         <div class="data-management-controls">
+          <button onclick="window.sportsApp.showIgnoredMatches()" class="data-btn" title="View and manage ignored matches">
+            👁️ View Ignored Matches
+          </button>
           <button onclick="window.sportsApp.exportData()" class="data-btn" title="Export your sports data">
             💾 Export Data
           </button>
@@ -608,12 +611,17 @@ class WebSportsApp {
   }
 
   onIgnoreButtonClick(matchId) {
-    this.dataManager.ignoreMatch(matchId);
     const match = this.footballMatches.find(m => m.id === matchId);
-    if (match) {
+    if (!match) return;
+    
+    // Show confirmation
+    if (confirm(`Hide "${match.teamA} vs ${match.teamB}"?\n\nThis match will be hidden from your view.`)) {
+      this.dataManager.ignoreMatch(matchId);
       match.ignored = true;
+      this.renderFootballMatches();
+      this.showFetchResult(`✓ Match hidden: ${match.teamA} vs ${match.teamB}`);
+      this.debugLog('filtering', `Match ignored: ${match.teamA} vs ${match.teamB} (ID: ${matchId})`);
     }
-    this.renderFootballMatches();
   }
 
   updateMatchesCount(filteredCount, totalCount) {
@@ -1116,6 +1124,113 @@ class WebSportsApp {
         this.showFetchResult(`❌ Clear error: ${error.message}`);
       }
     }
+  }
+
+  showIgnoredMatches() {
+    const ignoredMatches = this.footballMatches.filter(m => m.ignored);
+    
+    if (ignoredMatches.length === 0) {
+      alert('No ignored matches found.');
+      return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'ignored-matches-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.3s ease-out;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    `;
+    
+    const header = document.createElement('div');
+    header.style.cssText = 'margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;';
+    header.innerHTML = `
+      <h3 style="margin: 0; color: #333; font-size: 20px; font-weight: 700;">👁️ Ignored Matches (${ignoredMatches.length})</h3>
+      <button onclick="this.closest('.ignored-matches-modal').remove()" 
+              style="background: #f44336; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+        ✕ Close
+      </button>
+    `;
+    
+    const list = document.createElement('div');
+    list.style.cssText = 'display: flex; flex-direction: column; gap: 12px;';
+    
+    ignoredMatches.forEach(match => {
+      const item = document.createElement('div');
+      item.style.cssText = `
+        padding: 16px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-left: 4px solid #ff9800;
+      `;
+      
+      item.innerHTML = `
+        <div>
+          <div style="font-weight: 600; font-size: 15px; color: #333; margin-bottom: 4px;">
+            ${match.teamA} vs ${match.teamB}
+          </div>
+          <div style="font-size: 13px; color: #666;">
+            ${match.time} • ${match.channel} • ${match.competition}
+          </div>
+        </div>
+        <button onclick="window.sportsApp.unignoreMatch('${match.id}')" 
+                style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+          ↩️ Restore
+        </button>
+      `;
+      
+      list.appendChild(item);
+    });
+    
+    content.appendChild(header);
+    content.appendChild(list);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  unignoreMatch(matchId) {
+    const match = this.footballMatches.find(m => m.id === matchId);
+    if (!match) return;
+    
+    this.dataManager.unignoreMatch(matchId);
+    match.ignored = false;
+    
+    // Close the modal and refresh
+    const modal = document.querySelector('.ignored-matches-modal');
+    if (modal) modal.remove();
+    
+    this.renderFootballMatches();
+    this.showFetchResult(`✓ Match restored: ${match.teamA} vs ${match.teamB}`);
+    this.debugLog('filtering', `Match unignored: ${match.teamA} vs ${match.teamB} (ID: ${matchId})`);
   }
 
   addFootballMatch(match) {

@@ -1,8 +1,10 @@
-// Sports App JavaScript - Real Data Implementation Only
+// Sports App JavaScript - STANDARDIZED VERSION with ALL features
+// Includes: IGNORE matches, Traffic Light states, Data management, Enhanced debugging, Tapology scraper
 const { ipcRenderer } = require('electron');
 
 class SportsApp {
   constructor() {
+    this.version = '3.0.0'; // Standardized version
     this.footballMatches = [];
     this.ufcMainCard = [];
     this.ufcPrelimCard = [];
@@ -32,7 +34,7 @@ class SportsApp {
 
   async initDataManager() {
     try {
-      this.debugLog('data', 'Initializing data manager and fetchers...');
+      this.debugLog('data', `Initializing data manager and fetchers (v${this.version})...`);
       
       const MatchFetcher = require('./matchFetcher');
       const UFCFetcher = require('./ufcFetcher');
@@ -178,7 +180,14 @@ class SportsApp {
       
       if (fs.existsSync(dataFile)) {
         const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-        this.footballMatches = data.footballMatches || [];
+        
+        // Load matches with traffic light and ignored states
+        this.footballMatches = (data.footballMatches || []).map(match => ({
+          ...match,
+          trafficLightState: match.trafficLightState || 0,
+          ignored: match.ignored || false
+        }));
+        
         this.ufcEvents = data.ufcEvents || [];
         this.lastFetchTime = data.lastFetch || null;
         this.lastUFCFetch = data.lastUFCFetch || null;
@@ -198,7 +207,6 @@ class SportsApp {
           }
         }
         
-        // REMOVED: No fallback UFC data - only real data
         if (this.ufcMainCard.length === 0) {
           this.debugLog('data', 'No UFC events loaded - real data required');
           this.showNoUFCDataMessage();
@@ -216,7 +224,6 @@ class SportsApp {
   }
 
   loadFallbackData() {
-    // Enhanced fallback football data with proper channel arrays
     this.footballMatches = [
       {
         id: "fallback_001",
@@ -229,7 +236,9 @@ class SportsApp {
         status: "upcoming",
         createdAt: new Date().toISOString(),
         matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
+        apiSource: 'fallback',
+        trafficLightState: 0,
+        ignored: false
       },
       {
         id: "fallback_002",
@@ -242,69 +251,17 @@ class SportsApp {
         status: "upcoming",
         createdAt: new Date().toISOString(),
         matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "fallback_003",
-        time: "17:45",
-        teamA: "Real Madrid",
-        teamB: "Barcelona",
-        competition: "La Liga",
-        channel: "Premier Sports 1",
-        channels: ["Premier Sports 1"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "fallback_004",
-        time: "20:00",
-        teamA: "Bayern Munich",
-        teamB: "Borussia Dortmund",
-        competition: "Bundesliga",
-        channel: "Sky Sports Football",
-        channels: ["Sky Sports Football"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "fallback_005",
-        time: "19:45",
-        teamA: "Paris Saint-Germain",
-        teamB: "Olympique Marseille",
-        competition: "Ligue 1",
-        channel: "TNT Sports 1, TNT Sports 2",
-        channels: ["TNT Sports 1", "TNT Sports 2"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
-      },
-      {
-        id: "fallback_006",
-        time: "16:00",
-        teamA: "Tottenham",
-        teamB: "Manchester United",
-        competition: "Premier League",
-        channel: "ITV1, ITVX",
-        channels: ["ITV1", "ITVX"],
-        status: "upcoming",
-        createdAt: new Date().toISOString(),
-        matchDate: new Date().toISOString().split('T')[0],
-        apiSource: 'fallback'
+        apiSource: 'fallback',
+        trafficLightState: 0,
+        ignored: false
       }
     ];
 
-    // REMOVED: No fallback UFC data
     this.showNoUFCDataMessage();
-    this.debugLog('data', 'Using enhanced fallback data with multiple channels for testing channel filter - UFC data requires real fetch');
+    this.debugLog('data', 'Using enhanced fallback data - UFC data requires real fetch');
   }
 
   showNoUFCDataMessage() {
-    // Show message in UFC section encouraging real data fetch
     const ufcTitle = document.querySelector('.ufc-title');
     if (ufcTitle) {
       ufcTitle.textContent = 'No UFC Events - Real Data Required';
@@ -327,7 +284,6 @@ class SportsApp {
       `;
     }
     
-    // Clear preliminary cards too
     const prelimContainer = document.getElementById('prelim-card-fights');
     if (prelimContainer) {
       prelimContainer.innerHTML = '';
@@ -340,21 +296,22 @@ class SportsApp {
   }
 
   init() {
-    this.debugLog('display', 'Initializing Sports App...');
+    this.debugLog('display', `Initializing Sports App v${this.version}...`);
     
     this.updateClock();
     this.renderFootballMatches();
     this.renderUFCFights();
     this.renderChannelFilter();
     this.addFetchButton();
+    this.addDataManagementButtons(); // NEW: Data management
     this.initDebugWindow();
     
     setInterval(() => this.updateClock(), 1000);
     setInterval(() => this.updateMatchStatuses(), 60000);
     setInterval(() => this.autoRefreshIfNeeded(), 2 * 60 * 60 * 1000);
     
-    this.debugLog('display', 'Sports App initialized successfully!');
-    console.log('🚀 Sports App initialized successfully!');
+    this.debugLog('display', `Sports App v${this.version} initialized successfully!`);
+    console.log(`🚀 Sports App v${this.version} initialized successfully!`);
   }
 
   async autoRefreshIfNeeded() {
@@ -380,11 +337,66 @@ class SportsApp {
         <button onclick="window.sportsApp.manualCleanup()" class="cleanup-btn" title="Remove old matches and events">
           🧹 Cleanup
         </button>
+        <button onclick="window.sportsApp.toggleIgnoredMatchesView()" id="view-ignored-btn" class="view-ignored-btn" title="View your ignored matches" style="display: none;">
+          📦 View Ignored (0)
+        </button>
         <div class="auto-fetch-indicator" title="Auto-fetches football & UFC on startup">
           🔄 Auto-fetch: ON
         </div>
       `;
       header.appendChild(controls);
+      
+      // Update the button state based on ignored matches count
+      this.updateIgnoredMatchesButton();
+    }
+  }
+
+  // NEW: Data management buttons for export/import
+  addDataManagementButtons() {
+    const footer = document.querySelector('.footer');
+    if (footer && !document.getElementById('data-management')) {
+      const dataControls = document.createElement('div');
+      dataControls.id = 'data-management';
+      dataControls.className = 'data-management';
+      dataControls.innerHTML = `
+        <div class="data-management-controls">
+          <button onclick="window.sportsApp.exportData()" class="data-btn" title="Export your sports data">
+            💾 Export Data
+          </button>
+          <input type="file" id="import-file" accept=".json" style="display: none;" onchange="window.sportsApp.importData(event)">
+          <button onclick="document.getElementById('import-file').click()" class="data-btn" title="Import sports data">
+            📁 Import Data
+          </button>
+          <button onclick="window.sportsApp.clearAllData()" class="data-btn clear-data" title="Clear all stored data">
+            🗑️ Clear All Data
+          </button>
+          <span class="storage-info" id="storage-info">Storage: Loading...</span>
+        </div>
+      `;
+      footer.appendChild(dataControls);
+      
+      this.updateStorageInfo();
+    }
+  }
+
+  updateStorageInfo() {
+    const storageInfo = document.getElementById('storage-info');
+    if (storageInfo) {
+      const fs = require('fs');
+      const path = require('path');
+      const dataFile = path.join(__dirname, 'data', 'matches.json');
+      
+      try {
+        if (fs.existsSync(dataFile)) {
+          const stats = fs.statSync(dataFile);
+          const kb = Math.round(stats.size / 1024 * 100) / 100;
+          storageInfo.textContent = `Storage: ${kb} KB | ${this.footballMatches.length} matches, ${this.ufcEvents.length} events`;
+        } else {
+          storageInfo.textContent = 'Storage: No data file';
+        }
+      } catch (error) {
+        storageInfo.textContent = 'Storage: Unknown';
+      }
     }
   }
 
@@ -450,23 +462,20 @@ class SportsApp {
 
     container.innerHTML = '';
 
+    // Filter out old AND ignored matches
     const currentMatches = this.footballMatches.filter(match => {
       const matchDateTime = this.getMatchDateTime(match);
       const threeHoursAgo = new Date(Date.now() - (3 * 60 * 60 * 1000));
-      return matchDateTime > threeHoursAgo;
+      return matchDateTime > threeHoursAgo && !match.ignored; // NEW: Check ignored flag
     });
     
-    this.debugLog('filtering', `Filtered old matches: ${this.footballMatches.length} total -> ${currentMatches.length} current`);
+    this.debugLog('filtering', `Filtered matches: ${this.footballMatches.length} total -> ${currentMatches.length} current (non-ignored)`);
 
     const filteredMatches = this.applyChannelFilter(currentMatches);
     
-    this.debugLog('filtering', `Applied channel filter: ${currentMatches.length} current -> ${filteredMatches.length} after channel filter`, {
-      selectedChannels: Array.from(this.selectedChannels),
-      showAllChannels: this.showAllChannels
-    });
+    this.debugLog('filtering', `Applied channel filter: ${currentMatches.length} current -> ${filteredMatches.length} after channel filter`);
 
     if (currentMatches.length === 0) {
-      this.debugLog('display', 'No current matches found - showing empty state');
       container.innerHTML = `
         <div class="no-matches">
           <div class="no-matches-icon">📅</div>
@@ -484,7 +493,6 @@ class SportsApp {
     }
 
     if (filteredMatches.length === 0 && currentMatches.length > 0) {
-      this.debugLog('display', 'No matches after channel filtering - showing filter message');
       container.innerHTML = `
         <div class="no-filtered-matches">
           <div class="no-filtered-matches-icon">📺</div>
@@ -507,6 +515,13 @@ class SportsApp {
       const matchCard = document.createElement('div');
       matchCard.className = 'match-card';
       matchCard.setAttribute('data-match-id', match.id);
+      
+      // NEW: Apply traffic light styling
+      if (match.trafficLightState === 1) {
+        matchCard.classList.add('traffic-light-green');
+      } else if (match.trafficLightState === 2) {
+        matchCard.classList.add('traffic-light-red');
+      }
       
       matchCard.innerHTML = `
         <div class="match-header">
@@ -533,12 +548,193 @@ class SportsApp {
           <span class="competition-badge">${match.competition}</span>
           ${match.venue ? `<span class="venue-info" title="Venue">${match.venue}</span>` : ''}
         </div>
+        <div class="match-actions">
+          <button class="ignore-btn">Ignore</button>
+        </div>
       `;
+
+      // NEW: Click handler for traffic light toggle
+      matchCard.addEventListener('click', (e) => {
+        if (e.target.classList.contains('ignore-btn')) {
+          return; // Don't trigger traffic light on ignore button click
+        }
+        this.onMatchCardClick(match.id);
+      });
+
+      // NEW: Ignore button handler
+      const ignoreBtn = matchCard.querySelector('.ignore-btn');
+      ignoreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.onIgnoreButtonClick(match.id);
+      });
 
       container.appendChild(matchCard);
     });
 
     this.updateMatchesCount(filteredMatches.length, currentMatches.length);
+  }
+
+  // NEW: Traffic light click handler
+  onMatchCardClick(matchId) {
+    const match = this.footballMatches.find(m => m.id === matchId);
+    if (!match) return;
+
+    // Cycle through states: 0 -> 1 -> 2 -> 0
+    const currentState = match.trafficLightState || 0;
+    const nextState = (currentState + 1) % 3;
+
+    // Update local data
+    match.trafficLightState = nextState;
+
+    // Update persisted data
+    const DataManager = require('./dataManager');
+    const dataManager = new DataManager();
+    dataManager.updateMatchTrafficLightState(matchId, nextState);
+
+    // Update the UI
+    this.renderFootballMatches();
+    
+    this.debugLog('filtering', `Traffic light toggled for match ${matchId}: ${currentState} -> ${nextState}`);
+  }
+
+  // NEW: Ignore button handler
+  onIgnoreButtonClick(matchId) {
+    const match = this.footballMatches.find(m => m.id === matchId);
+    if (!match) return;
+
+    if (confirm(`Hide "${match.teamA} vs ${match.teamB}"?\n\nThis match will be hidden from your view.`)) {
+      const DataManager = require('./dataManager');
+      const dataManager = new DataManager();
+      dataManager.ignoreMatch(matchId);
+      
+      match.ignored = true;
+      
+      this.renderFootballMatches();
+      this.updateIgnoredMatchesButton();
+      this.showFetchResult(`✅ Match hidden: ${match.teamA} vs ${match.teamB}`);
+      
+      this.debugLog('filtering', `Match ignored: ${matchId}`);
+    }
+  }
+
+  // NEW: View ignored matches functionality
+  toggleIgnoredMatchesView() {
+    const section = document.getElementById('ignored-matches-section');
+    if (!section) {
+      this.showIgnoredMatches();
+    } else {
+      this.hideIgnoredMatches();
+    }
+  }
+
+  showIgnoredMatches() {
+    const DataManager = require('./dataManager');
+    const dataManager = new DataManager();
+    const ignoredMatches = dataManager.getIgnoredMatches();
+
+    const container = document.getElementById('football-matches');
+    if (!container) return;
+
+    let section = document.getElementById('ignored-matches-section');
+    if (section) {
+      section.remove();
+    }
+
+    section = document.createElement('div');
+    section.id = 'ignored-matches-section';
+    section.className = 'ignored-matches-section';
+
+    if (ignoredMatches.length === 0) {
+      section.innerHTML = `
+        <div class="ignored-header">
+          <h3>📦 Ignored Matches</h3>
+          <button onclick="window.sportsApp.toggleIgnoredMatchesView()" class="close-ignored-btn">×</button>
+        </div>
+        <div class="no-ignored-matches">
+          <p>No ignored matches</p>
+        </div>
+      `;
+    } else {
+      section.innerHTML = `
+        <div class="ignored-header">
+          <h3>📦 Ignored Matches (${ignoredMatches.length})</h3>
+          <button onclick="window.sportsApp.toggleIgnoredMatchesView()" class="close-ignored-btn">×</button>
+        </div>
+        <div id="ignored-matches-list"></div>
+      `;
+
+      const listContainer = section.querySelector('#ignored-matches-list');
+      ignoredMatches.forEach(match => {
+        const matchCard = document.createElement('div');
+        matchCard.className = 'match-card ignored-match-card';
+        matchCard.innerHTML = `
+          <div class="match-header">
+            <div class="match-time">
+              <span class="time-text">${match.time}</span>
+            </div>
+            <div class="channel-info">
+              <span>📺</span>
+              <span>${match.channel}</span>
+            </div>
+          </div>
+          <div class="teams">
+            <div class="teams-text">
+              <span class="team-a">${match.teamA}</span>
+              <span class="vs">vs</span>
+              <span class="team-b">${match.teamB}</span>
+            </div>
+          </div>
+          <div class="competition">
+            <span class="competition-badge">${match.competition}</span>
+          </div>
+          <div class="match-actions">
+            <button class="restore-btn" onclick="window.sportsApp.restoreMatch('${match.id}')">Restore</button>
+          </div>
+        `;
+        listContainer.appendChild(matchCard);
+      });
+    }
+
+    container.parentNode.insertBefore(section, container.nextSibling);
+    this.updateIgnoredMatchesButton();
+  }
+
+  hideIgnoredMatches() {
+    const section = document.getElementById('ignored-matches-section');
+    if (section) {
+      section.remove();
+    }
+    this.updateIgnoredMatchesButton();
+  }
+
+  restoreMatch(matchId) {
+    const DataManager = require('./dataManager');
+    const dataManager = new DataManager();
+    dataManager.unignoreMatch(matchId);
+
+    const match = this.footballMatches.find(m => m.id === matchId);
+    if (match) {
+      match.ignored = false;
+    }
+
+    this.renderFootballMatches();
+    this.showIgnoredMatches();
+    this.showFetchResult(`✅ Match restored: ${match.teamA} vs ${match.teamB}`);
+    this.debugLog('filtering', `Match restored: ${matchId}`);
+  }
+
+  updateIgnoredMatchesButton() {
+    const DataManager = require('./dataManager');
+    const dataManager = new DataManager();
+    const ignoredMatches = dataManager.getIgnoredMatches();
+    const count = ignoredMatches.length;
+
+    const existingBtn = document.getElementById('view-ignored-btn');
+    if (existingBtn) {
+      const section = document.getElementById('ignored-matches-section');
+      existingBtn.textContent = section ? '✖ Close Ignored' : `📦 View Ignored (${count})`;
+      existingBtn.style.display = count > 0 ? 'inline-block' : 'none';
+    }
   }
 
   updateMatchesCount(filteredCount, totalCount) {
@@ -567,7 +763,6 @@ class SportsApp {
       );
       
       if (upcomingEvent) {
-        // Show event title with data source indicator
         ufcTitle.textContent = upcomingEvent.title;
         
         const ufcDetails = document.querySelector('.ufc-details');
@@ -584,17 +779,17 @@ class SportsApp {
           }
         }
         
-        // Update UK timing display
         this.updateUFCTiming(upcomingEvent);
         
         const lastUFCFetchText = this.lastUFCFetch ? 
           ` (Updated: ${new Date(this.lastUFCFetch).toLocaleTimeString('en-GB')})` : '';
         
-        // Show data source status
         let statusIndicator = '';
         if (upcomingEvent.apiSource === 'ufc_official_website_direct') {
           const hasData = (upcomingEvent.mainCard && upcomingEvent.mainCard.length > 0);
           statusIndicator = hasData ? ' 🌐✅' : ' 🌐⏳';
+        } else if (upcomingEvent.apiSource === 'tapology_321_scraper') {
+          statusIndicator = ' 🔍✅'; // Tapology source
         } else {
           statusIndicator = ' ✏️';
         }
@@ -607,97 +802,70 @@ class SportsApp {
   }
 
   updateUFCTiming(event) {
-    // Update the UK Times section with accurate timing
     const ukTimesSection = document.querySelector('.uk-times');
     if (!ukTimesSection) return;
     
     this.debugLog('display', 'Updating UFC timing display', { event });
     
-    // Safe date formatting with fallback
     const formatUKTime = (dateString, fallbackHour = '18:00') => {
-      if (!dateString) {
-        return fallbackHour;
-      }
-      
+      if (!dateString) return fallbackHour;
       try {
         const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-          return fallbackHour;
-        }
+        if (isNaN(date.getTime())) return fallbackHour;
         return date.toLocaleTimeString('en-GB', { 
           hour: '2-digit', 
           minute: '2-digit',
           hour12: false 
         });
       } catch (error) {
-        this.debugLog('display', `Error formatting time: ${error.message}`);
         return fallbackHour;
       }
     };
     
     const formatUKDay = (dateString, fallbackDay = 'Sat') => {
-      if (!dateString) {
-        return fallbackDay;
-      }
-      
+      if (!dateString) return fallbackDay;
       try {
         const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-          return fallbackDay;
-        }
+        if (isNaN(date.getTime())) return fallbackDay;
         return date.toLocaleDateString('en-GB', { weekday: 'short' });
       } catch (error) {
-        this.debugLog('display', `Error formatting day: ${error.message}`);
         return fallbackDay;
       }
     };
     
-    // Calculate times based on event data (using real times from data sources)
     const getEventTimes = (event) => {
       const baseChannel = event.broadcast || 'TNT Sports 1';
       
-      // Use existing times from real data if available
       let prelimsTime, prelimsDay, mainCardTime, mainCardDay;
       
       if (event.ukPrelimTimeStr && event.ukMainCardTimeStr) {
-        // Use the already formatted times from real data
         prelimsTime = event.ukPrelimTimeStr;
         prelimsDay = formatUKDay(event.prelimUTCDate, 'Sat');
         mainCardTime = event.ukMainCardTimeStr;
         mainCardDay = formatUKDay(event.mainCardUTCDate, 'Sat');
       } else if (event.prelimUTCDate && event.mainCardUTCDate) {
-        // Format from UTC dates
         prelimsTime = formatUKTime(event.prelimUTCDate.toISOString(), '18:00');
         prelimsDay = formatUKDay(event.prelimUTCDate.toISOString(), 'Sat');
         mainCardTime = formatUKTime(event.mainCardUTCDate.toISOString(), '20:00');
         mainCardDay = formatUKDay(event.mainCardUTCDate.toISOString(), 'Sat');
       } else {
-        // Fallback: Don't guess times for real events - indicate data needed
         prelimsTime = 'TBD';
         prelimsDay = 'TBD';
         mainCardTime = 'TBD';
         mainCardDay = 'TBD';
       }
       
-      return {
-        prelimsTime,
-        prelimsDay,
-        mainCardTime,
-        mainCardDay,
-        channel: baseChannel
-      };
+      return { prelimsTime, prelimsDay, mainCardTime, mainCardDay, channel: baseChannel };
     };
     
     const times = getEventTimes(event);
     
-    // Update the title to show it's from real data
     const timesTitle = ukTimesSection.querySelector('.times-title');
     if (timesTitle) {
       const eventTypeDisplay = (event.ufcNumber ? `UFC ${event.ufcNumber}` : event.title || 'UFC Event').toUpperCase();
       timesTitle.textContent = `UK Start Times (${eventTypeDisplay} - REAL DATA)`;
     }
     
-    // Update the timing grid
     const timesGrid = ukTimesSection.querySelector('.times-grid');
     if (timesGrid) {
       timesGrid.innerHTML = `
@@ -720,19 +888,6 @@ class SportsApp {
         </div>
       `;
     }
-    
-    // Update the explanation
-    const timeExplanation = ukTimesSection.querySelector('.time-explanation p');
-    if (timeExplanation) {
-      timeExplanation.innerHTML = `<strong>🕐 Real UFC Timing:</strong> Times displayed are sourced from official UFC data feeds. All times converted to UK timezone for local viewing convenience.`;
-    }
-    
-    this.debugLog('display', 'UFC timing display updated successfully with real data', {
-      prelimsTime: times.prelimsTime,
-      mainCardTime: times.mainCardTime,
-      channel: times.channel,
-      dataSource: 'real_ufc_api'
-    });
   }
 
   renderMainCard() {
@@ -742,21 +897,19 @@ class SportsApp {
     container.innerHTML = '';
 
     if (this.ufcMainCard.length === 0) {
-      // Check if we have a UFC event but no fight data
       if (this.ufcEvents && this.ufcEvents.length > 0) {
         const upcomingEvent = this.ufcEvents.find(event => 
           new Date(event.ukDateTime || event.date) > new Date()
         );
         
-        if (upcomingEvent && upcomingEvent.apiSource === 'ufc_official_website_direct') {
-          // We have a real UFC event but no fight card details yet
+        if (upcomingEvent && upcomingEvent.apiSource) {
           container.innerHTML = `
             <div class="ufc-event-confirmed">
               <div class="ufc-confirmed-icon">✅</div>
               <div class="ufc-confirmed-text">UFC Event Confirmed</div>
               <div class="ufc-confirmed-details">
                 <strong>${upcomingEvent.title}</strong><br>
-                ${upcomingEvent.venue || 'Venue TBD'}<br>
+                ${upcomingEvent.venue || upcomingEvent.location || 'Venue TBD'}<br>
                 Fight card details will be added closer to event date
               </div>
             </div>
@@ -765,7 +918,6 @@ class SportsApp {
         }
       }
       
-      // No UFC events at all - show fetch message
       container.innerHTML = `
         <div class="no-ufc-data">
           <div class="no-ufc-icon">🥊</div>
@@ -810,9 +962,7 @@ class SportsApp {
 
     container.innerHTML = '';
 
-    if (this.ufcPrelimCard.length === 0) {
-      return; // Don't show message for prelims, just leave empty
-    }
+    if (this.ufcPrelimCard.length === 0) return;
 
     this.ufcPrelimCard.forEach(fight => {
       const fightCard = document.createElement('div');
@@ -837,9 +987,7 @@ class SportsApp {
 
     container.innerHTML = '';
     
-    if (!this.ufcEarlyPrelimCard || this.ufcEarlyPrelimCard.length === 0) {
-      return;
-    }
+    if (!this.ufcEarlyPrelimCard || this.ufcEarlyPrelimCard.length === 0) return;
 
     this.ufcEarlyPrelimCard.forEach(fight => {
       const fightCard = document.createElement('div');
@@ -863,6 +1011,7 @@ class SportsApp {
     this.renderFootballMatches();
     this.renderUFCFights();
     this.renderChannelFilter();
+    this.updateStorageInfo();
     this.debugLog('display', 'Sports data statuses updated');
   }
 
@@ -901,6 +1050,7 @@ class SportsApp {
         this.renderFootballMatches();
         this.renderUFCFights();
         this.renderChannelFilter();
+        this.updateStorageInfo();
         
         this.showFetchResult(`✅ Added ${footballResult.added || 0} football matches, ${ufcResult.added || 0} UFC events!`);
       } else if (footballResult.success || ufcResult.success) {
@@ -970,6 +1120,7 @@ class SportsApp {
         this.renderFootballMatches();
         this.renderUFCFights();
         this.renderChannelFilter();
+        this.updateStorageInfo();
       } else {
         this.showFetchResult(`❌ Cleanup failed`);
       }
@@ -982,12 +1133,158 @@ class SportsApp {
     }
   }
 
+  // NEW: Data management methods
+  exportData() {
+    try {
+      this.debugLog('data', 'Exporting sports data...');
+      
+      const fs = require('fs');
+      const path = require('path');
+      const { dialog } = require('electron').remote || require('@electron/remote');
+      
+      const data = {
+        footballMatches: this.footballMatches,
+        ufcEvents: this.ufcEvents,
+        lastFetch: this.lastFetchTime,
+        lastUFCFetch: this.lastUFCFetch,
+        exportedAt: new Date().toISOString(),
+        version: this.version
+      };
+      
+      const defaultPath = path.join(
+        require('os').homedir(), 
+        'Downloads',
+        `sports-app-data-${new Date().toISOString().split('T')[0]}.json`
+      );
+      
+      const filePath = dialog.showSaveDialogSync({
+        title: 'Export Sports Data',
+        defaultPath: defaultPath,
+        filters: [
+          { name: 'JSON Files', extensions: ['json'] },
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      });
+      
+      if (filePath) {
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+        this.showFetchResult('💾 Data exported successfully!');
+        this.debugLog('data', `Data exported to: ${filePath}`);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      this.debugLog('data', `Error exporting data: ${error.message}`);
+      this.showFetchResult(`❌ Export error: ${error.message}`);
+      return false;
+    }
+  }
+
+  async importData(event) {
+    try {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      this.debugLog('data', `Importing data from file: ${file.name}`);
+      
+      const fs = require('fs');
+      const path = require('path');
+      
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        try {
+          const importData = JSON.parse(e.target.result);
+          
+          if (!importData.footballMatches || !Array.isArray(importData.footballMatches)) {
+            throw new Error('Invalid data format: missing footballMatches array');
+          }
+          
+          if (!importData.ufcEvents || !Array.isArray(importData.ufcEvents)) {
+            throw new Error('Invalid data format: missing ufcEvents array');
+          }
+          
+          const DataManager = require('./dataManager');
+          const dataManager = new DataManager();
+          
+          const saved = dataManager.saveData({
+            footballMatches: importData.footballMatches,
+            ufcEvents: importData.ufcEvents,
+            lastCleanup: null,
+            lastFetch: importData.lastFetch || null,
+            lastUFCFetch: importData.lastUFCFetch || null
+          });
+          
+          if (saved) {
+            this.showFetchResult(`📁 Imported ${importData.footballMatches.length} matches, ${importData.ufcEvents.length} events!`);
+            this.debugLog('data', 'Data import completed successfully');
+            
+            await this.loadMatchData();
+            this.renderFootballMatches();
+            this.renderUFCFights();
+            this.renderChannelFilter();
+            this.updateStorageInfo();
+          } else {
+            throw new Error('Failed to save imported data');
+          }
+        } catch (parseError) {
+          this.debugLog('data', `Error parsing import file: ${parseError.message}`);
+          this.showFetchResult(`❌ Import failed: ${parseError.message}`);
+        }
+      };
+      
+      reader.readAsText(file);
+      event.target.value = '';
+      
+    } catch (error) {
+      this.debugLog('data', `Error importing data: ${error.message}`);
+      this.showFetchResult(`❌ Import error: ${error.message}`);
+      event.target.value = '';
+    }
+  }
+
+  clearAllData() {
+    if (confirm('Are you sure you want to clear ALL stored sports data? This cannot be undone.')) {
+      try {
+        this.debugLog('data', 'Clearing all stored data...');
+        
+        const DataManager = require('./dataManager');
+        const dataManager = new DataManager();
+        const success = dataManager.clearAllData();
+        
+        if (success) {
+          this.showFetchResult('🗑️ All data cleared successfully!');
+          this.debugLog('data', 'All data cleared');
+          
+          this.footballMatches = [];
+          this.ufcEvents = [];
+          this.lastFetchTime = null;
+          this.lastUFCFetch = null;
+          
+          this.loadFallbackData();
+          this.renderFootballMatches();
+          this.renderUFCFights();
+          this.renderChannelFilter();
+          this.updateStorageInfo();
+        } else {
+          this.showFetchResult('❌ Failed to clear data');
+        }
+      } catch (error) {
+        this.debugLog('data', `Error clearing data: ${error.message}`);
+        this.showFetchResult(`❌ Clear error: ${error.message}`);
+      }
+    }
+  }
+
   addFootballMatch(match) {
     const newMatch = {
       ...match,
       id: `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date().toISOString(),
-      matchDate: match.matchDate || new Date().toISOString().split('T')[0]
+      matchDate: match.matchDate || new Date().toISOString().split('T')[0],
+      trafficLightState: 0,
+      ignored: false
     };
     
     this.footballMatches.push(newMatch);
@@ -1016,6 +1313,7 @@ class SportsApp {
       
       fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
       this.debugLog('data', 'Sports data saved successfully');
+      this.updateStorageInfo();
     } catch (error) {
       this.debugLog('data', `Error saving sports data: ${error.message}`);
     }
@@ -1057,10 +1355,7 @@ class SportsApp {
     this.debugLog('display', 'Rendering channel filter...');
     
     this.availableChannels = this.extractChannelsFromMatches();
-    
-    this.debugLog('data', `Extracted ${this.availableChannels.length} unique channels`, {
-      channels: this.availableChannels
-    });
+    this.debugLog('data', `Extracted ${this.availableChannels.length} unique channels`);
     
     const container = document.getElementById('channel-checkboxes');
     if (!container) {
@@ -1071,7 +1366,6 @@ class SportsApp {
     container.innerHTML = '';
     
     if (this.availableChannels.length === 0) {
-      this.debugLog('display', 'No channels found - showing empty message');
       container.innerHTML = `
         <div class="no-channels">
           <p>No TV channels found in current matches</p>
@@ -1080,16 +1374,13 @@ class SportsApp {
       return;
     }
     
-    // Initialize all channels as selected on first load
     if (this.selectedChannels.size === 0) {
       this.availableChannels.forEach(channel => {
         this.selectedChannels.add(channel);
       });
       this.showAllChannels = true;
-      this.debugLog('filtering', 'Initialized all channels as selected on first load');
+      this.debugLog('filtering', 'Initialized all channels as selected');
     }
-    
-    this.debugLog('display', `Rendering ${this.availableChannels.length} channel checkboxes`);
     
     this.availableChannels.forEach(channel => {
       const checkboxDiv = document.createElement('div');
@@ -1113,7 +1404,6 @@ class SportsApp {
     });
     
     this.updateFilterStatus();
-    this.debugLog('display', 'Channel filter rendered successfully');
   }
 
   sanitizeId(str) {
@@ -1211,8 +1501,6 @@ class SportsApp {
     } else {
       statusElement.textContent = `Showing matches from ${selectedCount}/${totalChannels} channels`;
     }
-    
-    this.debugLog('filtering', `Filter status updated: ${selectedCount}/${totalChannels} channels selected`);
   }
 
   // Debug system methods
@@ -1275,8 +1563,6 @@ class SportsApp {
       debugSection.classList.add('hidden');
       toggleBtn.textContent = 'Show Debug';
     }
-    
-    this.debugLog('display', `Debug window ${this.debugVisible ? 'shown' : 'hidden'}`);
   }
 
   showDebugTab(tabName) {
@@ -1295,7 +1581,6 @@ class SportsApp {
     if (tab) tab.classList.add('active');
     
     this.updateDebugDisplay(tabName);
-    this.debugLog('display', `Switched to debug tab: ${tabName}`);
   }
 
   clearDebugLog() {
@@ -1307,13 +1592,201 @@ class SportsApp {
     console.log('🧹 Debug logs cleared');
   }
 
+  // NEW: Enhanced debug methods from web version
+  generateComprehensiveDebugReport() {
+    const report = [];
+    report.push('=== UK Sports TV Guide - Debug Report ===');
+    report.push(`Generated: ${new Date().toISOString()}`);
+    report.push(`App Version: ${this.version}`);
+    report.push(`Environment: Electron Desktop App`);
+    report.push('');
+
+    report.push('=== FOOTBALL MATCHES ===');
+    report.push(`Total matches: ${this.footballMatches.length}`);
+    report.push(`Last fetch: ${this.lastFetchTime || 'Never'}`);
+    report.push(`Available channels: ${this.availableChannels.length}`);
+    report.push(`Selected channels: ${this.selectedChannels.size}`);
+    report.push('');
+
+    report.push('=== UFC EVENTS ===');
+    report.push(`Total UFC events: ${this.ufcEvents.length}`);
+    report.push(`Last UFC fetch: ${this.lastUFCFetch || 'Never'}`);
+    report.push(`Main card fights: ${this.ufcMainCard.length}`);
+    report.push(`Prelim fights: ${this.ufcPrelimCard.length}`);
+    report.push('');
+
+    Object.keys(this.debugLogs).forEach(category => {
+      report.push(`=== ${category.toUpperCase()} LOGS ===`);
+      const logs = this.debugLogs[category] || [];
+      if (logs.length === 0) {
+        report.push('No logs available');
+      } else {
+        logs.slice(-10).forEach(log => {
+          report.push(`[${log.timestamp}] ${log.message}`);
+          if (log.data) {
+            report.push(`Data: ${log.data}`);
+          }
+        });
+      }
+      report.push('');
+    });
+
+    return report.join('\n');
+  }
+
+  copyDebugToClipboard() {
+    try {
+      const { clipboard } = require('electron');
+      const debugContent = this.generateComprehensiveDebugReport();
+      clipboard.writeText(debugContent);
+      this.showFetchResult('✅ Debug logs copied to clipboard!');
+      this.debugLog('display', 'Debug logs copied to clipboard');
+    } catch (error) {
+      this.debugLog('display', `Error copying to clipboard: ${error.message}`);
+      this.showFetchResult(`❌ Copy failed: ${error.message}`);
+    }
+  }
+
   initDebugWindow() {
-    this.debugLog('display', 'Debug system initialized');
+    this.debugLog('display', `Debug system initialized for Electron v${this.version}`);
     this.debugLog('data', 'Football matches loaded', { count: this.footballMatches.length });
     this.debugLog('data', 'Available channels extracted', { channels: this.availableChannels });
-    
     this.showDebugTab('requests');
   }
+
+  // ============================================================================
+  // UFC 321 TAPOLOGY SCRAPER INTEGRATION METHODS
+  // ============================================================================
+
+  async fetchUFCFromTapology() {
+    try {
+      const urlInput = document.getElementById('tapology-url-input');
+      const statusDiv = document.getElementById('ufc-scraper-status');
+      const fetchBtn = document.getElementById('fetch-ufc-btn');
+      
+      if (!urlInput || !urlInput.value.trim()) {
+        this.showScraperStatus('Please enter a Tapology event URL', 'error');
+        return;
+      }
+      
+      const eventUrl = urlInput.value.trim();
+      
+      if (!eventUrl.includes('tapology.com/fightcenter/events/')) {
+        this.showScraperStatus('Invalid Tapology URL format', 'error');
+        return;
+      }
+      
+      fetchBtn.disabled = true;
+      fetchBtn.textContent = '⏳ Scraping...';
+      this.showScraperStatus('Fetching UFC event data from Tapology...', 'loading');
+      
+      this.debugLog('requests', `Scraping UFC event from: ${eventUrl}`);
+      
+      const TapologyUFCScraper321 = require('./tapologyUFCScraper321');
+      const scraper = new TapologyUFCScraper321();
+      
+      const eventData = await scraper.scrapeEvent(eventUrl);
+      
+      this.debugLog('data', 'UFC event scraped successfully', eventData);
+      
+      if (eventData && eventData.totalFights > 0) {
+        this.ufcMainCard = eventData.mainCard || [];
+        this.ufcPrelimCard = eventData.prelimCard || [];
+        this.ufcEarlyPrelimCard = eventData.earlyPrelimCard || [];
+        
+        const ufcEvent = {
+          title: eventData.title,
+          date: eventData.date,
+          location: eventData.location,
+          venue: eventData.location,
+          mainCard: this.ufcMainCard,
+          prelimCard: this.ufcPrelimCard,
+          earlyPrelimCard: this.ufcEarlyPrelimCard,
+          totalFights: eventData.totalFights,
+          scrapedAt: eventData.scrapedAt,
+          source: 'tapology_321',
+          sourceUrl: eventUrl,
+          apiSource: 'tapology_321_scraper'
+        };
+        
+        this.ufcEvents = [ufcEvent];
+        this.lastUFCFetch = new Date().toISOString();
+        
+        await this.saveMatchData();
+        
+        this.updateUFCDisplay(eventData);
+        this.renderUFCFights();
+        
+        this.showScraperStatus(
+          `✅ Successfully scraped ${eventData.totalFights} fights from ${eventData.title}`, 
+          'success'
+        );
+        
+        this.debugLog('data', 'UFC data updated and saved from Tapology', {
+          title: eventData.title,
+          totalFights: eventData.totalFights
+        });
+        
+      } else {
+        this.showScraperStatus(
+          '⚠️ No fights found - keeping existing event data', 
+          'error'
+        );
+      }
+      
+    } catch (error) {
+      this.debugLog('requests', `UFC scraping error: ${error.message}`);
+      this.showScraperStatus(`❌ Error: ${error.message}`, 'error');
+      console.error('UFC scraping failed:', error);
+    } finally {
+      const fetchBtn = document.getElementById('fetch-ufc-btn');
+      if (fetchBtn) {
+        fetchBtn.disabled = false;
+        fetchBtn.textContent = '🥊 Get UFC Event';
+      }
+    }
+  }
+
+  updateUFCDisplay(eventData) {
+    const titleEl = document.querySelector('.ufc-title');
+    if (titleEl) {
+      titleEl.textContent = eventData.title + ' 🔍';
+    }
+    
+    const dateEl = document.getElementById('ufc-date');
+    if (dateEl) {
+      dateEl.textContent = eventData.date;
+    }
+    
+    const locationEl = document.getElementById('ufc-location');
+    if (locationEl) {
+      locationEl.textContent = eventData.location;
+    }
+    
+    const ukTimesTitle = document.querySelector('.uk-times .times-title');
+    if (ukTimesTitle) {
+      ukTimesTitle.textContent = 'UK Start Times (From Scraped Data)';
+    }
+  }
+
+  showScraperStatus(message, type = 'info') {
+    const statusDiv = document.getElementById('ufc-scraper-status');
+    if (!statusDiv) return;
+    
+    statusDiv.textContent = message;
+    statusDiv.className = `scraper-status ${type}`;
+    
+    if (type === 'success') {
+      setTimeout(() => {
+        statusDiv.textContent = '';
+        statusDiv.className = 'scraper-status';
+      }, 5000);
+    }
+  }
+
+  // ============================================================================
+  // END OF UFC 321 INTEGRATION METHODS
+  // ============================================================================
 }
 
 // Initialize the app when DOM is loaded

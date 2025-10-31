@@ -155,6 +155,83 @@ class DataManager {
       totalUFCEvents: data.ufcEvents.length
     };
   }
+
+  updateMatchTrafficLightState(matchId, newState) {
+    try {
+      const data = this.loadData();
+      const matchIndex = data.footballMatches.findIndex(match => match.id === matchId);
+
+      if (matchIndex !== -1) {
+        data.footballMatches[matchIndex].trafficLightState = newState;
+        this.saveData(data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error updating traffic light state:', error);
+      return false;
+    }
+  }
+
+  ignoreMatch(matchId) {
+    try {
+      const data = this.loadData();
+      const matchIndex = data.footballMatches.findIndex(match => match.id === matchId);
+
+      if (matchIndex !== -1) {
+        data.footballMatches[matchIndex].ignored = true;
+        this.saveData(data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error ignoring match:', error);
+      return false;
+    }
+  }
+
+  unignoreMatch(matchId) {
+    try {
+      const data = this.loadData();
+      const matchIndex = data.footballMatches.findIndex(match => match.id === matchId);
+
+      if (matchIndex !== -1) {
+        data.footballMatches[matchIndex].ignored = false;
+        this.saveData(data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error unignoring match:', error);
+      return false;
+    }
+  }
+
+  clearAllData() {
+    try {
+      const defaultData = {
+        footballMatches: [],
+        ufcEvents: [],
+        lastCleanup: null,
+        lastFetch: null,
+        lastUFCFetch: null
+      };
+      return this.saveData(defaultData);
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      return false;
+    }
+  }
+
+  getIgnoredMatches() {
+    try {
+      const data = this.loadData();
+      return data.footballMatches.filter(match => match.ignored === true);
+    } catch (error) {
+      console.error('Error getting ignored matches:', error);
+      return [];
+    }
+  }
 }
 
 module.exports = DataManager;

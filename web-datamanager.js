@@ -170,6 +170,23 @@ class WebDataManager {
     }
   }
 
+  unignoreMatch(matchId) {
+    try {
+      const data = this.loadData();
+      const matchIndex = data.footballMatches.findIndex(match => match.id === matchId);
+
+      if (matchIndex !== -1) {
+        data.footballMatches[matchIndex].ignored = false;
+        this.saveData(data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error unignoring match:', error);
+      return false;
+    }
+  }
+
   cleanupOldMatches() {
     const data = this.loadData();
     const now = new Date();

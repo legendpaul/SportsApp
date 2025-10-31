@@ -41,17 +41,34 @@
         <h2 class="section-title">Next UFC Event</h2>
       </div>
 
+      <!-- UFC Event Scraper Controls -->
+      <div class="ufc-scraper-controls">
+        <div class="scraper-input-group">
+          <label for="tapology-url-input">Tapology Event URL:</label>
+          <input 
+            type="text" 
+            id="tapology-url-input" 
+            placeholder="https://www.tapology.com/fightcenter/events/132058-ufc-fight-night"
+            class="tapology-input"
+          />
+          <button onclick="window.sportsApp.fetchUFCFromTapology()" class="fetch-ufc-btn" id="fetch-ufc-btn">
+            🥊 Get UFC Event
+          </button>
+        </div>
+        <div class="scraper-status" id="ufc-scraper-status"></div>
+      </div>
+
       <!-- UFC Event Header -->
       <div class="ufc-event-header">
-        <h3 class="ufc-title">UFC Fight Night: Blanchfield vs Barber</h3>
+        <h3 class="ufc-title">No UFC Event Loaded</h3>
         <div class="ufc-details">
           <div class="ufc-detail">
             <div class="detail-icon">📅</div>
-            <span>Saturday, May 31, 2025</span>
+            <span id="ufc-date">-</span>
           </div>
           <div class="ufc-detail">
             <div class="detail-icon">📍</div>
-            <span>UFC APEX, Las Vegas, Nevada</span>
+            <span id="ufc-location">-</span>
           </div>
         </div>
       </div>

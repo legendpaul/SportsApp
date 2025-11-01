@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>UK Sports TV Guide</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles_api.css">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="app-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <h1 class="main-title">UK Sports TV Guide</h1>
+        <div class="time-display">
+          <div class="clock-icon">🕐</div>
+          <div class="current-time" id="current-time">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Football Section -->
+    <div class="section football-section">
+      <div class="section-header">
+        <div class="section-icon">🏆</div>
+        <h2 class="section-title">Today's Football on UK TV</h2>
+      </div>
+      
+      <div class="matches-grid" id="football-matches">
+        <!-- Football matches will be populated by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Next UFC Event Section -->
+    <div class="section ufc-section">
+      <div class="section-header">
+        <div class="section-icon">🥊</div>
+        <h2 class="section-title">Next UFC Event</h2>
+      </div>
+
+      <!-- UFC Event Scraper Controls -->
+      <div class="ufc-scraper-controls">
+        <div class="scraper-input-group">
+          <label for="tapology-url-input">Tapology Event URL:</label>
+          <input 
+            type="text" 
+            id="tapology-url-input" 
+            placeholder="https://www.tapology.com/fightcenter/events/132058-ufc-fight-night"
+            class="tapology-input"
+          />
+          <button onclick="window.fetchUFC()" class="fetch-ufc-btn" id="fetch-ufc-btn">
+            🥊 Get UFC Event
+          </button>
+        </div>
+        <div class="scraper-status" id="ufc-scraper-status"></div>
+      </div>
+
+      <!-- UFC Event Header -->
+      <div class="ufc-event-header">
+        <h3 class="ufc-title">No UFC Event Loaded</h3>
+        <div class="ufc-details">
+          <div class="ufc-detail">
+            <div class="detail-icon">📅</div>
+            <span id="ufc-date">-</span>
+          </div>
+          <div class="ufc-detail">
+            <div class="detail-icon">📍</div>
+            <span id="ufc-location">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- UK Start Times - CORRECTED -->
+      <div class="uk-times">
+        <h4 class="times-title">UK Start Times (CORRECTED)</h4>
+        <div class="times-grid">
+          <div class="time-slot prelims">
+            <div class="time-label">Prelims</div>
+            <div class="time-value">1:00 AM (Sun) - TNT Sports</div>
+            <div class="time-note">📍 Correct UK Time</div>
+          </div>
+          <div class="time-slot main-card">
+            <div class="time-label">Main Card</div>
+            <div class="time-value">3:00 AM (Sun) - TNT Sports</div>
+            <div class="time-note">📍 Correct UK Time</div>
+          </div>
+        </div>
+        <div class="time-explanation">
+          <p><strong>🕐 Time Zone Info:</strong> UFC events are typically held at 10:00 PM ET (Eastern Time) for main cards, which converts to 3:00 AM UK time the next day. Prelims start 2 hours earlier at 1:00 AM UK time.</p>
+        </div>
+      </div>
+
+      <!-- Main Card -->
+      <div class="fight-card">
+        <h4 class="card-title">
+          <div class="card-icon">🏆</div>
+          Main Card
+        </h4>
+        <div class="fights-container" id="main-card-fights">
+          <div class="loading-ufc">Loading UFC events...</div>
+        </div>
+      </div>
+
+      <!-- Preliminary Card -->
+      <div class="fight-card">
+        <h4 class="card-title">Preliminary Card (TNT Sports)</h4>
+        <div class="prelim-fights-grid" id="prelim-card-fights">
+          <div class="loading-ufc">Loading preliminary fights...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Debug Window -->
+    <div class="section debug-section" id="debug-section">
+      <div class="section-header">
+        <div class="section-icon">🐛</div>
+        <h2 class="section-title">Debug Information</h2>
+        <div class="filter-controls">
+          <button onclick="window.sportsApp.toggleDebugWindow()" class="filter-btn debug-toggle" id="debug-toggle">Hide Debug</button>
+          <button onclick="window.sportsApp.clearDebugLog()" class="filter-btn debug-clear">Clear Log</button>
+          <button onclick="window.sportsApp.copyDebugToClipboard()" class="filter-btn debug-copy" title="Copy all debug logs to clipboard - FIXED for Netlify">📋 Copy Debug (FIXED)</button>
+          <textarea id="ufcDebugOutputTextbox" readonly style="width: 95%; height: 200px; margin: 5px; white-space: pre; overflow-wrap: normal; overflow-x: scroll;"></textarea>
+          <button id="copyUfcDebugInfoButton" style="margin: 5px;">Show/Copy UFC Google Debug Info</button>
+          <button onclick="window.sportsApp.testUFCConnection()" class="filter-btn debug-test" title="Test UFC API connection with enhanced diagnostics">🥊 Test UFC API</button>
+        </div>
+      </div>
+      
+      <div class="debug-content" id="debug-content">
+        <div class="debug-tabs">
+          <button class="debug-tab active" onclick="window.sportsApp.showDebugTab('requests')">Web Requests</button>
+          <button class="debug-tab" onclick="window.sportsApp.showDebugTab('data')">Raw Data</button>
+          <button class="debug-tab" onclick="window.sportsApp.showDebugTab('filtering')">Filtering</button>
+          <button class="debug-tab" onclick="window.sportsApp.showDebugTab('display')">Display Lists</button>
+        </div>
+        
+        <div id="debug-requests" class="debug-panel active">
+          <h4>Web Scraping Requests & Responses</h4>
+          <div id="debug-requests-content" class="debug-log">No requests yet...</div>
+        </div>
+        
+        <div id="debug-data" class="debug-panel">
+          <h4>Raw Parsed Data</h4>
+          <div id="debug-data-content" class="debug-log">No data loaded yet...</div>
+        </div>
+        
+        <div id="debug-filtering" class="debug-panel">
+          <h4>Channel Filtering Process</h4>
+          <div id="debug-filtering-content" class="debug-log">No filtering performed yet...</div>
+        </div>
+        
+        <div id="debug-display" class="debug-panel">
+          <h4>Display Lists & UI State</h4>
+          <div id="debug-display-content" class="debug-log">No display data yet...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Channel Filter Section -->
+    <div class="section channel-filter-section">
+      <div class="section-header">
+        <div class="section-icon">📺</div>
+        <h2 class="section-title">TV Channel Filter</h2>
+        <div class="filter-controls">
+          <button onclick="window.sportsApp.selectAllChannels()" class="filter-btn select-all">Select All</button>
+          <button onclick="window.sportsApp.clearAllChannels()" class="filter-btn clear-all">Clear All</button>
+        </div>
+      </div>
+      
+      <div class="channel-checkboxes" id="channel-checkboxes">
+        <!-- Channel checkboxes will be populated by JavaScript -->
+      </div>
+      
+      <div class="filter-info">
+        <p id="filter-status">Showing all matches</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>Live data from live-footballontv.com • Times shown in UK timezone • Powered by Netlify Functions • UFC times CORRECTED</p>
+    </div>
+  </div>
+
+  <!-- Web-compatible JavaScript modules with cache busting -->
+  <script src="web-datamanager.js?v=2.1.0"></script>
+  <script src="web-matchfetcher.js?v=2.1.0"></script>
+  <script src="web-ufcfetcher.js?v=1.0.0"></script>
+  <script src="web-app.js?v=2.1.0"></script>
+
+  <!-- Enhanced clipboard support styles -->
+  <style>
+    .time-explanation {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      border-left: 4px solid #4CAF50;
+    }
+    .time-explanation p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .time-note {
+      font-size: 11px;
+      color: #4CAF50;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .debug-copy {
+      background: linear-gradient(135deg, #4CAF50, #45a049) !important;
+      color: white !important;
+      font-weight: 600;
+    }
+    .debug-copy:hover {
+      background: linear-gradient(135deg, #45a049, #3d8b40) !important;
+      transform: translateY(-1px);
+    }
+    .copy-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 600;
+      max-width: 300px;
+      animation: slideInBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      cursor: pointer;
+    }
+    @keyframes slideInBounce {
+      0% { transform: translateX(100%) scale(0.8); opacity: 0; }
+      50% { transform: translateX(-10px) scale(1.05); opacity: 0.9; }
+      100% { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    .ufc-error-state {
+      text-align: center;
+      padding: 40px 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      margin: 20px 0;
+    }
+    .ufc-error-state .error-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .ufc-error-state .error-message {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 16px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+    .ufc-error-state .error-suggestion {
+      margin-top: 16px;
+    }
+    .ufc-error-state .fetch-btn {
+      background: linear-gradient(135deg, #FF6B35, #F5512F);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ufc-error-state .fetch-btn:hover {
+      background: linear-gradient(135deg, #F5512F, #E63946);
+      transform: translateY(-1px);
+    }
+    .loading-ufc, .no-fights {
+      text-align: center;
+      padding: 20px;
+      color: rgba(255, 255, 255, 0.6);
+      font-style: italic;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    .loading-ufc {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+  </style>
+</body>
+</html>

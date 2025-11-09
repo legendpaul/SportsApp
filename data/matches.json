@@ -1,371 +1,749 @@
 {
   "footballMatches": [
     {
-      "id": "web_1761916588914_49ionbu6z",
-      "time": "14:50",
-      "teamA": "Al-Hilal",
-      "teamB": "Al-Shabab",
-      "competition": "Saudi Pro League",
-      "channel": "Saudi Pro League YouTube",
+      "id": "web_1762686149536_nkf5r0okj",
+      "time": "11:15",
+      "teamA": "FC Utrecht",
+      "teamB": "Ajax",
+      "competition": "Eredivisie",
+      "channel": "Premier Sports 1, TrillerTV+",
       "channels": [
-        "Saudi Pro League YouTube"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.914Z",
-      "matchDate": "2025-10-31",
-      "apiSource": "live-footballontv.com",
-      "venue": "",
-      "ignored": true,
-      "trafficLightState": 0
-    },
-    {
-      "id": "web_1761916588914_72ftmjpzx",
-      "time": "15:45",
-      "teamA": "Khor Fakkan",
-      "teamB": "Al Wasl",
-      "competition": "UAE Pro League",
-      "channel": "TrillerTV+",
-      "channels": [
+        "Premier Sports 1",
         "TrillerTV+"
       ],
       "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.914Z",
-      "matchDate": "2025-10-31",
-      "apiSource": "live-footballontv.com",
-      "venue": "",
-      "ignored": true,
-      "trafficLightState": 0
-    },
-    {
-      "id": "web_1761916588914_cct8holov",
-      "time": "17:30",
-      "teamA": "Preussen Munster",
-      "teamB": "Holstein Kiel",
-      "competition": "Bundesliga 2",
-      "channel": "Bundesliga YouTube",
-      "channels": [
-        "Bundesliga YouTube"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.914Z",
-      "matchDate": "2025-10-31",
-      "apiSource": "live-footballontv.com",
-      "venue": "",
-      "ignored": true,
-      "trafficLightState": 0
-    },
-    {
-      "id": "web_1761916588914_oi96rypi0",
-      "time": "17:30",
-      "teamA": "SV Elversberg",
-      "teamB": "Hannover 96",
-      "competition": "Bundesliga 2",
-      "channel": "Bundesliga YouTube",
-      "channels": [
-        "Bundesliga YouTube"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.914Z",
-      "matchDate": "2025-10-31",
+      "createdAt": "2025-11-09T11:02:29.536Z",
+      "matchDate": "2025-11-09",
       "apiSource": "live-footballontv.com",
       "venue": "",
       "trafficLightState": 0,
       "ignored": false
     },
     {
-      "id": "web_1761916588914_vn2b0ruwf",
-      "time": "17:30",
-      "teamA": "FC Köln Women",
-      "teamB": "FC Nürnberg Women",
-      "competition": "Frauen Bundesliga",
+      "id": "web_1762686149536_nx91xjc03",
+      "time": "11:30",
+      "teamA": "Atalanta",
+      "teamB": "Sassuolo",
+      "competition": "Serie A",
       "channel": "DAZN",
       "channels": [
         "DAZN"
       ],
       "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.914Z",
-      "matchDate": "2025-10-31",
+      "createdAt": "2025-11-09T11:02:29.536Z",
+      "matchDate": "2025-11-09",
       "apiSource": "live-footballontv.com",
       "venue": "",
       "trafficLightState": 0,
       "ignored": false
     },
     {
-      "id": "web_1761916588914_2yyzfmvgu",
-      "time": "17:30",
-      "teamA": "Al-Nassr",
-      "teamB": "Al Feiha",
-      "competition": "Saudi Pro League",
-      "channel": "Saudi Pro League YouTube",
-      "channels": [
-        "Saudi Pro League YouTube"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.914Z",
-      "matchDate": "2025-10-31",
-      "apiSource": "live-footballontv.com",
-      "venue": "",
-      "trafficLightState": 0,
-      "ignored": false
-    },
-    {
-      "id": "web_1761916588915_ayezh32ra",
-      "time": "18:00",
-      "teamA": "Viktoria Köln",
-      "teamB": "Ingolstadt",
-      "competition": "3. Liga",
-      "channel": "DFB Play",
-      "channels": [
-        "DFB Play"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
-      "apiSource": "live-footballontv.com",
-      "venue": "",
-      "trafficLightState": 0,
-      "ignored": false
-    },
-    {
-      "id": "web_1761916588915_zm44ms29f",
-      "time": "19:00",
-      "teamA": "PSV Eindhoven",
-      "teamB": "Fortuna Sittard",
-      "competition": "Eredivisie",
-      "channel": "Premier Sports 2, TrillerTV+",
-      "channels": [
-        "Premier Sports 2",
-        "TrillerTV+"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
-      "apiSource": "live-footballontv.com",
-      "venue": "",
-      "trafficLightState": 0,
-      "ignored": false
-    },
-    {
-      "id": "web_1761916588915_xmos6799r",
-      "time": "19:00",
-      "teamA": "Manchester City U21",
-      "teamB": "Leicester City U21",
-      "competition": "Premier League 2",
-      "channel": "CITY+",
-      "channels": [
-        "CITY+"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
-      "apiSource": "live-footballontv.com",
-      "venue": "",
-      "trafficLightState": 0,
-      "ignored": false
-    },
-    {
-      "id": "web_1761916588915_c47wacpmw",
-      "time": "19:30",
-      "teamA": "Augsburg",
-      "teamB": "Borussia Dortmund",
-      "competition": "Bundesliga",
-      "channel": "BBC iPlayer, Bundesliga YouTube, That's Football YouTube, The Overlap YouTube, BBC Sport Website",
-      "channels": [
-        "BBC iPlayer",
-        "Bundesliga YouTube",
-        "That's Football YouTube",
-        "The Overlap YouTube",
-        "BBC Sport Website"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
-      "apiSource": "live-footballontv.com",
-      "venue": "",
-      "trafficLightState": 0,
-      "ignored": false
-    },
-    {
-      "id": "web_1761916588915_8wvw5ie9m",
-      "time": "19:30",
-      "teamA": "Luton Town",
-      "teamB": "Forest Green Rovers",
-      "competition": "FA Cup First Round",
-      "channel": "TNT Sports 1, discovery+",
-      "channels": [
-        "TNT Sports 1",
-        "discovery+"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
-      "apiSource": "live-footballontv.com",
-      "venue": "",
-      "trafficLightState": 0,
-      "ignored": false
-    },
-    {
-      "id": "web_1761916588915_kqthfxh5s",
-      "time": "19:30",
-      "teamA": "Racing Santander",
-      "teamB": "Real Sociedad B",
-      "competition": "La Liga 2",
-      "channel": "Premier Player",
-      "channels": [
-        "Premier Player"
-      ],
-      "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
-      "apiSource": "live-footballontv.com",
-      "venue": "",
-      "trafficLightState": 0,
-      "ignored": false
-    },
-    {
-      "id": "web_1761916588915_kza5nunt2",
-      "time": "19:45",
-      "teamA": "Standard Liege",
-      "teamB": "Sporting de Charleroi",
+      "id": "web_1762686149537_l99fxcn2m",
+      "time": "12:30",
+      "teamA": "Anderlecht",
+      "teamB": "Club Brugge",
       "competition": "Belgian Jupiler Pro League",
       "channel": "DAZN",
       "channels": [
         "DAZN"
       ],
       "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
+      "createdAt": "2025-11-09T11:02:29.537Z",
+      "matchDate": "2025-11-09",
       "apiSource": "live-footballontv.com",
       "venue": "",
       "trafficLightState": 0,
       "ignored": false
     },
     {
-      "id": "web_1761916588915_t9btuizzr",
-      "time": "19:45",
-      "teamA": "Glentoran",
-      "teamB": "Portadown",
-      "competition": "Northern Irish Premiership",
-      "channel": "BBC iPlayer, BBC Sport Website",
+      "id": "web_1762686149537_6r0succ9z",
+      "time": "12:30",
+      "teamA": "Eintracht Braunschweig",
+      "teamB": "VFL Bochum",
+      "competition": "Bundesliga 2",
+      "channel": "Bundesliga YouTube",
       "channels": [
-        "BBC iPlayer",
-        "BBC Sport Website"
+        "Bundesliga YouTube"
       ],
       "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
+      "createdAt": "2025-11-09T11:02:29.537Z",
+      "matchDate": "2025-11-09",
       "apiSource": "live-footballontv.com",
       "venue": "",
       "trafficLightState": 0,
       "ignored": false
     },
     {
-      "id": "web_1761916588915_mozgdz8kn",
-      "time": "19:45",
-      "teamA": "Ayr United",
-      "teamB": "Dunfermline",
-      "competition": "Scottish Championship",
-      "channel": "BBC Scotland, BBC iPlayer, BBC Sport Website",
+      "id": "web_1762686149537_rimqigmkq",
+      "time": "12:30",
+      "teamA": "FC Magdeburg",
+      "teamB": "Paderborn",
+      "competition": "Bundesliga 2",
+      "channel": "Bundesliga YouTube",
       "channels": [
-        "BBC Scotland",
-        "BBC iPlayer",
-        "BBC Sport Website"
+        "Bundesliga YouTube"
       ],
       "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
+      "createdAt": "2025-11-09T11:02:29.537Z",
+      "matchDate": "2025-11-09",
       "apiSource": "live-footballontv.com",
       "venue": "",
       "trafficLightState": 0,
       "ignored": false
     },
     {
-      "id": "web_1761916588915_249ps8ulu",
-      "time": "20:00",
-      "teamA": "Wrexham",
-      "teamB": "Coventry City",
-      "competition": "Championship",
-      "channel": "Sky Sports Main Event, Sky Sports Football, Sky Sports Ultra HDR",
+      "id": "web_1762686149537_i39yogrst",
+      "time": "12:30",
+      "teamA": "Holstein Kiel",
+      "teamB": "Fortuna Dusseldorf",
+      "competition": "Bundesliga 2",
+      "channel": "Bundesliga YouTube",
+      "channels": [
+        "Bundesliga YouTube"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.537Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149538_50ol6nuaq",
+      "time": "13:00",
+      "teamA": "Athletic Bilbao",
+      "teamB": "Real Oviedo",
+      "competition": "La Liga",
+      "channel": "Premier Sports 2",
+      "channels": [
+        "Premier Sports 2"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.538Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149539_p4b22clew",
+      "time": "14:00",
+      "teamA": "Lorient",
+      "teamB": "Toulouse",
+      "competition": "Ligue 1",
+      "channel": "Ligue1+",
+      "channels": [
+        "Ligue1+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.539Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149539_ndku03d4g",
+      "time": "14:00",
+      "teamA": "Aston Villa",
+      "teamB": "AFC Bournemouth",
+      "competition": "Premier League",
+      "channel": "Sky Sports Cricket, Sky Sports Cricket HD",
+      "channels": [
+        "Sky Sports Cricket",
+        "Sky Sports Cricket HD"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.539Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149539_e2zy6ka0m",
+      "time": "14:00",
+      "teamA": "Brentford",
+      "teamB": "Newcastle United",
+      "competition": "Premier League",
+      "channel": "Sky Sports Main Event, Sky Sports Ultra HDR",
       "channels": [
         "Sky Sports Main Event",
-        "Sky Sports Football",
         "Sky Sports Ultra HDR"
       ],
       "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
+      "createdAt": "2025-11-09T11:02:29.539Z",
+      "matchDate": "2025-11-09",
       "apiSource": "live-footballontv.com",
       "venue": "",
       "trafficLightState": 0,
       "ignored": false
     },
     {
-      "id": "web_1761916588915_xzmvap7bz",
-      "time": "20:00",
-      "teamA": "Marseille Women",
-      "teamB": "Strasbourg Women",
-      "competition": "Division 1 Féminine",
+      "id": "web_1762686149540_iel4rttsd",
+      "time": "14:00",
+      "teamA": "Crystal Palace",
+      "teamB": "Brighton & Hove Albion",
+      "competition": "Premier League",
+      "channel": "Sky Sports+",
+      "channels": [
+        "Sky Sports+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.540Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149540_xt4rj8wob",
+      "time": "14:00",
+      "teamA": "Nottingham Forest",
+      "teamB": "Leeds United",
+      "competition": "Premier League",
+      "channel": "Sky Sports Premier League, Sky Sports Ultra HDR",
+      "channels": [
+        "Sky Sports Premier League",
+        "Sky Sports Ultra HDR"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.540Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149540_dwxx1ybxq",
+      "time": "14:00",
+      "teamA": "Bologna",
+      "teamB": "Napoli",
+      "competition": "Serie A",
       "channel": "DAZN",
       "channels": [
         "DAZN"
       ],
       "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.915Z",
-      "matchDate": "2025-10-31",
+      "createdAt": "2025-11-09T11:02:29.540Z",
+      "matchDate": "2025-11-09",
       "apiSource": "live-footballontv.com",
       "venue": "",
       "trafficLightState": 0,
       "ignored": false
     },
     {
-      "id": "web_1761916588916_87pot1h8v",
-      "time": "20:00",
-      "teamA": "Getafe",
-      "teamB": "Girona",
-      "competition": "La Liga",
-      "channel": "Premier Sports 1",
+      "id": "web_1762686149540_vyvdjtiq2",
+      "time": "14:00",
+      "teamA": "Genoa",
+      "teamB": "Fiorentina",
+      "competition": "Serie A",
+      "channel": "DAZN",
       "channels": [
-        "Premier Sports 1"
+        "DAZN"
       ],
       "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.916Z",
-      "matchDate": "2025-10-31",
+      "createdAt": "2025-11-09T11:02:29.540Z",
+      "matchDate": "2025-11-09",
       "apiSource": "live-footballontv.com",
       "venue": "",
       "trafficLightState": 0,
       "ignored": false
     },
     {
-      "id": "web_1761916588916_pm0c84muz",
-      "time": "20:15",
-      "teamA": "Sporting CP",
-      "teamB": "FC Alverca",
+      "id": "web_1762686149543_55c5uc3oi",
+      "time": "14:30",
+      "teamA": "SC Freiburg",
+      "teamB": "St Pauli",
+      "competition": "Bundesliga",
+      "channel": "Amazon Prime PPV",
+      "channels": [
+        "Amazon Prime PPV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.543Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149545_bmq2s0ekz",
+      "time": "15:00",
+      "teamA": "Dundee",
+      "teamB": "Rangers",
+      "competition": "Scottish Premiership",
+      "channel": "Sky Sports Football",
+      "channels": [
+        "Sky Sports Football"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.545Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149546_u8h5zeicv",
+      "time": "15:15",
+      "teamA": "Rayo Vallecano",
+      "teamB": "Real Madrid",
+      "competition": "La Liga",
+      "channel": "Premier Sports 2",
+      "channels": [
+        "Premier Sports 2"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.546Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149546_dwao2tb0u",
+      "time": "15:45",
+      "teamA": "AZ Alkmaar",
+      "teamB": "PSV Eindhoven",
+      "competition": "Eredivisie",
+      "channel": "Premier Sports 1, TrillerTV+",
+      "channels": [
+        "Premier Sports 1",
+        "TrillerTV+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.546Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149547_ga2mfmlqg",
+      "time": "16:15",
+      "teamA": "Angers",
+      "teamB": "Auxerre",
+      "competition": "Ligue 1",
+      "channel": "Ligue1+",
+      "channels": [
+        "Ligue1+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.547Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149547_2x1pcse95",
+      "time": "16:15",
+      "teamA": "FC Metz",
+      "teamB": "Nice",
+      "competition": "Ligue 1",
+      "channel": "Ligue1+",
+      "channels": [
+        "Ligue1+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.547Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149548_ieyhn6yiw",
+      "time": "16:15",
+      "teamA": "Strasbourg",
+      "teamB": "Lille",
+      "competition": "Ligue 1",
+      "channel": "Amazon Prime PPV, Ligue1+",
+      "channels": [
+        "Amazon Prime PPV",
+        "Ligue1+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.548Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149549_dqqfk6dbp",
+      "time": "16:30",
+      "teamA": "VfB Stuttgart",
+      "teamB": "Augsburg",
+      "competition": "Bundesliga",
+      "channel": "Amazon Prime PPV",
+      "channels": [
+        "Amazon Prime PPV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.549Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149549_pny2fbl2e",
+      "time": "16:30",
+      "teamA": "Manchester City",
+      "teamB": "Liverpool",
+      "competition": "Premier League",
+      "channel": "Sky Sports Main Event, Sky Sports Premier League, Sky Sports Ultra HDR",
+      "channels": [
+        "Sky Sports Main Event",
+        "Sky Sports Premier League",
+        "Sky Sports Ultra HDR"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.549Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149550_atwzo7fd3",
+      "time": "17:00",
+      "teamA": "Roma",
+      "teamB": "Udinese",
+      "competition": "Serie A",
+      "channel": "DAZN",
+      "channels": [
+        "DAZN"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.550Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149550_b9td4juva",
+      "time": "17:30",
+      "teamA": "Gent",
+      "teamB": "Genk",
+      "competition": "Belgian Jupiler Pro League",
+      "channel": "DAZN",
+      "channels": [
+        "DAZN"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.550Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149551_u7pjam9wx",
+      "time": "17:30",
+      "teamA": "Real Mallorca",
+      "teamB": "Getafe",
+      "competition": "La Liga",
+      "channel": "Premier Player",
+      "channels": [
+        "Premier Player"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.551Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149551_6304uy5yl",
+      "time": "17:30",
+      "teamA": "Valencia",
+      "teamB": "Real Betis",
+      "competition": "La Liga",
+      "channel": "Premier Sports 2",
+      "channels": [
+        "Premier Sports 2"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.551Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149552_jmrb6j11w",
+      "time": "17:30",
+      "teamA": "Kansas City Current",
+      "teamB": "Gotham FC",
+      "competition": "NWSL Play-Off Quarter Final",
+      "channel": "TNT Sports 3",
+      "channels": [
+        "TNT Sports 3"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.552Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149552_my9ks2cv1",
+      "time": "18:00",
+      "teamA": "Famalicao",
+      "teamB": "FC Porto",
       "competition": "Primeira Liga",
       "channel": "TrillerTV+",
       "channels": [
         "TrillerTV+"
       ],
       "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.916Z",
-      "matchDate": "2025-10-31",
+      "createdAt": "2025-11-09T11:02:29.552Z",
+      "matchDate": "2025-11-09",
       "apiSource": "live-footballontv.com",
       "venue": "",
       "trafficLightState": 0,
       "ignored": false
     },
     {
-      "id": "web_1761916588916_csrao6dp8",
-      "time": "22:00",
-      "teamA": "San Lorenzo",
-      "teamB": "Deportivo Riestra",
+      "id": "web_1762686149552_xzv2iwq70",
+      "time": "18:15",
+      "teamA": "Mechelen",
+      "teamB": "Union Saint-Gilloise",
+      "competition": "Belgian Jupiler Pro League",
+      "channel": "DAZN",
+      "channels": [
+        "DAZN"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.552Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149553_z7sbowffo",
+      "time": "18:30",
+      "teamA": "Wehen Wiesbaden",
+      "teamB": "Viktoria Köln",
+      "competition": "3. Liga",
+      "channel": "German Football YouTube",
+      "channels": [
+        "German Football YouTube"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.553Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149553_mii49povc",
+      "time": "18:30",
+      "teamA": "Eintracht Frankfurt",
+      "teamB": "Mainz",
+      "competition": "Bundesliga",
+      "channel": "Amazon Prime PPV",
+      "channels": [
+        "Amazon Prime PPV"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.553Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149553_kf1g6rp3f",
+      "time": "19:00",
+      "teamA": "Cruzeiro",
+      "teamB": "Fluminense",
+      "competition": "Campeonato Brasileiro Serie A",
+      "channel": "Premier Player",
+      "channels": [
+        "Premier Player"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.553Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149554_ao0x8jgyd",
+      "time": "19:00",
+      "teamA": "Go Ahead Eagles",
+      "teamB": "Feyenoord",
+      "competition": "Eredivisie",
+      "channel": "TrillerTV+",
+      "channels": [
+        "TrillerTV+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.554Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149554_n1efuqnby",
+      "time": "19:30",
+      "teamA": "Boca Juniors",
+      "teamB": "River Plate",
       "competition": "Argentine Primeira Division",
+      "channel": "Premier Sports 1",
+      "channels": [
+        "Premier Sports 1"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.554Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149555_w4qw258go",
+      "time": "19:45",
+      "teamA": "Lyon",
+      "teamB": "PSG",
+      "competition": "Ligue 1",
+      "channel": "Amazon Prime PPV, Ligue1+",
+      "channels": [
+        "Amazon Prime PPV",
+        "Ligue1+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.555Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149556_4pie9c561",
+      "time": "19:45",
+      "teamA": "Inter Milan",
+      "teamB": "Lazio",
+      "competition": "Serie A",
+      "channel": "TNT Sports 1, TNT Sports 2, DAZN",
+      "channels": [
+        "TNT Sports 1",
+        "TNT Sports 2",
+        "DAZN"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.556Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149556_wi63hveds",
+      "time": "20:00",
+      "teamA": "Celta Vigo",
+      "teamB": "Barcelona",
+      "competition": "La Liga",
       "channel": "Premier Sports 2",
       "channels": [
         "Premier Sports 2"
       ],
       "status": "upcoming",
-      "createdAt": "2025-10-31T13:16:28.916Z",
-      "matchDate": "2025-10-31",
+      "createdAt": "2025-11-09T11:02:29.556Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149556_64p8zonas",
+      "time": "20:00",
+      "teamA": "Portland Thorns",
+      "teamB": "San Diego Wave",
+      "competition": "NWSL Play-Off Quarter Final",
+      "channel": "TNT Sports 3",
+      "channels": [
+        "TNT Sports 3"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.556Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149557_1z3rvyz8f",
+      "time": "20:30",
+      "teamA": "Benfica",
+      "teamB": "Casa Pia",
+      "competition": "Primeira Liga",
+      "channel": "TrillerTV+",
+      "channels": [
+        "TrillerTV+"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.557Z",
+      "matchDate": "2025-11-09",
+      "apiSource": "live-footballontv.com",
+      "venue": "",
+      "trafficLightState": 0,
+      "ignored": false
+    },
+    {
+      "id": "web_1762686149557_02b37bi5o",
+      "time": "23:30",
+      "teamA": "Mirassol",
+      "teamB": "Palmeiras",
+      "competition": "Campeonato Brasileiro Serie A",
+      "channel": "Premier Sports 1",
+      "channels": [
+        "Premier Sports 1"
+      ],
+      "status": "upcoming",
+      "createdAt": "2025-11-09T11:02:29.557Z",
+      "matchDate": "2025-11-09",
       "apiSource": "live-footballontv.com",
       "venue": "",
       "trafficLightState": 0,
@@ -374,102 +752,121 @@
   ],
   "ufcEvents": [
     {
-      "title": "UFC Fight Night: Garcia vs. Onama",
-      "date": "November  1, 2025",
-      "location": "UFC Apex, Las Vegas, Nevada",
-      "venue": "UFC Apex, Las Vegas, Nevada",
+      "title": "UFC 322: Della Maddalena vs. Makhachev",
+      "date": "November 15, 2025",
+      "location": "Madison Square Garden, New York, New York",
+      "venue": "Madison Square Garden, New York, New York",
       "mainCard": [
         {
-          "fighter1": "Steve Garcia",
-          "fighter2": "David Onama",
-          "weightClass": "",
-          "result": null
+          "fighter1": "Leon Edwards",
+          "fighter2": "Carlos Prates",
+          "weightClass": "170 lbs",
+          "result": null,
+          "boutUrl": "1037620-ufc-322-leon-rocky-edwards-vs-carlos-the-nightmare-prates"
         },
         {
-          "fighter1": "Waldo Cortes-Acosta",
-          "fighter2": "Ante Delija",
-          "weightClass": "",
-          "result": null
+          "fighter1": "Beneil Dariush",
+          "fighter2": "Benoit Saint-Denis",
+          "weightClass": "155 lbs",
+          "result": null,
+          "boutUrl": "1049432-ufc-322-beneil-benny-dariush-vs-benoit-god-of-war-saint-denis"
         },
         {
-          "fighter1": "Jeremiah Wells",
-          "fighter2": "Themba Gorimbo",
-          "weightClass": "",
-          "result": null
+          "fighter1": "Sean Brady",
+          "fighter2": "Michael Morales",
+          "weightClass": "170 lbs",
+          "result": null,
+          "boutUrl": "1054950-ufc-322-sean-brady-vs-michael-morales"
         },
         {
-          "fighter1": "Isaac Dulgarian",
-          "fighter2": "Yadier del Valle",
-          "weightClass": "",
-          "result": null
+          "fighter1": "Erin Blanchfield",
+          "fighter2": "Tracy Cortez",
+          "weightClass": "125 lbs",
+          "result": null,
+          "boutUrl": "1036601-ufc-322-erin-cold-blooded-blanchfield-vs-tracy-cortez"
         },
         {
-          "fighter1": "Charles Radtke",
-          "fighter2": "Daniel Frunza",
-          "weightClass": "",
-          "result": null
-        },
-        {
-          "fighter1": "Allan Nascimento",
-          "fighter2": "Cody Durden",
-          "weightClass": "",
-          "result": null
+          "fighter1": "B. Susurkaev",
+          "fighter2": "Eric McConico",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1041556-ufc-322-baisangur-hunter-susurkaev-vs-eric-mcconico"
         }
       ],
       "prelimCard": [
         {
-          "fighter1": "Kevin Christian",
-          "fighter2": "Billy Elekana",
-          "weightClass": "",
-          "result": null
+          "fighter1": "Angela Hill",
+          "fighter2": "Fatima Kline",
+          "weightClass": "115 lbs",
+          "result": null,
+          "boutUrl": "1041904-ufc-322-angela-overkill-hill-vs-fatima-the-archangel-kline"
         },
         {
-          "fighter1": "Timmy Cuamba",
-          "fighter2": "Chang Ho Lee",
-          "weightClass": "",
-          "result": null
+          "fighter1": "G. Meerschaert",
+          "fighter2": "Kyle Daukaus",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043403-ufc-322-gerald-gm3-meerschaert-vs-kyle-the-d-arce-knight-daukaus"
         },
         {
-          "fighter1": "Donte Johnson",
-          "fighter2": "Sedriques Dumas",
-          "weightClass": "",
-          "result": null
+          "fighter1": "Bo Nickal",
+          "fighter2": "Rodolfo Vieira",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043809-ufc-322-bo-nickal-vs-rodolfo-the-black-belt-hunter-vieira"
         },
         {
-          "fighter1": "Ketlen Vieira",
-          "fighter2": "Norma Dumont",
-          "weightClass": "",
-          "result": null
+          "fighter1": "Roman Kopylov",
+          "fighter2": "Gregory Rodrigues",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043810-ufc-322-roman-kopylov-vs-gregory-robocop-rodrigues"
+        },
+        {
+          "fighter1": "M. Wellmaker",
+          "fighter2": "Cody Haddon",
+          "weightClass": "135 lbs",
+          "result": null,
+          "boutUrl": "1056450-ufc-322-malcolm-the-machine-wellmaker-vs-cody-haddon"
+        },
+        {
+          "fighter1": "Chepe Mariscal",
+          "fighter2": "Pat Sabatini",
+          "weightClass": "145 lbs",
+          "result": null,
+          "boutUrl": "1058790-ufc-322-chepe-machine-gun-mariscal-vs-pat-sabatini"
+        },
+        {
+          "fighter1": "V. Borshchev",
+          "fighter2": "Matheus Camilo",
+          "weightClass": "155 lbs",
+          "result": null,
+          "boutUrl": "1065788-ufc-322-viacheslav-slava-claus-borshchev-vs-matheus-jaguar-camilo"
+        },
+        {
+          "fighter1": "Valentina Shevchenko",
+          "fighter2": "Weili Zhang",
+          "weightClass": "125 lbs",
+          "result": null,
+          "boutUrl": "1037618-ufc-322-jack-della-maddalena-vs-islam-makhachev"
+        },
+        {
+          "fighter1": "Malcolm Wellmaker",
+          "fighter2": "Serhiy Sidey",
+          "weightClass": "135 lbs",
+          "result": null,
+          "boutUrl": "1053277-ufc-322-malcolm-the-machine-wellmaker-vs-serhiy-sidey"
         }
       ],
-      "earlyPrelimCard": [
-        {
-          "fighter1": "Montserrat Conejo Ruiz",
-          "fighter2": "Alice Ardelean",
-          "weightClass": "",
-          "result": null
-        },
-        {
-          "fighter1": "Phil Rowe",
-          "fighter2": "Seok Hyeon Ko",
-          "weightClass": "",
-          "result": null
-        },
-        {
-          "fighter1": "Talita Alencar",
-          "fighter2": "Ariane Carnelossi",
-          "weightClass": "",
-          "result": null
-        }
-      ],
-      "totalFights": 13,
-      "scrapedAt": "2025-10-31T13:54:45.520Z",
+      "earlyPrelimCard": [],
+      "totalFights": 14,
+      "scrapedAt": "2025-11-09T11:03:00.459Z",
       "source": "tapology_321",
-      "sourceUrl": "https://www.tapology.com/fightcenter/events/132058-ufc-fight-night",
+      "sourceUrl": "https://www.tapology.com/fightcenter/events/132653-ufc-322",
       "apiSource": "tapology_321_scraper"
     }
   ],
   "lastCleanup": null,
-  "lastFetch": "2025-06-28T00:57:53.917Z",
-  "lastUFCFetch": "2025-10-31T13:54:45.521Z"
+  "lastFetch": null,
+  "lastUFCFetch": "2025-11-09T11:03:00.460Z"
 }

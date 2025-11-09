@@ -55,59 +55,47 @@ async function extractFights() {
       console.log('   No cancelled section found\n');
     }
     
-    // Extract all fighters BEFORE the cancelled section
-    console.log('🔍 Extracting active fighters...');
+    // Extract fights with weight classes from bout sections
+    console.log('🔍 Extracting active fights...');
     const activeSectionHTML = cancelledSectionStart !== -1 
       ? html.substring(0, cancelledSectionStart) 
       : html;
     
-    const fighterLinkRegex = /<a[^>]*href="\/fightcenter\/fighters\/\d+-([^"]*)"[^>]*>([^<]+)<\/a>/gi;
-    const allFighters = [];
-    let match;
+    const fights = [];
     
-    while ((match = fighterLinkRegex.exec(activeSectionHTML)) !== null) {
-      const name = match[2].trim();
-      allFighters.push(name);
-    }
+    // Extract bouts using <li class="bout"> structure
+    const boutRegex = /<li[^>]*class="[^"]*bout[^"]*"[^>]*>([\s\S]*?)<\/li>/gi;
+    let boutMatch;
     
-    console.log(`   Found ${allFighters.length} fighter mentions in active section\n`);
-    
-    // Deduplicate using last name
-    const uniqueFighters = [];
-    const seenLastNames = new Map();
-    
-    for (const name of allFighters) {
-      const parts = name.split(/\s+/);
-      const lastName = parts[parts.length - 1].toLowerCase().replace(/[.]/g, '');
+    while ((boutMatch = boutRegex.exec(activeSectionHTML)) !== null) {
+      const boutHTML = boutMatch[1];
       
-      if (seenLastNames.has(lastName)) {
-        const existingName = seenLastNames.get(lastName);
-        if (name.length > existingName.length) {
-          const idx = uniqueFighters.indexOf(existingName);
-          if (idx !== -1) {
-            uniqueFighters[idx] = name;
-            seenLastNames.set(lastName, name);
-          }
-        }
-        continue;
+      // Extract fighter names from this bout
+      const nameRegex = /<span[^>]*class="[^"]*name[^"]*"[^>]*>\s*<a[^>]*>([^<]+)<\/a>/gi;
+      const fighters = [];
+      let nameMatch;
+      
+      while ((nameMatch = nameRegex.exec(boutHTML)) !== null) {
+        fighters.push(nameMatch[1].trim());
       }
       
-      seenLastNames.set(lastName, name);
-      uniqueFighters.push(name);
+      // Extract weight class (look for patterns like "170 lbs" or "135 lbs")
+      const weightRegex = /(\d+)\s*lbs/i;
+      const weightMatch = boutHTML.match(weightRegex);
+      const weightClass = weightMatch ? `${weightMatch[1]} lbs` : '';
+      
+      // Only add if we have both fighters
+      if (fighters.length >= 2) {
+        fights.push({
+          fighter1: fighters[0],
+          fighter2: fighters[1],
+          weightClass: weightClass,
+          result: null
+        });
+      }
     }
     
-    console.log(`   ${uniqueFighters.length} unique active fighters\n`);
-    
-    // Pair consecutive fighters
-    const fights = [];
-    for (let i = 0; i < uniqueFighters.length - 1; i += 2) {
-      fights.push({
-        fighter1: uniqueFighters[i],
-        fighter2: uniqueFighters[i + 1],
-        weightClass: '',
-        result: null
-      });
-    }
+    console.log(`   Found ${fights.length} bouts with weight classes\n`);
     
     console.log('╔════════════════════════════════════════════╗');
     console.log(`║  ${eventTitle.substring(0, 42).padEnd(42)}  ║`);
@@ -122,7 +110,7 @@ async function extractFights() {
     if (mainCardSize > 0) {
       console.log('🏆 MAIN CARD:');
       fights.slice(0, mainCardSize).forEach((f, i) => {
-        console.log(`  ${i+1}. ${f.fighter1} vs ${f.fighter2}`);
+        console.log(`  ${i+1}. ${f.fighter1} vs ${f.fighter2} (${f.weightClass})`);
       });
       console.log('');
     }
@@ -133,7 +121,7 @@ async function extractFights() {
     if (prelimSize > 0) {
       console.log('📋 PRELIMINARY CARD:');
       fights.slice(prelimStart, prelimStart + prelimSize).forEach((f, i) => {
-        console.log(`  ${i+1}. ${f.fighter1} vs ${f.fighter2}`);
+        console.log(`  ${i+1}. ${f.fighter1} vs ${f.fighter2} (${f.weightClass})`);
       });
       console.log('');
     }
@@ -143,7 +131,7 @@ async function extractFights() {
     if (earlyStart < fights.length) {
       console.log('⏰ EARLY PRELIMS:');
       fights.slice(earlyStart).forEach((f, i) => {
-        console.log(`  ${i+1}. ${f.fighter1} vs ${f.fighter2}`);
+        console.log(`  ${i+1}. ${f.fighter1} vs ${f.fighter2} (${f.weightClass})`);
       });
       console.log('');
     }

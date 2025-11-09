@@ -105,41 +105,120 @@ class TapologyUFCScraper321 {
   }
 
   /**
-   * Extract active fighters before the cancelled section
+   * Extract active fights with weight classes using bout hrefs
    */
   extractActiveFights(html, cancelledFighters) {
-    const cancelledSectionStart = html.indexOf("id='sectionCancelled'");
-    const activeSectionHTML = cancelledSectionStart !== -1 
-      ? html.substring(0, cancelledSectionStart) 
-      : html;
-    
-    // Extract all fighter links
-    const fighterLinkRegex = /<a[^>]*href="\/fightcenter\/fighters\/\d+-([^"]*)"[^>]*>([^<]+)<\/a>/gi;
-    const allFighters = [];
-    let match;
-    
-    while ((match = fighterLinkRegex.exec(activeSectionHTML)) !== null) {
-      const name = match[2].trim();
-      allFighters.push(name);
-    }
-    
-    console.log(`   Found ${allFighters.length} fighter mentions in active section`);
-    
-    // Deduplicate using last name
-    const uniqueFighters = this.deduplicateFighters(allFighters);
-    
-    console.log(`   ${uniqueFighters.length} unique active fighters`);
-    
-    // Pair consecutive fighters into bouts
     const fights = [];
-    for (let i = 0; i < uniqueFighters.length - 1; i += 2) {
-      fights.push({
-        fighter1: uniqueFighters[i],
-        fighter2: uniqueFighters[i + 1],
-        weightClass: '',
-        result: null
-      });
+    const processedBouts = new Set();
+    const fighterPairs = new Set();
+    
+    // STEP 1: Build a map of all fighters to their weight classes from the entire page
+    console.log('   Building fighter-to-weight mapping...');
+    const fighterWeightMap = new Map();
+    
+    // Look for patterns like: "Fighter Name" ... "170 lbs" within reasonable distance
+    const fighterLinkRegex = /<a[^>]*href="\/fightcenter\/fighters\/\d+-[^"]*"[^>]*>([^<]+)<\/a>/gi;
+    let fighterMatch;
+    
+    while ((fighterMatch = fighterLinkRegex.exec(html)) !== null) {
+      const fighterName = fighterMatch[1].trim();
+      const fighterIndex = fighterMatch.index;
+      
+      // Look for weight within 500 characters AFTER this fighter mention
+      const searchEnd = Math.min(html.length, fighterIndex + 500);
+      const searchHTML = html.substring(fighterIndex, searchEnd);
+      
+      const weightMatch = searchHTML.match(/(\d+)\s*lbs/i);
+      if (weightMatch && !fighterWeightMap.has(fighterName)) {
+        fighterWeightMap.set(fighterName, `${weightMatch[1]} lbs`);
+      }
     }
+    
+    console.log(`   Mapped ${fighterWeightMap.size} fighters to weight classes`);
+    
+    // STEP 2: Extract bouts
+    const boutHrefRegex = /href="\/fightcenter\/bouts\/(\d+-[^"]+)"/gi;
+    let boutMatch;
+    
+    console.log('   Searching for bout links...');
+    
+    while ((boutMatch = boutHrefRegex.exec(html)) !== null) {
+      const boutUrl = boutMatch[1];
+      const boutIndex = boutMatch.index;
+      
+      if (processedBouts.has(boutUrl)) continue;
+      
+      // Check if fizzled
+      const checkStart = boutIndex;
+      const checkEnd = Math.min(html.length, boutIndex + 150);
+      const checkHTML = html.substring(checkStart, checkEnd);
+      
+      if (checkHTML.match(/>fizzled<\/a>/i)) {
+        continue;
+      }
+      
+      // Extract fighters
+      const searchStart = Math.max(0, boutIndex - 2000);
+      const searchEnd = Math.min(html.length, boutIndex + 2000);
+      const searchHTML = html.substring(searchStart, searchEnd);
+      
+      const fighterRegex = /<a[^>]*href="\/fightcenter\/fighters\/\d+-[^"]*"[^>]*>([^<]+)<\/a>/gi;
+      const fighters = [];
+      let fMatch;
+      
+      while ((fMatch = fighterRegex.exec(searchHTML)) !== null) {
+        const name = fMatch[1].trim();
+        if (name.length > 2 && !fighters.includes(name)) {
+          fighters.push(name);
+        }
+        if (fighters.length >= 2) break;
+      }
+      
+      if (fighters.length < 2) continue;
+      
+      // Check for duplicates
+      const pairKey = [fighters[0], fighters[1]].sort().join('|');
+      if (fighterPairs.has(pairKey)) {
+        continue;
+      }
+      
+      // STEP 3: Get weight class from our mapping
+      let weightClass = '';
+      
+      // Try to get weight from either fighter
+      if (fighterWeightMap.has(fighters[0])) {
+        weightClass = fighterWeightMap.get(fighters[0]);
+      } else if (fighterWeightMap.has(fighters[1])) {
+        weightClass = fighterWeightMap.get(fighters[1]);
+      }
+      
+      // If still no weight, try a broader search in the bout area
+      if (!weightClass) {
+        const broadSearch = html.substring(
+          Math.max(0, boutIndex - 5000),
+          Math.min(html.length, boutIndex + 5000)
+        );
+        const weightMatch = broadSearch.match(/(\d+)\s*lbs/i);
+        if (weightMatch) {
+          weightClass = `${weightMatch[1]} lbs`;
+        }
+      }
+      
+      processedBouts.add(boutUrl);
+      fighterPairs.add(pairKey);
+      
+      fights.push({
+        fighter1: fighters[0],
+        fighter2: fighters[1],
+        weightClass: weightClass,
+        result: null,
+        boutUrl: boutUrl
+      });
+      
+      console.log(`   ✓ ${fighters[0]} vs ${fighters[1]} (${weightClass || 'NO WEIGHT'})`);
+    }
+    
+    console.log(`   Found ${fights.length} bouts with weight classes`);
     
     return fights;
   }
@@ -176,17 +255,23 @@ class TapologyUFCScraper321 {
 
   /**
    * Organize fights into main card, prelims, and early prelims
+   * Displays ALL non-cancelled and non-fizzled fights with no limits
+   * Main card: First 5 fights (typical UFC structure)
+   * Prelims: All remaining fights (no artificial caps)
    */
   organizeFightCard(fights) {
-    const mainCardSize = Math.min(6, fights.length);
+    // Main card is typically the first 5 fights
+    const mainCardSize = Math.min(5, fights.length);
     const prelimStart = mainCardSize;
-    const prelimSize = Math.min(4, fights.length - prelimStart);
-    const earlyStart = prelimStart + prelimSize;
+    
+    // ALL remaining fights go to prelims - no caps, no limits
+    // Just display everything that wasn't cancelled or fizzled
+    const remainingFights = fights.length - prelimStart;
     
     return {
       mainCard: fights.slice(0, mainCardSize),
-      prelimCard: fights.slice(prelimStart, prelimStart + prelimSize),
-      earlyPrelimCard: fights.slice(earlyStart)
+      prelimCard: fights.slice(prelimStart),  // ALL remaining fights
+      earlyPrelimCard: []  // Not using early prelims anymore
     };
   }
 

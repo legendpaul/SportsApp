@@ -220,6 +220,24 @@ class MatchFetcher {
     return matches;
   }
 
+  shouldExcludeMatch(teamA, teamB, competition) {
+    // List of keywords to exclude (case insensitive)
+    const excludeKeywords = ['women', 'u17', 'u 17', 'u18', 'u 18', 'u19', 'u 19', 'u20', 'u 20'];
+    
+    // Combine all text to check
+    const textToCheck = `${teamA} ${teamB} ${competition}`.toLowerCase();
+    
+    // Check if any exclude keyword is present
+    for (const keyword of excludeKeywords) {
+      if (textToCheck.includes(keyword)) {
+        this.debugLog('data', `Excluding match: "${teamA} vs ${teamB}" (${competition}) - contains "${keyword}"`);
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
   parseIndividualFixture(fixtureHTML, matchDate) {
     try {
       // Extract time
@@ -240,6 +258,11 @@ class MatchFetcher {
       // Extract competition
       const competitionMatch = fixtureHTML.match(/<div class="fixture__competition">([^<]+)<\/div>/);
       const competition = competitionMatch ? this.cleanHTML(competitionMatch[1].trim()) : 'Football';
+      
+      // Filter out women's and youth matches
+      if (this.shouldExcludeMatch(teams.teamA, teams.teamB, competition)) {
+        return null;
+      }
       
       // Extract channels
       const channels = this.parseChannelsFromHTML(fixtureHTML);

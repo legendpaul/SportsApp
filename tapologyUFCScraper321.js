@@ -147,14 +147,34 @@ class TapologyUFCScraper321 {
       const boutIndex = boutMatch.index;
       
       if (processedBouts.has(boutUrl)) continue;
+
+      // Check if bout is in a "previous" or "past" section by looking for a section header
+      const searchStartForSection = Math.max(0, boutIndex - 4000);
+      const searchEndForSection = boutIndex;
+      const precedingHtml = html.substring(searchStartForSection, searchEndForSection);
+      const lastLi = precedingHtml.lastIndexOf('<li');
+      const precedingHtmlTrimmed = precedingHtml.substring(lastLi);
+      if (/class="[^"]*previous[^"]*"/.test(precedingHtmlTrimmed)) {
+          console.log(`   - Skipping previous bout (in previous section): ${boutUrl}`);
+          continue;
+      }
       
-      // Check if fizzled
-      const checkStart = boutIndex;
-      const checkEnd = Math.min(html.length, boutIndex + 150);
+      // Check if fizzled or has a result
+      const checkRange = 300;
+      const checkStart = Math.max(0, boutIndex - 100);
+      const checkEnd = Math.min(html.length, boutIndex + checkRange);
       const checkHTML = html.substring(checkStart, checkEnd);
       
       if (checkHTML.match(/>fizzled<\/a>/i)) {
+        console.log(`   - Skipping fizzled bout: ${boutUrl}`);
         continue;
+      }
+
+      // Check for result text like "Decision"
+      const result_regex = /(>Decision<|>KO<|>TKO<|>Submission<|>Draw<|>NC<)/i;
+      if (result_regex.test(checkHTML)) {
+          console.log(`   - Skipping past bout (result found): ${boutUrl}`);
+          continue;
       }
       
       // Extract fighters

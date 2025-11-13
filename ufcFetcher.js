@@ -335,12 +335,32 @@ class UFCFetcher {
   /**
    * Generate main card fights (real scraping would extract these from event pages)
    */
+  async scrapeTapologyData(event) {
+    if (event._tapologyData) {
+      return event._tapologyData;
+    }
+    if (!event.tapologyUrl) {
+      this.debugLog('ufc-fights', `No Tapology URL for ${event.title}, skipping scrape.`);
+      return null;
+    }
+
+    try {
+      const tapologyScraper = new (require('./tapologyUFCScraper321'))();
+      const scrapedData = await tapologyScraper.scrapeEvent(event.tapologyUrl);
+      event._tapologyData = scrapedData; // Cache it
+      return scrapedData;
+    } catch (error) {
+      this.debugLog('ufc-fights', `Error scraping Tapology data for ${event.title}: ${error.message}`);
+      return null;
+    }
+  }
+
   async generateMainCard(event) {
-    // In a real implementation, this would scrape the specific event page
-    // For now, return empty array to avoid duplicate data issues
-    this.debugLog('ufc-fights', `Generating main card for ${event.title}`);
-    
-    // TODO: Scrape actual fight card from event detail page
+    const scrapedData = await this.scrapeTapologyData(event);
+    if (scrapedData) {
+      this.debugLog('ufc-fights', `Using scraped main card for ${event.title} from Tapology.`);
+      return scrapedData.mainCard || [];
+    }
     return [];
   }
 
@@ -348,7 +368,11 @@ class UFCFetcher {
    * Generate prelim card fights
    */
   async generatePrelimCard(event) {
-    this.debugLog('ufc-fights', `Generating prelim card for ${event.title}`);
+    const scrapedData = await this.scrapeTapologyData(event);
+    if (scrapedData) {
+      this.debugLog('ufc-fights', `Using scraped prelim card for ${event.title} from Tapology.`);
+      return scrapedData.prelimCard || [];
+    }
     return [];
   }
 
@@ -356,7 +380,11 @@ class UFCFetcher {
    * Generate early prelim card fights
    */
   async generateEarlyPrelimCard(event) {
-    this.debugLog('ufc-fights', `Generating early prelim card for ${event.title}`);
+    const scrapedData = await this.scrapeTapologyData(event);
+    if (scrapedData) {
+      this.debugLog('ufc-fights', `Using scraped early prelim card for ${event.title} from Tapology.`);
+      return scrapedData.earlyPrelimCard || [];
+    }
     return [];
   }
 

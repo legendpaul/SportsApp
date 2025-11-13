@@ -1398,9 +1398,621 @@
       "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
       "prelimUTCDate": "2025-11-20T01:00:00.000Z",
       "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029381231_0",
+      "title": "UFC Event 1",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 1 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:23:01.630Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [],
+      "prelimCard": [],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 1",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029381231_1",
+      "title": "UFC Event 2",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 2 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:23:01.630Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [],
+      "prelimCard": [],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 2",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029381231_2",
+      "title": "UFC Event 3",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 3 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:23:01.630Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [],
+      "prelimCard": [],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 3",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029443111_0",
+      "title": "UFC Event 1",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 1 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:24:03.495Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [],
+      "prelimCard": [],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 1",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029443112_1",
+      "title": "UFC Event 2",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 2 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:24:03.495Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [],
+      "prelimCard": [],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 2",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029443112_2",
+      "title": "UFC Event 3",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 3 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:24:03.495Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [],
+      "prelimCard": [],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 3",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029484589_0",
+      "title": "UFC Event 1",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 1 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:24:44.930Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [],
+      "prelimCard": [],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 1",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029484590_1",
+      "title": "UFC Event 2",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 2 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:24:44.930Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [],
+      "prelimCard": [],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 2",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029484590_2",
+      "title": "UFC Event 3",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 3 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:24:44.930Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [],
+      "prelimCard": [],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 3",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029553798_0",
+      "title": "UFC Event 1",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 1 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:25:53.799Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [
+        {
+          "fighter1": "Sean Brady",
+          "fighter2": "Michael Morales",
+          "weightClass": "170 lbs",
+          "result": null,
+          "boutUrl": "1054950-ufc-322-sean-brady-vs-michael-morales"
+        },
+        {
+          "fighter1": "Leon Edwards",
+          "fighter2": "Carlos Prates",
+          "weightClass": "170 lbs",
+          "result": null,
+          "boutUrl": "1037620-ufc-322-leon-rocky-edwards-vs-carlos-the-nightmare-prates"
+        },
+        {
+          "fighter1": "Beneil Dariush",
+          "fighter2": "Benoit Saint-Denis",
+          "weightClass": "155 lbs",
+          "result": null,
+          "boutUrl": "1049432-ufc-322-beneil-benny-dariush-vs-benoit-god-of-war-saint-denis"
+        },
+        {
+          "fighter1": "Bo Nickal",
+          "fighter2": "Rodolfo Vieira",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043809-ufc-322-bo-nickal-vs-rodolfo-the-black-belt-hunter-vieira"
+        },
+        {
+          "fighter1": "Roman Kopylov",
+          "fighter2": "Gregory Rodrigues",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043810-ufc-322-roman-kopylov-vs-gregory-robocop-rodrigues"
+        }
+      ],
+      "prelimCard": [
+        {
+          "fighter1": "Erin Blanchfield",
+          "fighter2": "Tracy Cortez",
+          "weightClass": "125 lbs",
+          "result": null,
+          "boutUrl": "1036601-ufc-322-erin-cold-blooded-blanchfield-vs-tracy-cortez"
+        },
+        {
+          "fighter1": "M. Wellmaker",
+          "fighter2": "Cody Haddon",
+          "weightClass": "135 lbs",
+          "result": null,
+          "boutUrl": "1056450-ufc-322-malcolm-the-machine-wellmaker-vs-cody-haddon"
+        },
+        {
+          "fighter1": "G. Meerschaert",
+          "fighter2": "Kyle Daukaus",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043403-ufc-322-gerald-gm3-meerschaert-vs-kyle-the-d-arce-knight-daukaus"
+        },
+        {
+          "fighter1": "Chepe Mariscal",
+          "fighter2": "Pat Sabatini",
+          "weightClass": "145 lbs",
+          "result": null,
+          "boutUrl": "1058790-ufc-322-chepe-machine-gun-mariscal-vs-pat-sabatini"
+        },
+        {
+          "fighter1": "Angela Hill",
+          "fighter2": "Fatima Kline",
+          "weightClass": "115 lbs",
+          "result": null,
+          "boutUrl": "1041904-ufc-322-angela-overkill-hill-vs-fatima-the-archangel-kline"
+        },
+        {
+          "fighter1": "B. Susurkaev",
+          "fighter2": "Eric McConico",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1041556-ufc-322-baisangur-hunter-susurkaev-vs-eric-mcconico"
+        },
+        {
+          "fighter1": "V. Borshchev",
+          "fighter2": "Matheus Camilo",
+          "weightClass": "155 lbs",
+          "result": null,
+          "boutUrl": "1065788-ufc-322-viacheslav-slava-claus-borshchev-vs-matheus-jaguar-camilo"
+        },
+        {
+          "fighter1": "Valentina Shevchenko",
+          "fighter2": "Weili Zhang",
+          "weightClass": "125 lbs",
+          "result": null,
+          "boutUrl": "1037618-ufc-322-jack-della-maddalena-vs-islam-makhachev"
+        },
+        {
+          "fighter1": "Malcolm Wellmaker",
+          "fighter2": "Serhiy Sidey",
+          "weightClass": "135 lbs",
+          "result": null,
+          "boutUrl": "1053277-ufc-322-malcolm-the-machine-wellmaker-vs-serhiy-sidey"
+        }
+      ],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 1",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029553798_1",
+      "title": "UFC Event 2",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 2 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:25:53.802Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [
+        {
+          "fighter1": "Sean Brady",
+          "fighter2": "Michael Morales",
+          "weightClass": "170 lbs",
+          "result": null,
+          "boutUrl": "1054950-ufc-322-sean-brady-vs-michael-morales"
+        },
+        {
+          "fighter1": "Leon Edwards",
+          "fighter2": "Carlos Prates",
+          "weightClass": "170 lbs",
+          "result": null,
+          "boutUrl": "1037620-ufc-322-leon-rocky-edwards-vs-carlos-the-nightmare-prates"
+        },
+        {
+          "fighter1": "Beneil Dariush",
+          "fighter2": "Benoit Saint-Denis",
+          "weightClass": "155 lbs",
+          "result": null,
+          "boutUrl": "1049432-ufc-322-beneil-benny-dariush-vs-benoit-god-of-war-saint-denis"
+        },
+        {
+          "fighter1": "Bo Nickal",
+          "fighter2": "Rodolfo Vieira",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043809-ufc-322-bo-nickal-vs-rodolfo-the-black-belt-hunter-vieira"
+        },
+        {
+          "fighter1": "Roman Kopylov",
+          "fighter2": "Gregory Rodrigues",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043810-ufc-322-roman-kopylov-vs-gregory-robocop-rodrigues"
+        }
+      ],
+      "prelimCard": [
+        {
+          "fighter1": "Erin Blanchfield",
+          "fighter2": "Tracy Cortez",
+          "weightClass": "125 lbs",
+          "result": null,
+          "boutUrl": "1036601-ufc-322-erin-cold-blooded-blanchfield-vs-tracy-cortez"
+        },
+        {
+          "fighter1": "M. Wellmaker",
+          "fighter2": "Cody Haddon",
+          "weightClass": "135 lbs",
+          "result": null,
+          "boutUrl": "1056450-ufc-322-malcolm-the-machine-wellmaker-vs-cody-haddon"
+        },
+        {
+          "fighter1": "G. Meerschaert",
+          "fighter2": "Kyle Daukaus",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043403-ufc-322-gerald-gm3-meerschaert-vs-kyle-the-d-arce-knight-daukaus"
+        },
+        {
+          "fighter1": "Chepe Mariscal",
+          "fighter2": "Pat Sabatini",
+          "weightClass": "145 lbs",
+          "result": null,
+          "boutUrl": "1058790-ufc-322-chepe-machine-gun-mariscal-vs-pat-sabatini"
+        },
+        {
+          "fighter1": "Angela Hill",
+          "fighter2": "Fatima Kline",
+          "weightClass": "115 lbs",
+          "result": null,
+          "boutUrl": "1041904-ufc-322-angela-overkill-hill-vs-fatima-the-archangel-kline"
+        },
+        {
+          "fighter1": "B. Susurkaev",
+          "fighter2": "Eric McConico",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1041556-ufc-322-baisangur-hunter-susurkaev-vs-eric-mcconico"
+        },
+        {
+          "fighter1": "V. Borshchev",
+          "fighter2": "Matheus Camilo",
+          "weightClass": "155 lbs",
+          "result": null,
+          "boutUrl": "1065788-ufc-322-viacheslav-slava-claus-borshchev-vs-matheus-jaguar-camilo"
+        },
+        {
+          "fighter1": "Valentina Shevchenko",
+          "fighter2": "Weili Zhang",
+          "weightClass": "125 lbs",
+          "result": null,
+          "boutUrl": "1037618-ufc-322-jack-della-maddalena-vs-islam-makhachev"
+        },
+        {
+          "fighter1": "Malcolm Wellmaker",
+          "fighter2": "Serhiy Sidey",
+          "weightClass": "135 lbs",
+          "result": null,
+          "boutUrl": "1053277-ufc-322-malcolm-the-machine-wellmaker-vs-serhiy-sidey"
+        }
+      ],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 2",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
+    },
+    {
+      "id": "ufc_direct_1763029553799_2",
+      "title": "UFC Event 3",
+      "date": "2025-11-20",
+      "time": "22:00",
+      "ukDateTime": "2025-11-20T22:00:00.000Z",
+      "ukMainCardTimeStr": "03:00 (Sun)",
+      "ukPrelimTimeStr": "01:00 (Sun)",
+      "ukEarlyPrelimTimeStr": "22:00 (Sat)",
+      "location": "TBD",
+      "venue": "TBD",
+      "status": "upcoming",
+      "description": "UFC Event 3 - Live from UFC.com",
+      "poster": null,
+      "createdAt": "2025-11-13T10:25:53.804Z",
+      "apiSource": "ufc_official_website_direct",
+      "mainCard": [
+        {
+          "fighter1": "Sean Brady",
+          "fighter2": "Michael Morales",
+          "weightClass": "170 lbs",
+          "result": null,
+          "boutUrl": "1054950-ufc-322-sean-brady-vs-michael-morales"
+        },
+        {
+          "fighter1": "Leon Edwards",
+          "fighter2": "Carlos Prates",
+          "weightClass": "170 lbs",
+          "result": null,
+          "boutUrl": "1037620-ufc-322-leon-rocky-edwards-vs-carlos-the-nightmare-prates"
+        },
+        {
+          "fighter1": "Beneil Dariush",
+          "fighter2": "Benoit Saint-Denis",
+          "weightClass": "155 lbs",
+          "result": null,
+          "boutUrl": "1049432-ufc-322-beneil-benny-dariush-vs-benoit-god-of-war-saint-denis"
+        },
+        {
+          "fighter1": "Bo Nickal",
+          "fighter2": "Rodolfo Vieira",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043809-ufc-322-bo-nickal-vs-rodolfo-the-black-belt-hunter-vieira"
+        },
+        {
+          "fighter1": "Roman Kopylov",
+          "fighter2": "Gregory Rodrigues",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043810-ufc-322-roman-kopylov-vs-gregory-robocop-rodrigues"
+        }
+      ],
+      "prelimCard": [
+        {
+          "fighter1": "Erin Blanchfield",
+          "fighter2": "Tracy Cortez",
+          "weightClass": "125 lbs",
+          "result": null,
+          "boutUrl": "1036601-ufc-322-erin-cold-blooded-blanchfield-vs-tracy-cortez"
+        },
+        {
+          "fighter1": "M. Wellmaker",
+          "fighter2": "Cody Haddon",
+          "weightClass": "135 lbs",
+          "result": null,
+          "boutUrl": "1056450-ufc-322-malcolm-the-machine-wellmaker-vs-cody-haddon"
+        },
+        {
+          "fighter1": "G. Meerschaert",
+          "fighter2": "Kyle Daukaus",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1043403-ufc-322-gerald-gm3-meerschaert-vs-kyle-the-d-arce-knight-daukaus"
+        },
+        {
+          "fighter1": "Chepe Mariscal",
+          "fighter2": "Pat Sabatini",
+          "weightClass": "145 lbs",
+          "result": null,
+          "boutUrl": "1058790-ufc-322-chepe-machine-gun-mariscal-vs-pat-sabatini"
+        },
+        {
+          "fighter1": "Angela Hill",
+          "fighter2": "Fatima Kline",
+          "weightClass": "115 lbs",
+          "result": null,
+          "boutUrl": "1041904-ufc-322-angela-overkill-hill-vs-fatima-the-archangel-kline"
+        },
+        {
+          "fighter1": "B. Susurkaev",
+          "fighter2": "Eric McConico",
+          "weightClass": "185 lbs",
+          "result": null,
+          "boutUrl": "1041556-ufc-322-baisangur-hunter-susurkaev-vs-eric-mcconico"
+        },
+        {
+          "fighter1": "V. Borshchev",
+          "fighter2": "Matheus Camilo",
+          "weightClass": "155 lbs",
+          "result": null,
+          "boutUrl": "1065788-ufc-322-viacheslav-slava-claus-borshchev-vs-matheus-jaguar-camilo"
+        },
+        {
+          "fighter1": "Valentina Shevchenko",
+          "fighter2": "Weili Zhang",
+          "weightClass": "125 lbs",
+          "result": null,
+          "boutUrl": "1037618-ufc-322-jack-della-maddalena-vs-islam-makhachev"
+        },
+        {
+          "fighter1": "Malcolm Wellmaker",
+          "fighter2": "Serhiy Sidey",
+          "weightClass": "135 lbs",
+          "result": null,
+          "boutUrl": "1053277-ufc-322-malcolm-the-machine-wellmaker-vs-serhiy-sidey"
+        }
+      ],
+      "earlyPrelimCard": [],
+      "ufcNumber": null,
+      "broadcast": "TNT Sports",
+      "ticketInfo": "Tickets for UFC Event 3",
+      "mainCardUTCDate": "2025-11-20T03:00:00.000Z",
+      "prelimUTCDate": "2025-11-20T01:00:00.000Z",
+      "earlyPrelimUTCDate": "2025-11-19T22:00:00.000Z"
     }
   ],
   "lastCleanup": null,
   "lastFetch": null,
-  "lastUFCFetch": "2025-11-13T10:12:33.227Z"
+  "lastUFCFetch": "2025-11-13T10:25:54.247Z"
 }

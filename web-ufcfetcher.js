@@ -383,6 +383,74 @@ No mock/fake data is provided.
   }
 
   /**
+   * Fetch the next UFC event URL from Tapology and prepopulate the input field
+   */
+  async fetchAndPrepopulateNextEventUrl() {
+    try {
+      this.debugLog('tapology', 'Fetching next UFC event URL from Tapology...');
+
+      const nextEventUrlFunction = '/.netlify/functions/fetch-next-ufc-url';
+      const statusDiv = document.getElementById('ufc-scraper-status');
+
+      if (statusDiv) {
+        statusDiv.textContent = '🔍 Finding next UFC event...';
+        statusDiv.className = 'status-message status-loading';
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const response = await fetch(nextEventUrlFunction, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch next event URL: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.url) {
+        this.debugLog('tapology', `Found next UFC event URL: ${data.url}`);
+
+        // Prepopulate the input field
+        const urlInput = document.getElementById('tapology-url-input');
+        if (urlInput) {
+          urlInput.value = data.url;
+          this.debugLog('tapology', 'Prepopulated URL input field');
+        }
+
+        if (statusDiv) {
+          statusDiv.textContent = `✅ Found next event: ${data.url.split('/').pop()}`;
+          statusDiv.className = 'status-message status-success';
+        }
+
+        return data.url;
+      } else {
+        throw new Error('No UFC event URL found');
+      }
+
+    } catch (error) {
+      this.debugLog('tapology', `Error fetching next event URL: ${error.message}`);
+
+      const statusDiv = document.getElementById('ufc-scraper-status');
+      if (statusDiv) {
+        statusDiv.textContent = `❌ Error: ${error.message}`;
+        statusDiv.className = 'status-message status-error';
+      }
+
+      throw error;
+    }
+  }
+
+  /**
    * Update UFC data and save to storage
    */
   async updateUFCData() {

@@ -2278,7 +2278,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     window.fetchSportsData = () => app.fetchNewSportsData();
     window.fetchFootball = () => app.matchFetcher?.updateMatchData();
-    window.fetchUFC = () => app.ufcFetcher?.updateUFCData();
+    window.fetchUFC = async () => {
+      // First, auto-fetch and prepopulate the next UFC event URL from Tapology
+      if (app.ufcFetcher) {
+        try {
+          await app.ufcFetcher.fetchAndPrepopulateNextEventUrl();
+        } catch (error) {
+          console.error('Error fetching next event URL:', error);
+          // Continue anyway - user can manually enter URL if auto-fetch fails
+        }
+      }
+    };
     window.manualCleanup = () => app.manualCleanup();
     window.addMatch = (match) => app.addFootballMatch(match);
     
